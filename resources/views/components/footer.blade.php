@@ -13,15 +13,14 @@
         <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {{-- Brand --}}
             <div class="sm:col-span-2 lg:col-span-1">
-                <a href="{{ route('pages.home') }}" class="flex items-center gap-2.5">
+                <a href="{{ route('pages.home') }}" class="flex items-center">
                     @if (setting('logo_url'))
-                        <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-9 w-9 rounded-lg object-contain">
+                        <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-12 w-12 rounded-lg object-contain">
                     @else
-                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-luxury-gold text-sm font-bold text-luxury-black">
+                        <span class="flex h-12 w-12 items-center justify-center rounded-lg bg-luxury-gold text-lg font-bold text-luxury-black">
                             {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}
                         </span>
                     @endif
-                    <span class="text-sm font-semibold text-luxury-white">{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</span>
                 </a>
                 @if (setting('tagline'))
                     <p class="mt-4 max-w-xs text-sm text-luxury-muted">{{ setting('tagline') }}</p>

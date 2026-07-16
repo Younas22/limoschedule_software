@@ -29,15 +29,14 @@
     @keydown.escape.window="sidebarOpen = false">
 
     <div class="flex h-16 shrink-0 items-center justify-between border-b border-luxury-border px-5">
-        <a href="{{ route('pages.home') }}" @click="sidebarOpen = false" class="flex items-center gap-2.5">
+        <a href="{{ route('pages.home') }}" @click="sidebarOpen = false" class="flex items-center">
             @if (setting('logo_url'))
-                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-8 w-8 rounded-lg object-contain">
+                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-12 w-12 rounded-lg object-contain">
             @else
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-luxury-gold text-sm font-bold text-luxury-black">
+                <span class="flex h-12 w-12 items-center justify-center rounded-lg bg-luxury-gold text-lg font-bold text-luxury-black">
                     {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}
                 </span>
             @endif
-            <span class="text-sm font-semibold text-luxury-white">{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</span>
         </a>
         <button type="button" @click="sidebarOpen = false" aria-label="{{ __('Close menu') }}"
             class="flex h-9 w-9 items-center justify-center rounded-lg text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white">

@@ -16,15 +16,14 @@
 <header class="sticky top-0 z-30 border-b border-luxury-border bg-luxury-black/90 backdrop-blur">
     <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         {{-- Logo --}}
-        <a href="{{ route('pages.home') }}" class="flex shrink-0 items-center gap-2.5">
+        <a href="{{ route('pages.home') }}" class="flex shrink-0 items-center">
             @if (setting('logo_url'))
-                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-9 w-9 rounded-lg object-contain">
+                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-12 w-12 rounded-lg object-contain">
             @else
-                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-luxury-gold text-sm font-bold text-luxury-black">
+                <span class="flex h-12 w-12 items-center justify-center rounded-lg bg-luxury-gold text-lg font-bold text-luxury-black">
                     {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}
                 </span>
             @endif
-            <span class="hidden text-sm font-semibold tracking-wide text-luxury-white sm:inline">{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</span>
         </a>
 
         {{-- Desktop nav --}}

@@ -28,12 +28,12 @@
     class="fixed inset-y-0 start-0 z-50 flex w-[85%] max-w-sm flex-col overflow-y-auto border-e border-luxury-border bg-luxury-charcoal lg:hidden"
     @keydown.escape.window="sidebarOpen = false">
 
-    <div class="flex h-16 shrink-0 items-center justify-between border-b border-luxury-border px-5">
+    <div class="flex h-20 shrink-0 items-center justify-between border-b border-luxury-border px-5">
         <a href="{{ route('pages.home') }}" @click="sidebarOpen = false" class="flex items-center">
             @if (setting('logo_url'))
-                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-12 w-12 rounded-lg object-contain">
+                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-16 w-16 rounded-lg object-contain">
             @else
-                <span class="flex h-12 w-12 items-center justify-center rounded-lg bg-luxury-gold text-lg font-bold text-luxury-black">
+                <span class="flex h-16 w-16 items-center justify-center rounded-lg bg-luxury-gold text-xl font-bold text-luxury-black">
                     {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}
                 </span>
             @endif

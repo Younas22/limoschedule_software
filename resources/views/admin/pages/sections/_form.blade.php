@@ -9,7 +9,7 @@
 
             return [
                 'existing_photo' => $existingPhoto,
-                'photo_preview' => $existingPhoto ? asset('uploads/team/'.$existingPhoto) : '',
+                'photo_preview' => $existingPhoto ? asset('public/uploads/team/'.$existingPhoto) : '',
                 'name' => $item['name'] ?? '',
                 'role' => $item['role'] ?? '',
                 'bio' => $item['bio'] ?? '',

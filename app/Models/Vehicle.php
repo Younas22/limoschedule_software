@@ -89,7 +89,7 @@ class Vehicle extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset('uploads/vehicles/'.$this->image) : null;
+        return $this->image ? asset('public/uploads/vehicles/'.$this->image) : null;
     }
 
     /** @return array<int, string> */

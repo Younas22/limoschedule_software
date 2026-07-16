@@ -60,7 +60,7 @@ class Driver extends Model
 
     public function getPhotoUrlAttribute(): ?string
     {
-        return $this->photo ? asset('uploads/drivers/'.$this->photo) : null;
+        return $this->photo ? asset('public/uploads/drivers/'.$this->photo) : null;
     }
 
     public function getAverageRatingAttribute(): ?float

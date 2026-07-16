@@ -49,7 +49,7 @@ class Language extends Model
 
     public function getFlagUrlAttribute(): ?string
     {
-        return $this->flag ? asset('uploads/languages/'.$this->flag) : null;
+        return $this->flag ? asset('public/uploads/languages/'.$this->flag) : null;
     }
 
     /**

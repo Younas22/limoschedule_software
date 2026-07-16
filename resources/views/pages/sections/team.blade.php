@@ -22,7 +22,7 @@
                     <div class="reveal-up delay-{{ ($index % 6) + 1 }} text-center" :class="{ 'is-visible': visible }">
                         <div class="mx-auto h-28 w-28 overflow-hidden rounded-full border border-luxury-border bg-luxury-graphite">
                             @if (! empty($member['photo']))
-                                <x-lazy-image :src="asset('uploads/team/'.$member['photo'])" :alt="$member['name']" class="rounded-full" />
+                                <x-lazy-image :src="asset('public/uploads/team/'.$member['photo'])" :alt="$member['name']" class="rounded-full" />
                             @else
                                 <div class="flex h-full w-full items-center justify-center text-2xl font-semibold text-luxury-gold">
                                     {{ strtoupper(substr($member['name'] ?? '?', 0, 1)) }}

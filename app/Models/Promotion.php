@@ -38,6 +38,6 @@ class Promotion extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset('uploads/promotions/'.$this->image) : null;
+        return $this->image ? asset('public/uploads/promotions/'.$this->image) : null;
     }
 }

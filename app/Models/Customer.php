@@ -178,7 +178,7 @@ class Customer extends Authenticatable implements MustVerifyEmailContract
 
     public function getAvatarUrlAttribute(): ?string
     {
-        return $this->avatar ? asset('uploads/customers/'.$this->avatar) : null;
+        return $this->avatar ? asset('public/uploads/customers/'.$this->avatar) : null;
     }
 
     public function creditWallet(float $amount, ?string $reason, ?int $adminId = null): CustomerWalletTransaction

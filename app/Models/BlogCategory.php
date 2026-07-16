@@ -62,7 +62,7 @@ class BlogCategory extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset('uploads/blogs/'.$this->image) : null;
+        return $this->image ? asset('public/uploads/blogs/'.$this->image) : null;
     }
 
     public function scopeOrdered(Builder $query): Builder

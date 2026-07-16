@@ -60,12 +60,12 @@ class PageSection extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset('uploads/pages/'.$this->image) : null;
+        return $this->image ? asset('public/uploads/pages/'.$this->image) : null;
     }
 
     public function getVideoUrlAttribute(): ?string
     {
-        return $this->video ? asset('uploads/pages/'.$this->video) : null;
+        return $this->video ? asset('public/uploads/pages/'.$this->video) : null;
     }
 
     /**

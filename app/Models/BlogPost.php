@@ -95,7 +95,7 @@ class BlogPost extends Model
 
     public function getFeaturedImageUrlAttribute(): ?string
     {
-        return $this->featured_image ? asset('uploads/blogs/'.$this->featured_image) : null;
+        return $this->featured_image ? asset('public/uploads/blogs/'.$this->featured_image) : null;
     }
 
     public function getStatusLabelAttribute(): string

@@ -61,17 +61,17 @@ class Setting extends Model
 
     public function getLogoUrlAttribute(): ?string
     {
-        return $this->logo ? asset('uploads/settings/'.$this->logo) : null;
+        return $this->logo ? asset('public/uploads/settings/'.$this->logo) : null;
     }
 
     public function getFaviconUrlAttribute(): ?string
     {
-        return $this->favicon ? asset('uploads/settings/'.$this->favicon) : null;
+        return $this->favicon ? asset('public/uploads/settings/'.$this->favicon) : null;
     }
 
     public function getOgImageUrlAttribute(): ?string
     {
-        return $this->og_image ? asset('uploads/settings/'.$this->og_image) : null;
+        return $this->og_image ? asset('public/uploads/settings/'.$this->og_image) : null;
     }
 
     /**

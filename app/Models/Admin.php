@@ -49,8 +49,8 @@ class Admin extends Authenticatable
     public function getAvatarUrlAttribute(): string
     {
         return $this->avatar
-            ? asset('uploads/admins/'.$this->avatar)
-            : asset('uploads/admins/default.png');
+            ? asset('public/uploads/admins/'.$this->avatar)
+            : asset('public/uploads/admins/default.png');
     }
 
     public function roles(): BelongsToMany

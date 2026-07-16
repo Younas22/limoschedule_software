@@ -68,11 +68,11 @@ class VehicleCategory extends Model
 
     public function getIconUrlAttribute(): ?string
     {
-        return $this->icon ? asset('uploads/vehicle-categories/'.$this->icon) : null;
+        return $this->icon ? asset('public/uploads/vehicle-categories/'.$this->icon) : null;
     }
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset('uploads/vehicle-categories/'.$this->image) : null;
+        return $this->image ? asset('public/uploads/vehicle-categories/'.$this->image) : null;
     }
 }

@@ -1,0 +1,20 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Serve real static files straight from public/ (built Vite assets,
+    # uploads, favicon, robots.txt, etc.) without going through PHP. %1
+    # below is the request path with the "/limoschedule_software/" prefix
+    # stripped, so the existence check lines up with the real file location.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_URI} ^/limoschedule_software/(.*)$
+    RewriteCond %{DOCUMENT_ROOT}/limoschedule_software/public/%1 -f
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Everything else goes through the front controller at the project
+    # root (index.php, next to this file), which boots Laravel with a
+    # corrected SCRIPT_NAME so the app is reachable without "/public/" in
+    # the URL — see index.php for why that correction is necessary.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>

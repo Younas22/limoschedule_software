@@ -1,0 +1,59 @@
+@props(['section'])
+
+<section class="relative flex min-h-[100svh] flex-col justify-center overflow-hidden border-b border-luxury-border">
+    {{-- Background media --}}
+    <div class="absolute inset-0">
+        @if ($section->video_url)
+            <video class="h-full w-full object-cover animate-ken-burns" autoplay muted loop playsinline
+                @if ($section->image_url) poster="{{ $section->image_url }}" @endif>
+                <source src="{{ $section->video_url }}" type="video/mp4">
+            </video>
+        @elseif ($section->image_url)
+            <img src="{{ $section->image_url }}" alt="" class="h-full w-full object-cover animate-ken-burns">
+        @else
+            <div class="h-full w-full bg-gradient-to-br from-luxury-charcoal via-luxury-black to-luxury-black"></div>
+        @endif
+        <div class="absolute inset-0 bg-gradient-to-t from-luxury-black via-luxury-black/75 to-luxury-black/30"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-luxury-black/50 via-transparent to-luxury-black/50"></div>
+    </div>
+
+    {{-- Content --}}
+    <div class="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-28 text-center sm:px-6 lg:px-8">
+        @if ($section->heading)
+            <h1 class="animate-fade-up text-4xl font-semibold leading-tight tracking-tight text-luxury-white sm:text-6xl lg:text-7xl">
+                {{ $section->heading }}
+            </h1>
+        @endif
+
+        @if ($section->subheading)
+            <p class="animate-fade-up delay-1 mx-auto mt-6 max-w-2xl text-base text-luxury-muted sm:text-lg">
+                {{ $section->subheading }}
+            </p>
+        @endif
+
+        @if (($section->button_text && $section->button_url) || ($section->button_text_2 && $section->button_url_2))
+            <div class="animate-fade-up delay-2 mt-9 flex flex-col items-center gap-3 sm:flex-row">
+                @if ($section->button_text && $section->button_url)
+                    <a href="{{ $section->button_url }}"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-luxury-gold px-7 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:w-auto">
+                        <x-icon name="calendar" class="h-4 w-4" />
+                        {{ $section->button_text }}
+                    </a>
+                @endif
+                @if ($section->button_text_2 && $section->button_url_2)
+                    <a href="{{ $section->button_url_2 }}"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-luxury-white/30 bg-white/5 px-7 py-3.5 text-sm font-semibold text-luxury-white backdrop-blur transition hover:border-luxury-white/60 hover:bg-white/10 sm:w-auto">
+                        {{ $section->button_text_2 }}
+                    </a>
+                @endif
+            </div>
+        @endif
+    </div>
+
+    {{-- Booking search box --}}
+    <div class="relative z-10 mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div class="animate-fade-up delay-3">
+            <x-booking-search-box />
+        </div>
+    </div>
+</section>

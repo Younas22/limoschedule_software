@@ -1,0 +1,95 @@
+<x-admin.layouts.app :title="'Email Settings'">
+    <div class="mb-6">
+        <h2 class="text-2xl font-semibold text-luxury-white">Email Settings</h2>
+        <p class="mt-1 text-sm text-luxury-muted">Configure outgoing mail via Resend, and verify delivery with a test email.</p>
+    </div>
+
+    <div class="space-y-6">
+        <form method="POST" action="{{ route('admin.email-settings.update') }}" x-data="{ mailer: {{ \Illuminate\Support\Js::from(old('mailer', $settings->mailer)) }}, reveal: false }">
+            @csrf
+            @method('PUT')
+
+            <div class="space-y-6">
+                <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                    <h3 class="text-sm font-semibold text-luxury-white">Mail Driver</h3>
+
+                    <div>
+                        <x-admin.input-label for="mailer" value="Mailer" />
+                        <select id="mailer" name="mailer" x-model="mailer" required
+                            class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition sm:max-w-xs">
+                            @foreach (\App\Models\EmailSetting::MAILERS as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-luxury-muted">MAIL_MAILER — which transport is used to send outgoing mail.</p>
+                        <x-admin.input-error :messages="$errors->get('mailer')" />
+                    </div>
+                </div>
+
+                {{-- Resend Credentials --}}
+                <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="mailer === 'resend'" x-cloak>
+                    <div>
+                        <h3 class="text-sm font-semibold text-luxury-white">Resend API Key</h3>
+                        <p class="mt-1 text-xs text-luxury-muted">RESEND_API_KEY — required while Resend is the selected mailer. Stored encrypted at rest.</p>
+                    </div>
+
+                    <div>
+                        <x-admin.input-label for="resend_api_key" value="API Key" />
+                        <div class="flex items-center gap-2">
+                            <input :type="reveal ? 'text' : 'password'" id="resend_api_key" name="resend_api_key" autocomplete="new-password"
+                                placeholder="{{ $settings->resend_api_key ? '•••••••••••••••• (unchanged)' : 're_...' }}"
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                            <button type="button" @click="reveal = !reveal" class="shrink-0 rounded-lg border border-luxury-border px-3 py-3 text-xs text-luxury-muted hover:text-luxury-gold">
+                                <span x-text="reveal ? 'Hide' : 'Show'"></span>
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-luxury-muted">Leave blank to keep the currently saved key.</p>
+                        <x-admin.input-error :messages="$errors->get('resend_api_key')" />
+                    </div>
+                </div>
+
+                {{-- From Address --}}
+                <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                    <h3 class="text-sm font-semibold text-luxury-white">From Address</h3>
+
+                    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <div>
+                            <x-admin.input-label for="from_address" value="From Address" />
+                            <x-admin.text-input id="from_address" name="from_address" type="email" placeholder="bookings@yourdomain.com" value="{{ old('from_address', $settings->from_address) }}" />
+                            <p class="mt-1 text-xs text-luxury-muted">MAIL_FROM_ADDRESS</p>
+                            <x-admin.input-error :messages="$errors->get('from_address')" />
+                        </div>
+
+                        <div>
+                            <x-admin.input-label for="from_name" value="From Name" />
+                            <x-admin.text-input id="from_name" name="from_name" type="text" placeholder="{{ setting('company_name', config('app.name')) }}" value="{{ old('from_name', $settings->from_name) }}" />
+                            <p class="mt-1 text-xs text-luxury-muted">MAIL_FROM_NAME</p>
+                            <x-admin.input-error :messages="$errors->get('from_name')" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-end gap-3">
+                <x-admin.button type="submit" variant="primary">Save Email Settings</x-admin.button>
+            </div>
+        </form>
+
+        {{-- Test Email --}}
+        <div class="space-y-4 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+            <div>
+                <h3 class="text-sm font-semibold text-luxury-white">Send Test Email</h3>
+                <p class="mt-1 text-xs text-luxury-muted">Send a sample message using the settings saved above to confirm delivery works end-to-end.</p>
+            </div>
+
+            <form method="POST" action="{{ route('admin.email-settings.test') }}" class="flex flex-col gap-3 sm:flex-row sm:items-start">
+                @csrf
+                <div class="flex-1">
+                    <x-admin.text-input name="test_email" type="email" placeholder="you@example.com" required class="sm:max-w-sm" />
+                    <x-admin.input-error :messages="$errors->get('test_email')" />
+                </div>
+                <x-admin.button type="submit" variant="secondary">Send Test Email</x-admin.button>
+            </form>
+        </div>
+    </div>
+</x-admin.layouts.app>

@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
+
+class SettingController extends Controller
+{
+    public function edit(): View
+    {
+        $settings = Setting::current();
+        $timezones = timezone_identifiers_list();
+
+        $dateFormats = [
+            'Y-m-d' => now()->format('Y-m-d'),
+            'd-m-Y' => now()->format('d-m-Y'),
+            'm/d/Y' => now()->format('m/d/Y'),
+            'd/m/Y' => now()->format('d/m/Y'),
+            'M d, Y' => now()->format('M d, Y'),
+            'd M, Y' => now()->format('d M, Y'),
+            'F j, Y' => now()->format('F j, Y'),
+        ];
+
+        return view('admin.settings.edit', compact('settings', 'timezones', 'dateFormats'));
+    }
+
+    public function update(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'company_name' => ['required', 'string', 'max:255'],
+            'tagline' => ['nullable', 'string', 'max:255'],
+            'logo' => ['nullable', 'image', 'max:2048'],
+            'favicon' => ['nullable', 'image', 'max:512'],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'whatsapp' => ['nullable', 'string', 'max:30'],
+            'timezone' => ['required', 'timezone'],
+            'date_format' => ['required', 'string', 'max:20'],
+            'tax_label' => ['required', 'string', 'max:50'],
+            'tax_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'primary_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'secondary_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'accent_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'text_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'background_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme_mode' => ['required', 'in:dark,light'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+            'meta_keywords' => ['nullable', 'string', 'max:255'],
+            'og_image' => ['nullable', 'image', 'max:4096'],
+            'google_site_verification' => ['nullable', 'string', 'max:255'],
+            'facebook_url' => ['nullable', 'url', 'max:255'],
+            'instagram_url' => ['nullable', 'url', 'max:255'],
+            'twitter_url' => ['nullable', 'url', 'max:255'],
+            'linkedin_url' => ['nullable', 'url', 'max:255'],
+            'youtube_url' => ['nullable', 'url', 'max:255'],
+        ]);
+
+        $settings = Setting::current();
+
+        if ($request->hasFile('logo')) {
+            $data['logo'] = $this->storeUpload($request->file('logo'), 'logo', $settings->logo);
+        }
+
+        if ($request->hasFile('favicon')) {
+            $data['favicon'] = $this->storeUpload($request->file('favicon'), 'favicon', $settings->favicon);
+        }
+
+        if ($request->hasFile('og_image')) {
+            $data['og_image'] = $this->storeUpload($request->file('og_image'), 'og-image', $settings->og_image);
+        }
+
+        $settings->update($data);
+
+        return back()->with('status', 'Settings updated successfully.');
+    }
+
+    private function storeUpload($file, string $prefix, ?string $previousFilename): string
+    {
+        $directory = public_path('uploads/settings');
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $filename = $prefix.'-'.time().'-'.Str::random(8).'.'.$file->getClientOriginalExtension();
+        $file->move($directory, $filename);
+
+        if ($previousFilename && file_exists($directory.DIRECTORY_SEPARATOR.$previousFilename)) {
+            @unlink($directory.DIRECTORY_SEPARATOR.$previousFilename);
+        }
+
+        return $filename;
+    }
+}

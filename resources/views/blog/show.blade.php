@@ -1,0 +1,104 @@
+<x-layouts.public :title="$post->meta_title ?: $post->title" :description="$post->meta_description ?: $post->excerpt_or_summary"
+    :og-image="$post->featured_image_url" og-type="article" :published-time="$post->published_at?->toIso8601String()">
+
+    <x-slot:head>
+        <script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+    </x-slot:head>
+    @if ($post->featured_image_url)
+        <div class="h-64 w-full overflow-hidden border-b border-luxury-border sm:h-96">
+            <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover">
+        </div>
+    @endif
+
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-3">
+            <article class="lg:col-span-2">
+                @if ($post->category)
+                    <a href="{{ route('blog.category', $post->category->slug) }}" class="text-xs font-medium uppercase tracking-wide text-luxury-gold hover:text-luxury-gold-light">
+                        {{ $post->category->name }}
+                    </a>
+                @endif
+
+                <h1 class="mt-2 text-2xl font-semibold text-luxury-white sm:text-3xl">{{ $post->title }}</h1>
+
+                <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-luxury-muted">
+                    @if ($post->author)
+                        <span>By {{ $post->author->name }}</span>
+                        <span>&middot;</span>
+                    @endif
+                    <span>{{ $post->published_at?->format('M d, Y') }}</span>
+                    <span>&middot;</span>
+                    <span>{{ $post->reading_time }} min read</span>
+                    <span>&middot;</span>
+                    <span class="flex items-center gap-1"><x-icon name="eye" class="h-4 w-4" /> {{ number_format($post->views_count) }} views</span>
+                </div>
+
+                <div class="mt-5">
+                    <x-share-buttons :url="url()->current()" :title="$post->title" />
+                </div>
+
+                <div class="richtext-content mt-8 text-luxury-muted">
+                    {!! $post->body !!}
+                </div>
+
+                @if ($post->tags->isNotEmpty())
+                    <div class="mt-8 flex flex-wrap items-center gap-2 border-t border-luxury-border pt-6">
+                        @foreach ($post->tags as $tag)
+                            <a href="{{ route('blog.tag', $tag->slug) }}" class="rounded-full border border-luxury-border px-3 py-1 text-xs text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                #{{ $tag->name }}
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($previousPost || $nextPost)
+                    <div class="mt-8 grid grid-cols-1 gap-4 border-t border-luxury-border pt-6 sm:grid-cols-2">
+                        @if ($previousPost)
+                            <a href="{{ route('blog.show', $previousPost->slug) }}" class="group rounded-xl border border-luxury-border p-4 transition hover:border-luxury-gold/40">
+                                <span class="flex items-center gap-1 text-xs text-luxury-muted">
+                                    <x-icon name="chevron-right" class="h-3.5 w-3.5 rotate-180 rtl:rotate-0" />
+                                    {{ __('Previous') }}
+                                </span>
+                                <p class="mt-1.5 line-clamp-2 text-sm font-medium text-luxury-white group-hover:text-luxury-gold">{{ $previousPost->title }}</p>
+                            </a>
+                        @else
+                            <span></span>
+                        @endif
+
+                        @if ($nextPost)
+                            <a href="{{ route('blog.show', $nextPost->slug) }}" class="group rounded-xl border border-luxury-border p-4 text-end transition hover:border-luxury-gold/40">
+                                <span class="flex items-center justify-end gap-1 text-xs text-luxury-muted">
+                                    {{ __('Next') }}
+                                    <x-icon name="chevron-right" class="h-3.5 w-3.5 rtl:rotate-180" />
+                                </span>
+                                <p class="mt-1.5 line-clamp-2 text-sm font-medium text-luxury-white group-hover:text-luxury-gold">{{ $nextPost->title }}</p>
+                            </a>
+                        @endif
+                    </div>
+                @endif
+
+                @if ($related->isNotEmpty())
+                    <div class="mt-12">
+                        <h2 class="mb-5 text-lg font-semibold text-luxury-white">Related Posts</h2>
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            @foreach ($related as $relatedPost)
+                                <x-blog.post-card :post="$relatedPost" />
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </article>
+
+            <x-blog.sidebar :categories="$categories" :popular-posts="$popularPosts" :tags="$tags" />
+        </div>
+    </div>
+
+    <style>
+        .richtext-content h2 { font-size: 1.25rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f4f4f5; }
+        .richtext-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f4f4f5; }
+        .richtext-content p { margin: 0.75rem 0; line-height: 1.7; }
+        .richtext-content ul { list-style: disc; padding-inline-start: 1.5rem; margin: 0.75rem 0; }
+        .richtext-content ol { list-style: decimal; padding-inline-start: 1.5rem; margin: 0.75rem 0; }
+        .richtext-content a { color: #c9a227; text-decoration: underline; }
+    </style>
+</x-layouts.public>

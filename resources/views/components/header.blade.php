@@ -34,7 +34,7 @@
                 @continue(in_array($slug, \App\Models\Page::LEGAL_PAGES, true) || in_array($slug, \App\Models\Page::SERVICE_PAGES, true))
                 <a href="{{ $slug === 'home' ? route('pages.home') : route('pages.show', $slug) }}"
                     class="text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ $currentSlug === $slug ? 'text-luxury-gold' : '' }}">
-                    1111{{ $label }}
+                    {{ $label }}
                 </a>
             @endforeach
             <a href="{{ route('blog.index') }}" class="text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ request()->routeIs('blog.*') ? 'text-luxury-gold' : '' }}">

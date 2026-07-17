@@ -14,13 +14,13 @@
 @endphp
 
 <header class="sticky top-0 z-30 border-b border-luxury-border bg-luxury-black/90 backdrop-blur">
-    <div class="mx-auto flex h-20 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         {{-- Logo --}}
         <a href="{{ route('pages.home') }}" class="flex shrink-0 items-center">
             @if (setting('logo_url'))
-                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-16 w-16 rounded-lg object-contain">
+                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-9 w-auto max-w-none object-contain">
             @else
-                <span class="flex h-16 w-16 items-center justify-center rounded-lg bg-luxury-gold text-xl font-bold text-luxury-black">
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-luxury-gold text-sm font-bold text-luxury-black">
                     {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}
                 </span>
             @endif

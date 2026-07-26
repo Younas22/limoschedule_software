@@ -16,6 +16,13 @@
         </div>
     </div>
 
+    @if (session('command_output'))
+        <div class="mb-6 rounded-xl border border-luxury-border bg-luxury-charcoal p-5">
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-luxury-muted">Command Output</p>
+            <pre class="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-luxury-black/60 p-4 text-xs text-luxury-muted">{{ session('command_output') }}</pre>
+        </div>
+    @endif
+
     @if ($isDownForMaintenance)
         <div class="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4">
             <p class="text-sm font-semibold text-red-400">Maintenance mode is currently ON — the public site is unavailable to visitors.</p>
@@ -131,22 +138,34 @@
         </div>
 
         {{-- Backups --}}
-        <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-            <div class="flex items-center justify-between">
+        <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6 lg:col-span-2">
+            <div class="flex flex-wrap items-center justify-between gap-3">
                 <h3 class="text-sm font-semibold text-luxury-white">Database Backups</h3>
                 @permission('system.edit')
-                    <form method="POST" action="{{ route('admin.system-tools.backups.create') }}">
-                        @csrf
-                        <button type="submit" class="rounded-lg bg-luxury-gold px-3 py-1.5 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                            + New Backup
-                        </button>
-                    </form>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <form method="POST" action="{{ route('admin.system-tools.backups.upload') }}" enctype="multipart/form-data"
+                            x-data="{ filename: '' }">
+                            @csrf
+                            <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                <span x-text="filename || 'Upload .sql File'"></span>
+                                <input type="file" name="file" accept=".sql" class="hidden" required
+                                    @change="filename = $event.target.files[0]?.name; $el.closest('form').submit()">
+                            </label>
+                        </form>
+                        <form method="POST" action="{{ route('admin.system-tools.backups.create') }}">
+                            @csrf
+                            <button type="submit" class="rounded-lg bg-luxury-gold px-3 py-1.5 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
+                                + New Backup
+                            </button>
+                        </form>
+                    </div>
                 @endpermission
             </div>
+            <x-admin.input-error :messages="$errors->get('file')" class="mt-2" />
 
             <div class="mt-4 max-h-64 space-y-2 overflow-y-auto">
                 @forelse ($backups as $backup)
-                    <div class="flex items-center justify-between rounded-lg border border-luxury-border/60 bg-luxury-graphite/40 px-4 py-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-luxury-border/60 bg-luxury-graphite/40 px-4 py-2.5">
                         <div class="min-w-0">
                             <p class="truncate text-xs font-medium text-luxury-white">{{ $backup['name'] }}</p>
                             <p class="text-[11px] text-luxury-muted">{{ $backup['size'] }} &middot; {{ $backup['created_at']->format('M d, Y H:i') }}</p>
@@ -158,6 +177,25 @@
                                 </a>
                             @endpermission
                             @permission('system.delete')
+                                <div x-data="{ open: false, confirm: '' }" class="relative inline-block">
+                                    <button type="button" @click="open = true" class="rounded-lg border border-luxury-gold/40 px-2.5 py-1.5 text-[11px] font-medium text-luxury-gold transition hover:bg-luxury-gold/10">
+                                        Update DB
+                                    </button>
+                                    <div x-show="open" x-cloak @click.outside="open = false"
+                                        class="absolute end-0 z-40 mt-2 w-72 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 text-start shadow-xl">
+                                        <p class="text-xs font-semibold text-red-400">This overwrites the current database with this backup's tables.</p>
+                                        <form method="POST" action="{{ route('admin.system-tools.backups.restore', $backup['name']) }}" class="mt-3">
+                                            @csrf
+                                            <label class="mb-1 block text-[11px] text-luxury-muted">Type <span class="font-mono text-luxury-white">RESTORE</span> to confirm</label>
+                                            <input type="text" name="confirm" x-model="confirm" autocomplete="off"
+                                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                                            <button type="submit" :disabled="confirm !== 'RESTORE'"
+                                                class="mt-2 w-full rounded-lg bg-red-500/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-30">
+                                                Update DB Now
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
                                 <form method="POST" action="{{ route('admin.system-tools.backups.destroy', $backup['name']) }}" onsubmit="return confirm('Delete this backup?');">
                                     @csrf
                                     @method('DELETE')
@@ -172,6 +210,48 @@
                     <p class="py-6 text-center text-sm text-luxury-muted">No backups yet.</p>
                 @endforelse
             </div>
+
+            @permission('system.delete')
+                <div class="mt-5 rounded-xl border border-red-500/30 bg-red-500/5 p-4" x-data="{ open: false, confirm: '' }">
+                    <p class="text-xs font-semibold text-red-400">Danger Zone</p>
+                    <p class="mt-1 text-xs text-luxury-muted">Delete every table in the database. Do this only right before uploading/restoring a backup or running migrations — until then the site will be completely broken.</p>
+                    <button type="button" @click="open = ! open" class="mt-3 rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                        Delete All Tables
+                    </button>
+                    <form method="POST" action="{{ route('admin.system-tools.database.drop-tables') }}" x-show="open" x-cloak class="mt-3">
+                        @csrf
+                        <label class="mb-1 block text-[11px] text-luxury-muted">Type <span class="font-mono text-luxury-white">DELETE ALL TABLES</span> to confirm</label>
+                        <input type="text" name="confirm" x-model="confirm" autocomplete="off"
+                            class="w-full max-w-xs rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        <button type="submit" :disabled="confirm !== 'DELETE ALL TABLES'"
+                            class="mt-2 block rounded-lg bg-red-500/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-30">
+                            Delete All Tables Now
+                        </button>
+                    </form>
+                </div>
+            @endpermission
+        </div>
+
+        {{-- Deployment --}}
+        <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+            <h3 class="text-sm font-semibold text-luxury-white">Deployment</h3>
+            <p class="mt-1 text-xs text-luxury-muted">Run pending migrations or pull the latest Composer dependencies.</p>
+
+            @permission('system.edit')
+                <form method="POST" action="{{ route('admin.system-tools.database.migrate') }}" class="mt-4">
+                    @csrf
+                    <x-admin.button type="submit" variant="secondary">Run Migrations</x-admin.button>
+                </form>
+            @endpermission
+
+            @permission('system.delete')
+                <form method="POST" action="{{ route('admin.system-tools.composer.update') }}" class="mt-3"
+                    onsubmit="return confirm('This can take several minutes and may break the site if a dependency update is incompatible. Continue?');">
+                    @csrf
+                    <x-admin.button type="submit" variant="danger">Run Composer Update</x-admin.button>
+                </form>
+                <p class="mt-2 text-[11px] text-luxury-muted">Runs <code class="rounded bg-luxury-black/40 px-1 py-0.5">composer update</code> on the server. This can take a few minutes — don't close this tab.</p>
+            @endpermission
         </div>
     </div>
 </x-admin.layouts.app>

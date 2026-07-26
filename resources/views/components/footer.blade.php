@@ -6,6 +6,13 @@
     $currentLanguage = $activeLanguages->firstWhere('code', app()->getLocale()) ?? $activeLanguages->first();
     $activeCurrencies = \App\Models\Currency::active();
     $currentCurrency = active_currency();
+    $socialLinks = [
+        'facebook' => setting('facebook_url'),
+        'instagram' => setting('instagram_url'),
+        'twitter' => setting('twitter_url'),
+        'linkedin' => setting('linkedin_url'),
+        'youtube' => setting('youtube_url'),
+    ];
 @endphp
 
 <footer class="border-t border-luxury-border pb-20 lg:pb-0">
@@ -24,6 +31,18 @@
                 </a>
                 @if (setting('tagline'))
                     <p class="mt-4 max-w-xs text-sm text-luxury-muted">{{ setting('tagline') }}</p>
+                @endif
+
+                @if (array_filter($socialLinks))
+                    <div class="mt-4 flex items-center gap-2">
+                        @foreach ($socialLinks as $platform => $url)
+                            @continue(! $url)
+                            <a href="{{ $url }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($platform) }}"
+                                class="flex h-9 w-9 items-center justify-center rounded-full border border-luxury-border text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                <x-social-icon :name="$platform" class="h-4 w-4" />
+                            </a>
+                        @endforeach
+                    </div>
                 @endif
             </div>
 

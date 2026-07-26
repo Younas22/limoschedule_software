@@ -142,6 +142,15 @@ class PageSectionController extends Controller
     {
         $type = $request->input('type');
 
+        // Admins sometimes paste the whole <iframe> snippet from Google's "Embed a
+        // map" dialog instead of just the src URL — pull the URL back out so it
+        // still validates and saves correctly instead of failing with a confusing error.
+        if ($request->filled('google_maps_embed_url') && str_contains($request->input('google_maps_embed_url'), '<iframe')) {
+            if (preg_match('/src=["\']([^"\']+)["\']/', $request->input('google_maps_embed_url'), $matches)) {
+                $request->merge(['google_maps_embed_url' => html_entity_decode($matches[1])]);
+            }
+        }
+
         $data = $request->validate([
             'type' => ['required', Rule::in(array_keys(PageSection::TYPES))],
             'heading' => ['nullable', 'string', 'max:255'],

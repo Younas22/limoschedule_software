@@ -105,8 +105,14 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::post('cache/clear', [SystemToolController::class, 'clearCache'])->name('cache.clear')->middleware('permission:system.edit');
 
         Route::post('backups', [SystemToolController::class, 'createBackup'])->name('backups.create')->middleware('permission:system.edit');
+        Route::post('backups/upload', [SystemToolController::class, 'uploadBackup'])->name('backups.upload')->middleware('permission:system.edit');
         Route::get('backups/{filename}/download', [SystemToolController::class, 'downloadBackup'])->name('backups.download')->middleware('permission:system.export');
+        Route::post('backups/{filename}/restore', [SystemToolController::class, 'restoreBackup'])->name('backups.restore')->middleware('permission:system.delete');
         Route::delete('backups/{filename}', [SystemToolController::class, 'destroyBackup'])->name('backups.destroy')->middleware('permission:system.delete');
+
+        Route::post('database/drop-tables', [SystemToolController::class, 'dropAllTables'])->name('database.drop-tables')->middleware('permission:system.delete');
+        Route::post('database/migrate', [SystemToolController::class, 'runMigrations'])->name('database.migrate')->middleware('permission:system.edit');
+        Route::post('composer/update', [SystemToolController::class, 'composerUpdate'])->name('composer.update')->middleware('permission:system.delete');
 
         Route::get('activity-logs', [SystemToolController::class, 'activityLogs'])->name('activity-logs');
 

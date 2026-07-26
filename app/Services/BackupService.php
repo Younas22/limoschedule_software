@@ -90,6 +90,49 @@ class BackupService
     }
 
     /**
+     * Saves an uploaded .sql dump into the backups directory under a
+     * generated name (never the client-supplied filename), so it slots into
+     * the same list/download/delete/restore flow as generated backups.
+     */
+    public function storeUploaded(\Illuminate\Http\UploadedFile $file): string
+    {
+        $filename = 'backup-'.now()->format('Y-m-d-His').'.sql';
+        $file->move($this->directory(), $filename);
+
+        return $filename;
+    }
+
+    /**
+     * Restores a backup file by executing its SQL directly against the
+     * current connection. Each table in the dump is preceded by its own
+     * `DROP TABLE IF EXISTS`, so tables in the dump are replaced in place;
+     * tables not present in the dump are left untouched.
+     */
+    public function restore(string $filename): void
+    {
+        $path = $this->resolvePath($filename);
+
+        abort_unless($path, 404, 'Backup not found.');
+
+        DB::unprepared((string) file_get_contents($path));
+    }
+
+    /**
+     * Drops every table in the current database. Irreversible outside of
+     * restoring a prior backup — callers must confirm with the user first.
+     */
+    public function dropAllTables(): void
+    {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+        foreach ($this->tableNames() as $table) {
+            DB::statement("DROP TABLE IF EXISTS `{$table}`");
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+    }
+
+    /**
      * @return array<int, string>
      */
     private function tableNames(): array

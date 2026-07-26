@@ -10,10 +10,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 class SystemToolController extends Controller
 {
@@ -99,6 +101,93 @@ class SystemToolController extends Controller
         }
 
         return back()->with('status', $deleted ? 'Backup deleted.' : 'Backup not found.');
+    }
+
+    public function uploadBackup(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200', function ($attribute, $value, $fail) {
+                if (strtolower($value->getClientOriginalExtension()) !== 'sql') {
+                    $fail('The backup file must be a .sql file.');
+                }
+            }],
+        ]);
+
+        $filename = $this->backups->storeUploaded($request->file('file'));
+
+        ActivityLog::record('backup.uploaded', "Database backup uploaded: {$filename}", $request);
+
+        return back()->with('status', "Backup \"{$filename}\" uploaded. Click \"Update DB\" on it to restore.");
+    }
+
+    public function restoreBackup(Request $request, string $filename): RedirectResponse
+    {
+        $request->validate([
+            'confirm' => ['required', 'in:RESTORE'],
+        ], [
+            'confirm.in' => 'Type RESTORE to confirm you want to overwrite the current database.',
+        ]);
+
+        try {
+            $this->backups->restore($filename);
+        } catch (Throwable $e) {
+            return back()->with('error', 'Restore failed: '.$e->getMessage());
+        }
+
+        ActivityLog::record('backup.restored', "Database restored from backup: {$filename}", $request);
+
+        return back()->with('status', "Database restored from \"{$filename}\".");
+    }
+
+    public function dropAllTables(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'confirm' => ['required', 'in:DELETE ALL TABLES'],
+        ], [
+            'confirm.in' => 'Type DELETE ALL TABLES to confirm.',
+        ]);
+
+        $this->backups->dropAllTables();
+
+        ActivityLog::record('database.tables_dropped', 'All database tables were dropped.', $request);
+
+        return back()->with('status', 'All tables deleted. Upload or restore a backup, or run migrations, to rebuild the schema.');
+    }
+
+    public function runMigrations(Request $request): RedirectResponse
+    {
+        Artisan::call('migrate', ['--force' => true]);
+        $output = Artisan::output();
+
+        ActivityLog::record('database.migrated', 'Migrations run.', $request);
+
+        return back()->with('status', 'Migrations completed.')->with('command_output', $output);
+    }
+
+    public function composerUpdate(Request $request): RedirectResponse
+    {
+        set_time_limit(0);
+
+        $result = Process::path(base_path())->timeout(600)->run([$this->composerBinary(), 'update', '--no-interaction']);
+
+        $output = $result->output().$result->errorOutput();
+
+        ActivityLog::record('composer.updated', 'Composer update run ('.($result->successful() ? 'succeeded' : 'failed').').', $request);
+
+        return back()
+            ->with($result->successful() ? 'status' : 'error', $result->successful() ? 'Composer update completed.' : 'Composer update failed — see output below.')
+            ->with('command_output', $output);
+    }
+
+    private function composerBinary(): string
+    {
+        foreach (['C:\\composer\\composer.bat', '/usr/local/bin/composer', '/usr/bin/composer'] as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return 'composer';
     }
 
     public function activityLogs(Request $request): View

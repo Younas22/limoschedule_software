@@ -60,9 +60,7 @@
     {{-- Booking search box (renders nothing when website booking is off) --}}
     @if (booking_setting('website_booking_enabled') && booking_setting('guest_booking_enabled'))
         <div class="relative z-10 mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
-            <div class="animate-fade-up delay-3">
-                <x-booking-search-box />
-            </div>
+            <x-booking-search-box />
         </div>
     @endif
 </section>

@@ -12,7 +12,7 @@
     $initialStops = old('stops', []);
 @endphp
 
-<div {{ $attributes->merge(['class' => $class]) }} id="booking-widget"
+<div id="booking-widget"
     @select-vehicle-category.window="vehicleCategory = $event.detail"
     @select-route.window="pickup = $event.detail.pickup; dropoff = $event.detail.dropoff"
     x-data="bookingSearchBox({
@@ -34,7 +34,7 @@
             phone: {{ \Illuminate\Support\Js::from(old('phone')) }},
         },
     })"
-    class="rounded-2xl border border-luxury-border bg-luxury-charcoal/95 p-4 shadow-2xl shadow-black/40 backdrop-blur sm:p-5">
+    {{ $attributes->merge(['class' => 'rounded-2xl border border-luxury-border bg-luxury-black p-4 shadow-2xl shadow-black/40 sm:p-5 '.$class]) }}>
 
     @if (session('error'))
         <div class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">

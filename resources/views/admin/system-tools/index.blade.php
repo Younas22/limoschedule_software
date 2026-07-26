@@ -214,7 +214,12 @@
             @permission('system.delete')
                 <div class="mt-5 rounded-xl border border-red-500/30 bg-red-500/5 p-4" x-data="{ open: false, confirm: '' }">
                     <p class="text-xs font-semibold text-red-400">Danger Zone</p>
-                    <p class="mt-1 text-xs text-luxury-muted">Delete every table in the database. Do this only right before uploading/restoring a backup or running migrations — until then the site will be completely broken.</p>
+                    <p class="mt-1 text-xs text-luxury-muted">
+                        You do not need this to restore a backup — "Update DB" above already replaces tables safely on its own.
+                        This button deletes every table, including sessions and admin accounts, which logs everyone out immediately
+                        and breaks every page on the site (login included) with no way to fix it from the browser — you'd need
+                        server/terminal access to recover. Only use this for a full wipe-and-rebuild via CLI.
+                    </p>
                     <button type="button" @click="open = ! open" class="mt-3 rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
                         Delete All Tables
                     </button>

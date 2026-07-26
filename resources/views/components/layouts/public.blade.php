@@ -62,6 +62,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('admin.partials.theme-vars')
 
+    {{-- Windows doesn't render flag emoji, so currency/language flags use this CSS sprite library instead. --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+
     {{-- Alpine plugins must load before the core Alpine script. --}}
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>

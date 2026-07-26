@@ -86,13 +86,22 @@ class Currency extends Model
 
     /**
      * A colored country-flag emoji derived from the ISO 4217 code, e.g. USD -> US -> 🇺🇸.
+     * Windows doesn't ship flag glyphs in its emoji font, so prefer
+     * flag_country_code (rendered via the flag-icons CSS library) in the UI.
      */
     public function getFlagEmojiAttribute(): string
     {
-        $country = strtoupper($this->code) === 'EUR' ? 'EU' : strtoupper(substr($this->code, 0, 2));
-
-        return collect(str_split($country))
-            ->map(fn ($char) => mb_chr(127397 + ord($char)))
+        return collect(str_split($this->flag_country_code))
+            ->map(fn ($char) => mb_chr(127397 + ord(strtoupper($char))))
             ->implode('');
+    }
+
+    /**
+     * Lowercase ISO 3166-1 country code derived from the ISO 4217 currency
+     * code, for use with the flag-icons CSS library (e.g. USD -> us).
+     */
+    public function getFlagCountryCodeAttribute(): string
+    {
+        return strtoupper($this->code) === 'EUR' ? 'eu' : strtolower(substr($this->code, 0, 2));
     }
 }

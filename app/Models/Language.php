@@ -64,8 +64,21 @@ class Language extends Model
     ];
 
     /**
+     * Lowercase ISO 3166-1 country code for the flag-icons CSS library. Null
+     * if the language code isn't in the map, so callers can fall back to a
+     * text badge.
+     */
+    public function getFlagCountryCodeAttribute(): ?string
+    {
+        $country = self::FLAG_COUNTRY_MAP[strtolower($this->code)] ?? null;
+
+        return $country ? strtolower($country) : null;
+    }
+
+    /**
      * A colored country-flag emoji derived from the language code. Null if the
-     * code isn't in the map, so callers can fall back to a text badge.
+     * code isn't in the map. Windows doesn't ship flag glyphs in its emoji
+     * font, so prefer flag_country_code (via flag-icons CSS) in the UI.
      */
     public function getFlagEmojiAttribute(): ?string
     {

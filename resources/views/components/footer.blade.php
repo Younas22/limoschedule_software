@@ -120,7 +120,7 @@
                     <div x-data="{ open: false }" class="relative">
                         <button type="button" @click="open = !open" @click.outside="open = false"
                             class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-luxury-border px-3 py-2 text-xs text-luxury-muted">
-                            <span class="text-sm leading-none">{{ $currentCurrency->flag_emoji }}</span>
+                            <span class="fi fi-{{ $currentCurrency->flag_country_code }} rounded-sm"></span>
                             <span class="font-semibold">{{ $currentCurrency->symbol }}</span> {{ $currentCurrency->code }}
                         </button>
                         <div x-show="open" x-cloak x-transition class="absolute end-0 bottom-full z-40 mb-2 w-44 overflow-hidden rounded-xl border border-luxury-border bg-luxury-graphite shadow-xl">
@@ -128,7 +128,7 @@
                                 <form method="POST" action="{{ route('currency.switch', $currencyOption->code) }}">
                                     @csrf
                                     <button type="submit" class="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-start text-xs {{ $currencyOption->code === $currentCurrency->code ? 'text-luxury-gold' : 'text-luxury-muted' }}">
-                                        <span class="text-sm leading-none">{{ $currencyOption->flag_emoji }}</span>
+                                        <span class="fi fi-{{ $currencyOption->flag_country_code }} shrink-0 rounded-sm"></span>
                                         {{ $currencyOption->symbol }} {{ $currencyOption->code }}
                                     </button>
                                 </form>
@@ -143,8 +143,8 @@
                             class="flex cursor-pointer items-center gap-1.5 rounded-lg border border-luxury-border px-3 py-2 text-xs text-luxury-muted">
                             @if ($currentLanguage->flag_url)
                                 <img src="{{ $currentLanguage->flag_url }}" alt="" class="h-3.5 w-3.5 shrink-0 rounded-sm object-cover">
-                            @elseif ($currentLanguage->flag_emoji)
-                                <span class="text-sm leading-none">{{ $currentLanguage->flag_emoji }}</span>
+                            @elseif ($currentLanguage->flag_country_code)
+                                <span class="fi fi-{{ $currentLanguage->flag_country_code }}"></span>
                             @endif
                             {{ $currentLanguage->native_name }}
                         </button>
@@ -155,8 +155,8 @@
                                     <button type="submit" class="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-start text-xs {{ $language->code === $currentLanguage->code ? 'text-luxury-gold' : 'text-luxury-muted' }}">
                                         @if ($language->flag_url)
                                             <img src="{{ $language->flag_url }}" alt="" class="h-3.5 w-3.5 shrink-0 rounded-sm object-cover">
-                                        @elseif ($language->flag_emoji)
-                                            <span class="text-sm leading-none">{{ $language->flag_emoji }}</span>
+                                        @elseif ($language->flag_country_code)
+                                            <span class="fi fi-{{ $language->flag_country_code }}"></span>
                                         @endif
                                         {{ $language->native_name }}
                                     </button>

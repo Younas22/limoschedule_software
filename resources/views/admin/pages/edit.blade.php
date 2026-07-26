@@ -65,11 +65,14 @@
                 @endpermission
             </div>
 
-            <div class="space-y-3">
+            <div class="space-y-3" id="sections-list" x-data="pageSectionsSortable({{ \Illuminate\Support\Js::from(route('admin.pages.sections.reorder', $page)) }})">
                 @forelse ($page->sections as $section)
-                    <div class="flex flex-col gap-3 rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex flex-col gap-3 rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-4 sm:flex-row sm:items-center sm:justify-between" data-section-id="{{ $section->id }}">
                         <div class="flex items-center gap-3">
                             @permission('content.edit')
+                                <button type="button" class="drag-handle hidden shrink-0 cursor-grab text-luxury-muted hover:text-luxury-gold active:cursor-grabbing sm:block" title="Drag to reorder">
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M9 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm6-12a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm0 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" /></svg>
+                                </button>
                                 <div class="flex flex-col">
                                     <form method="POST" action="{{ route('admin.pages.sections.move-up', [$page, $section]) }}">
                                         @csrf
@@ -125,4 +128,31 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+        <script>
+            function pageSectionsSortable(reorderUrl) {
+                return {
+                    init() {
+                        Sortable.create(this.$el, {
+                            handle: '.drag-handle',
+                            animation: 150,
+                            onEnd: () => {
+                                const sectionIds = Array.from(this.$el.children)
+                                    .map((row) => row.dataset.sectionId)
+                                    .filter(Boolean);
+
+                                axios.post(reorderUrl, { section_ids: sectionIds }).catch(() => {
+                                    window.dispatchEvent(new CustomEvent('notify', {
+                                        detail: { type: 'error', message: 'Could not save the new order — please try again.' },
+                                    }));
+                                });
+                            },
+                        });
+                    },
+                };
+            }
+        </script>
+    @endpush
 </x-admin.layouts.app>

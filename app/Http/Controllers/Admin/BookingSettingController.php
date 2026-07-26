@@ -27,9 +27,16 @@ class BookingSettingController extends Controller
             'whatsapp_message_template' => ['nullable', 'string', 'max:2000'],
         ]);
 
+        $manualBookingEnabled = $request->boolean('manual_booking_enabled');
+        $websiteBookingEnabled = $request->boolean('website_booking_enabled');
+
+        if ($manualBookingEnabled && $websiteBookingEnabled) {
+            return back()->withInput()->with('error', 'Manual Booking and Website Booking cannot both be enabled at the same time. Please disable one first.');
+        }
+
         $settings->update([
-            'manual_booking_enabled' => $request->boolean('manual_booking_enabled'),
-            'website_booking_enabled' => $request->boolean('website_booking_enabled'),
+            'manual_booking_enabled' => $manualBookingEnabled,
+            'website_booking_enabled' => $websiteBookingEnabled,
             'guest_booking_enabled' => $request->boolean('guest_booking_enabled'),
             'voice_search_enabled' => $request->boolean('voice_search_enabled'),
             'auto_confirmation_enabled' => $request->boolean('auto_confirmation_enabled'),

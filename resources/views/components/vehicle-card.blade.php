@@ -2,6 +2,8 @@
 
 @php
     $pricingRule = \App\Models\PricingRule::resolveForVehicle($vehicle);
+    $bookingSettings = booking_setting();
+    $whatsappEnabled = (bool) ($bookingSettings->manual_booking_enabled && $bookingSettings->whatsapp_number);
 @endphp
 
 <div {{ $attributes->merge(['class' => '']) }}
@@ -76,14 +78,30 @@
                 <p class="text-lg font-semibold text-luxury-gold">{{ currency($pricingRule->base_fare) }}</p>
             </div>
 
-            {{-- Book button: smooth-scrolls to the booking widget (if present on this page)
-                 and pre-selects this vehicle's category via a shared browser event. --}}
-            <a href="#booking-widget"
-                @click="window.dispatchEvent(new CustomEvent('select-vehicle-category', { detail: '{{ $vehicle->vehicle_category_id }}' }))"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
-                <x-icon name="calendar" class="h-4 w-4" />
-                {{ __('Book') }}
-            </a>
+            @if ($whatsappEnabled)
+                {{-- Manual booking mode: skip the form entirely, go straight to WhatsApp. --}}
+                @php
+                    $waMessage = __("Hi! I'd like to book the :vehicle (:category). Please confirm availability.", [
+                        'vehicle' => $vehicle->name,
+                        'category' => $vehicle->category->name ?? __('Any Vehicle'),
+                    ]);
+                    $waDigits = preg_replace('/\D/', '', $bookingSettings->whatsapp_number);
+                @endphp
+                <a href="https://wa.me/{{ $waDigits }}?text={{ urlencode($waMessage) }}" target="_blank" rel="noopener"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
+                    <x-icon name="chat" class="h-4 w-4" />
+                    {{ __('Book') }}
+                </a>
+            @else
+                {{-- Website booking mode: smooth-scrolls to the booking widget
+                     and pre-selects this vehicle's category via a shared browser event. --}}
+                <a href="#booking-widget"
+                    @click="window.dispatchEvent(new CustomEvent('select-vehicle-category', { detail: '{{ $vehicle->vehicle_category_id }}' }))"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
+                    <x-icon name="calendar" class="h-4 w-4" />
+                    {{ __('Book') }}
+                </a>
+            @endif
         </div>
     </div>
 </div>

@@ -36,9 +36,14 @@ Route::prefix('blog')->name('blog.')->group(function () {
     Route::get('/', [BlogController::class, 'index'])->name('index');
     Route::get('category/{category:slug}', [BlogController::class, 'category'])->name('category');
     Route::get('tag/{tag:slug}', [BlogController::class, 'tag'])->name('tag');
-    Route::get('{post:slug}', [BlogController::class, 'show'])->name('show');
 });
 
 Route::get('/{slug}', [PageController::class, 'show'])
     ->where('slug', implode('|', array_diff(array_keys(\App\Models\Page::PAGES), ['home'])))
     ->name('pages.show');
+
+// Blog post detail lives at the site root (no "/blog/" prefix) — registered
+// after pages.show so known static-page slugs are matched there first, and
+// any other single-segment slug falls through here to be looked up as a
+// blog post (implicit model binding 404s naturally if it doesn't exist).
+Route::get('/{post:slug}', [BlogController::class, 'show'])->name('blog.show');

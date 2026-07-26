@@ -9,20 +9,29 @@
         @method('PUT')
 
         <div class="space-y-6">
-            <div class="space-y-4 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+            <div class="space-y-4 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6"
+                x-data="{
+                    manualBooking: {{ old('manual_booking_enabled', $settings->manual_booking_enabled) ? 'true' : 'false' }},
+                    websiteBooking: {{ old('website_booking_enabled', $settings->website_booking_enabled) ? 'true' : 'false' }},
+                }">
                 <h3 class="text-sm font-semibold text-luxury-white">Booking Channels</h3>
+                <p class="text-xs text-luxury-muted">Manual Booking and Website Booking cannot both be active — enabling one turns the other off.</p>
 
                 <x-admin.toggle
                     name="manual_booking_enabled"
                     :checked="old('manual_booking_enabled', $settings->manual_booking_enabled)"
                     label="Manual Booking"
-                    description="Allow admins to create bookings directly from this admin panel. When disabled, the \"New Booking\" action is blocked." />
+                    description="Allow admins to create bookings directly from this admin panel. When disabled, the 'New Booking' action is blocked."
+                    x-model="manualBooking"
+                    @change="if (manualBooking) websiteBooking = false" />
 
                 <x-admin.toggle
                     name="website_booking_enabled"
                     :checked="old('website_booking_enabled', $settings->website_booking_enabled)"
                     label="Website Booking"
-                    description="Allow customers to submit bookings from the public website / booking widget." />
+                    description="Allow customers to submit bookings from the public website / booking widget."
+                    x-model="websiteBooking"
+                    @change="if (websiteBooking) manualBooking = false" />
 
                 <x-admin.toggle
                     name="guest_booking_enabled"

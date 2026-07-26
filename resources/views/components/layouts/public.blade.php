@@ -53,10 +53,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    @if (setting('favicon_url'))
-        <link rel="icon" href="{{ setting('favicon_url') }}">
-        <link rel="apple-touch-icon" href="{{ setting('favicon_url') }}">
-    @endif
+    <link rel="icon" href="{{ setting('favicon_url') ?: asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ setting('favicon_url') ?: asset('favicon.ico') }}">
 
     {{-- Organization structured data --}}
     <script type="application/ld+json">{!! json_encode(organization_schema(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
@@ -92,6 +90,7 @@
         <x-footer :nav-pages="$navPages" />
 
         <x-sticky-booking-button />
+        <x-sticky-whatsapp-button />
 
         <x-bottom-nav :current-slug="$currentSlug" />
 

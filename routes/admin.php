@@ -336,6 +336,7 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
             Route::post('{section}/toggle', [PageSectionController::class, 'toggleStatus'])->name('toggle')->middleware('permission:content.edit');
             Route::post('{section}/move-up', [PageSectionController::class, 'moveUp'])->name('move-up')->middleware('permission:content.edit');
             Route::post('{section}/move-down', [PageSectionController::class, 'moveDown'])->name('move-down')->middleware('permission:content.edit');
+            Route::post('reorder', [PageSectionController::class, 'reorder'])->name('reorder')->middleware('permission:content.edit');
         });
     });
 

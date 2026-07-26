@@ -156,7 +156,7 @@
         {{-- Theme --}}
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
             <h3 class="mb-1 text-sm font-semibold text-luxury-white">Theme</h3>
-            <p class="mb-4 text-xs text-luxury-muted">Colors apply site-wide immediately after saving — no rebuild required.</p>
+            <p class="mb-4 text-xs text-luxury-muted">Colors apply to the public website immediately after saving — no rebuild required. The admin panel and customer portal keep their own fixed colors and are not affected.</p>
 
             <div class="mb-6">
                 <x-admin.input-label value="Appearance Mode" />

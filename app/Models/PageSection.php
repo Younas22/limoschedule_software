@@ -21,6 +21,7 @@ class PageSection extends Model
         'blog' => 'Blog Highlights (Live Posts)',
         'vision_mission' => 'Vision & Mission',
         'team' => 'Team Members',
+        'process' => 'Booking Process (Numbered Steps)',
     ];
 
     protected $fillable = [
@@ -173,5 +174,13 @@ class PageSection extends Model
     public function getTeamMembersAttribute(): array
     {
         return $this->type === 'team' ? ($this->content ?? []) : [];
+    }
+
+    /**
+     * @return array<int, array{icon: ?string, title: string, description: ?string}>
+     */
+    public function getProcessStepsAttribute(): array
+    {
+        return $this->type === 'process' ? ($this->content ?? []) : [];
     }
 }

@@ -45,7 +45,7 @@
         <div class="ms-auto flex items-center gap-1.5 lg:ms-0">
             {{-- Search --}}
             <button type="button" @click="searchOpen = true" aria-label="{{ __('Search') }}"
-                class="flex h-10 w-10 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
                 <x-icon name="search" class="h-5 w-5" />
             </button>
 
@@ -53,7 +53,8 @@
             @if ($currentCurrency && $activeCurrencies->count() > 1)
                 <div x-data="{ open: false }" class="relative hidden sm:block">
                     <button type="button" @click="open = !open" @click.outside="open = false"
-                        class="flex h-10 items-center gap-1 rounded-lg px-2.5 text-sm text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                        class="flex h-10 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-sm text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                        <span class="text-base leading-none">{{ $currentCurrency->flag_emoji }}</span>
                         <span class="font-semibold">{{ $currentCurrency->symbol }}</span>
                         <span>{{ $currentCurrency->code }}</span>
                         <x-icon name="chevron-down" class="h-3.5 w-3.5" />
@@ -64,7 +65,8 @@
                             <form method="POST" action="{{ route('currency.switch', $currencyOption->code) }}">
                                 @csrf
                                 <button type="submit"
-                                    class="flex w-full items-center gap-3 px-4 py-2.5 text-start text-sm transition hover:bg-luxury-graphite {{ $currencyOption->code === $currentCurrency->code ? 'text-luxury-gold' : 'text-luxury-muted' }}">
+                                    class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-start text-sm transition hover:bg-luxury-graphite {{ $currencyOption->code === $currentCurrency->code ? 'text-luxury-gold' : 'text-luxury-muted' }}">
+                                    <span class="text-base leading-none">{{ $currencyOption->flag_emoji }}</span>
                                     <span class="w-5 shrink-0 text-center font-semibold">{{ $currencyOption->symbol }}</span>
                                     <span>{{ $currencyOption->name }}</span>
                                     <span class="ms-auto text-xs text-luxury-muted">{{ $currencyOption->code }}</span>
@@ -79,10 +81,12 @@
             @if ($currentLanguage && $activeLanguages->count() > 1)
                 <div x-data="{ open: false }" class="relative hidden sm:block">
                     <button type="button" @click="open = !open" @click.outside="open = false"
-                        class="flex h-10 items-center gap-1.5 rounded-lg px-2.5 text-sm text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                        class="flex h-10 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-sm text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
                         <div class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded border border-luxury-border bg-luxury-graphite text-[9px] font-semibold uppercase">
                             @if ($currentLanguage->flag_url)
                                 <img src="{{ $currentLanguage->flag_url }}" alt="{{ $currentLanguage->name }}" class="h-full w-full object-cover">
+                            @elseif ($currentLanguage->flag_emoji)
+                                <span class="text-sm leading-none">{{ $currentLanguage->flag_emoji }}</span>
                             @else
                                 {{ $currentLanguage->code }}
                             @endif
@@ -95,10 +99,12 @@
                             <form method="POST" action="{{ route('locale.switch', $language->code) }}">
                                 @csrf
                                 <button type="submit"
-                                    class="flex w-full items-center gap-3 px-4 py-2.5 text-start text-sm transition hover:bg-luxury-graphite {{ $language->code === $currentLanguage->code ? 'text-luxury-gold' : 'text-luxury-muted' }}">
+                                    class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-start text-sm transition hover:bg-luxury-graphite {{ $language->code === $currentLanguage->code ? 'text-luxury-gold' : 'text-luxury-muted' }}">
                                     <div class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded border border-luxury-border bg-luxury-graphite text-[9px] font-semibold uppercase">
                                         @if ($language->flag_url)
                                             <img src="{{ $language->flag_url }}" alt="{{ $language->name }}" class="h-full w-full object-cover">
+                                        @elseif ($language->flag_emoji)
+                                            <span class="text-sm leading-none">{{ $language->flag_emoji }}</span>
                                         @else
                                             {{ $language->code }}
                                         @endif

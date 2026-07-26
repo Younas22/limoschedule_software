@@ -1,10 +1,13 @@
 @props(['class' => ''])
 
 @php
-    $categories = \App\Models\VehicleCategory::active()->ordered()->get(['id', 'name']);
     $settings = booking_setting();
     $websiteBookingEnabled = (bool) ($settings->website_booking_enabled && $settings->guest_booking_enabled);
-    $whatsappEnabled = (bool) ($settings->manual_booking_enabled && $settings->whatsapp_number);
+@endphp
+
+@if ($websiteBookingEnabled)
+@php
+    $categories = \App\Models\VehicleCategory::active()->ordered()->get(['id', 'name']);
     $voiceSearchEnabled = (bool) $settings->voice_search_enabled;
     $initialStops = old('stops', []);
 @endphp
@@ -14,9 +17,6 @@
     @select-route.window="pickup = $event.detail.pickup; dropoff = $event.detail.dropoff"
     x-data="bookingSearchBox({
         categories: {{ \Illuminate\Support\Js::from($categories) }},
-        websiteBookingEnabled: {{ \Illuminate\Support\Js::from($websiteBookingEnabled) }},
-        whatsappEnabled: {{ \Illuminate\Support\Js::from($whatsappEnabled) }},
-        whatsappNumber: {{ \Illuminate\Support\Js::from($settings->whatsapp_number) }},
         initial: {
             {{-- "Rebook" links (from a past trip) prefill via query string; normal
                  validation-error redisplay prefills via old() — old() wins if both
@@ -171,56 +171,34 @@
             </div>
         </div>
 
-        @if ($websiteBookingEnabled)
-            {{-- Guest contact details (website booking mode) --}}
-            <div class="grid grid-cols-1 gap-3 border-t border-luxury-border/60 pt-3 sm:grid-cols-3">
-                <div>
-                    <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Full Name') }}</label>
-                    <input type="text" name="name" x-model="name" required placeholder="{{ __('Your name') }}"
-                        class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('name') }}</p>
-                </div>
-                <div>
-                    <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Email') }}</label>
-                    <input type="email" name="email" x-model="email" required placeholder="{{ __('you@example.com') }}"
-                        class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('email') }}</p>
-                </div>
-                <div>
-                    <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Phone (optional)') }}</label>
-                    <input type="tel" name="phone" x-model="phone" placeholder="{{ __('+1 555 123 4567') }}"
-                        class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                </div>
+        {{-- Guest contact details --}}
+        <div class="grid grid-cols-1 gap-3 border-t border-luxury-border/60 pt-3 sm:grid-cols-3">
+            <div>
+                <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Full Name') }}</label>
+                <input type="text" name="name" x-model="name" required placeholder="{{ __('Your name') }}"
+                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                <p class="mt-1 text-xs text-red-400">{{ $errors->first('name') }}</p>
             </div>
-        @endif
+            <div>
+                <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Email') }}</label>
+                <input type="email" name="email" x-model="email" required placeholder="{{ __('you@example.com') }}"
+                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                <p class="mt-1 text-xs text-red-400">{{ $errors->first('email') }}</p>
+            </div>
+            <div>
+                <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Phone (optional)') }}</label>
+                <input type="tel" name="phone" x-model="phone" placeholder="{{ __('+1 555 123 4567') }}"
+                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+            </div>
+        </div>
 
         {{-- Actions --}}
-        <div class="flex flex-col items-center gap-2 pt-1 sm:flex-row sm:justify-between">
-            <template x-if="websiteBookingEnabled">
-                <button type="submit"
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:w-auto sm:flex-1">
-                    <x-icon name="search" class="h-4 w-4" />
-                    {{ __('Book Now') }}
-                </button>
-            </template>
-            <template x-if="!websiteBookingEnabled && whatsappEnabled">
-                <button type="button" @click="submitWhatsapp"
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:w-auto sm:flex-1">
-                    <x-icon name="search" class="h-4 w-4" />
-                    {{ __('Check Availability via WhatsApp') }}
-                </button>
-            </template>
-            <template x-if="!websiteBookingEnabled && !whatsappEnabled">
-                <p class="w-full rounded-lg border border-luxury-border px-6 py-3.5 text-center text-sm text-luxury-muted">
-                    {{ __('Booking is currently unavailable. Please check back soon.') }}
-                </p>
-            </template>
-
-            <template x-if="websiteBookingEnabled && whatsappEnabled">
-                <button type="button" @click="submitWhatsapp" class="text-xs font-medium text-luxury-muted underline-offset-2 hover:text-luxury-gold hover:underline">
-                    {{ __('or message us on WhatsApp') }}
-                </button>
-            </template>
+        <div class="pt-1">
+            <button type="submit"
+                class="flex w-full items-center justify-center gap-2 rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:w-auto sm:flex-1">
+                <x-icon name="search" class="h-4 w-4" />
+                {{ __('Book Now') }}
+            </button>
         </div>
     </form>
 </div>
@@ -239,8 +217,6 @@
             name: config.initial.name || '',
             email: config.initial.email || '',
             phone: config.initial.phone || '',
-            websiteBookingEnabled: config.websiteBookingEnabled,
-            whatsappEnabled: config.whatsappEnabled,
             today: new Date().toISOString().split('T')[0],
 
             incrementPassengers(delta) {
@@ -263,45 +239,12 @@
             },
 
             handleSubmit(event) {
-                if (!this.websiteBookingEnabled) {
-                    event.preventDefault();
-                    return;
-                }
                 if (!this.hasRequiredFields()) {
                     event.preventDefault();
                     this.notify('error', @json(__('Please fill in pickup, drop-off, date and time.')));
                 }
-            },
-
-            submitWhatsapp() {
-                if (!this.hasRequiredFields()) {
-                    this.notify('error', @json(__('Please fill in pickup, drop-off, date and time.')));
-                    return;
-                }
-                if (!this.whatsappEnabled) {
-                    this.notify('error', @json(__('WhatsApp booking is currently unavailable.')));
-                    return;
-                }
-
-                const category = config.categories.find((c) => String(c.id) === String(this.vehicleCategory));
-                const categoryLabel = category ? category.name : @json(__('Any Vehicle'));
-                const stopsLine = this.stops.filter((s) => s).length
-                    ? '\n' + @json(__('Stops')) + ': ' + this.stops.filter((s) => s).join(', ')
-                    : '';
-
-                const message = @json(__("Hi! I'd like to book a ride.\nPickup: {pickup}\nDrop-off: {dropoff}{stops}\nDate: {date}\nTime: {time}\nPassengers: {passengers}\nLuggage: {luggage}\nVehicle: {category}\n\nPlease confirm availability."))
-                    .replace('{pickup}', this.pickup)
-                    .replace('{dropoff}', this.dropoff)
-                    .replace('{stops}', stopsLine)
-                    .replace('{date}', this.date)
-                    .replace('{time}', this.time)
-                    .replace('{passengers}', this.passengers)
-                    .replace('{luggage}', this.luggage)
-                    .replace('{category}', categoryLabel);
-
-                const digits = config.whatsappNumber.replace(/\D/g, '');
-                window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(message), '_blank');
             },
         };
     }
 </script>
+@endif

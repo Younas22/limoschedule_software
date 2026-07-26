@@ -44,7 +44,7 @@ class BookingSetting extends Model
     {
         return Cache::rememberForever(self::CACHE_KEY, function () {
             return self::firstOrCreate(['id' => 1], [
-                'manual_booking_enabled' => true,
+                'manual_booking_enabled' => false,
                 'website_booking_enabled' => true,
                 'guest_booking_enabled' => true,
                 'voice_search_enabled' => false,

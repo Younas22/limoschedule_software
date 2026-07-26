@@ -53,6 +53,34 @@ class Language extends Model
     }
 
     /**
+     * Representative country for each language code, used to derive a colored
+     * flag emoji when no flag image has been uploaded (see getFlagEmojiAttribute).
+     */
+    private const FLAG_COUNTRY_MAP = [
+        'en' => 'GB', 'ar' => 'SA', 'de' => 'DE', 'ur' => 'PK', 'fr' => 'FR',
+        'es' => 'ES', 'it' => 'IT', 'pt' => 'PT', 'ru' => 'RU', 'zh' => 'CN',
+        'ja' => 'JP', 'ko' => 'KR', 'hi' => 'IN', 'tr' => 'TR', 'nl' => 'NL',
+        'pl' => 'PL', 'sv' => 'SE', 'fa' => 'IR', 'he' => 'IL', 'id' => 'ID',
+    ];
+
+    /**
+     * A colored country-flag emoji derived from the language code. Null if the
+     * code isn't in the map, so callers can fall back to a text badge.
+     */
+    public function getFlagEmojiAttribute(): ?string
+    {
+        $country = self::FLAG_COUNTRY_MAP[strtolower($this->code)] ?? null;
+
+        if (! $country) {
+            return null;
+        }
+
+        return collect(str_split($country))
+            ->map(fn ($char) => mb_chr(127397 + ord($char)))
+            ->implode('');
+    }
+
+    /**
      * All enabled languages, cached.
      */
     public static function active(): \Illuminate\Support\Collection

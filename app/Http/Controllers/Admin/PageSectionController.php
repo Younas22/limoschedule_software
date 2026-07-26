@@ -122,6 +122,22 @@ class PageSectionController extends Controller
         return back();
     }
 
+    public function reorder(Request $request, Page $page): RedirectResponse
+    {
+        $data = $request->validate([
+            'section_ids' => ['required', 'array'],
+            'section_ids.*' => ['integer', Rule::exists('page_sections', 'id')->where('page_id', $page->id)],
+        ]);
+
+        DB::transaction(function () use ($data, $page) {
+            foreach ($data['section_ids'] as $index => $sectionId) {
+                $page->sections()->where('id', $sectionId)->update(['sort_order' => $index]);
+            }
+        });
+
+        return back()->with('status', 'Section order updated.');
+    }
+
     private function validateSection(Request $request): array
     {
         $type = $request->input('type');
@@ -137,8 +153,8 @@ class PageSectionController extends Controller
             'button_url' => ['nullable', 'string', 'max:255'],
             'button_text_2' => ['nullable', 'string', 'max:100'],
             'button_url_2' => ['nullable', 'string', 'max:255'],
-            'items' => [Rule::requiredIf(in_array($type, ['items', 'faq', 'stats', 'team'], true)), 'nullable', 'array'],
-            'items.*.title' => ['required_if:type,items', 'nullable', 'string', 'max:255'],
+            'items' => [Rule::requiredIf(in_array($type, ['items', 'faq', 'stats', 'team', 'process'], true)), 'nullable', 'array'],
+            'items.*.title' => ['required_if:type,items', 'required_if:type,process', 'nullable', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:1000'],
             'items.*.icon' => ['nullable', 'string', 'max:50'],
             'items.*.link' => ['nullable', 'string', 'max:255'],
@@ -188,6 +204,13 @@ class PageSectionController extends Controller
                     'question' => $item['question'],
                     'answer' => $item['answer'] ?? null,
                     'category' => $item['category'] ?? null,
+                ])->values()->all(),
+            'process' => collect($data['items'] ?? [])
+                ->filter(fn ($item) => filled($item['title'] ?? null))
+                ->map(fn ($item) => [
+                    'icon' => $item['icon'] ?? null,
+                    'title' => $item['title'],
+                    'description' => $item['description'] ?? null,
                 ])->values()->all(),
             'contact_info' => array_filter([
                 'address' => $data['address'] ?? null,

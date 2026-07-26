@@ -1,5 +1,10 @@
 @props(['route'])
 
+@php
+    $bookingSettings = booking_setting();
+    $whatsappEnabled = (bool) ($bookingSettings->manual_booking_enabled && $bookingSettings->whatsapp_number);
+@endphp
+
 <div {{ $attributes->merge(['class' => '']) }}
     class="flex h-full flex-col justify-between rounded-2xl border border-luxury-border bg-luxury-charcoal p-5 transition hover:border-luxury-gold/40">
     <div>
@@ -28,10 +33,26 @@
         </div>
     </div>
 
-    <a href="#booking-widget"
-        @click="window.dispatchEvent(new CustomEvent('select-route', { detail: { pickup: {{ \Illuminate\Support\Js::from($route->pickup) }}, dropoff: {{ \Illuminate\Support\Js::from($route->dropoff) }} } }))"
-        class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
-        <x-icon name="calendar" class="h-4 w-4" />
-        {{ __('Book This Route') }}
-    </a>
+    @if ($whatsappEnabled)
+        {{-- Manual booking mode: skip the form entirely, go straight to WhatsApp. --}}
+        @php
+            $waMessage = __("Hi! I'd like to book a ride from :pickup to :dropoff. Please confirm availability.", [
+                'pickup' => $route->pickup,
+                'dropoff' => $route->dropoff,
+            ]);
+            $waDigits = preg_replace('/\D/', '', $bookingSettings->whatsapp_number);
+        @endphp
+        <a href="https://wa.me/{{ $waDigits }}?text={{ urlencode($waMessage) }}" target="_blank" rel="noopener"
+            class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
+            <x-icon name="chat" class="h-4 w-4" />
+            {{ __('Book This Route') }}
+        </a>
+    @else
+        <a href="#booking-widget"
+            @click="window.dispatchEvent(new CustomEvent('select-route', { detail: { pickup: {{ \Illuminate\Support\Js::from($route->pickup) }}, dropoff: {{ \Illuminate\Support\Js::from($route->dropoff) }} } }))"
+            class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
+            <x-icon name="calendar" class="h-4 w-4" />
+            {{ __('Book This Route') }}
+        </a>
+    @endif
 </div>

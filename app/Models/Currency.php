@@ -83,4 +83,16 @@ class Currency extends Model
     {
         return $this->symbol.number_format($this->convert($amount), 2);
     }
+
+    /**
+     * A colored country-flag emoji derived from the ISO 4217 code, e.g. USD -> US -> 🇺🇸.
+     */
+    public function getFlagEmojiAttribute(): string
+    {
+        $country = strtoupper($this->code) === 'EUR' ? 'EU' : strtoupper(substr($this->code, 0, 2));
+
+        return collect(str_split($country))
+            ->map(fn ($char) => mb_chr(127397 + ord($char)))
+            ->implode('');
+    }
 }

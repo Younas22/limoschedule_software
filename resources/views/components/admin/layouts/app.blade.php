@@ -6,12 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Dashboard' }} — {{ setting('company_name', config('app.name', 'Limo Schedule')) }}</title>
-    @if (setting('favicon_url'))
-        <link rel="icon" href="{{ setting('favicon_url') }}">
-    @endif
+    <link rel="icon" href="{{ setting('favicon_url') ?: asset('favicon.ico') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @include('admin.partials.theme-vars')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="min-h-screen bg-luxury-black font-sans text-luxury-white antialiased">

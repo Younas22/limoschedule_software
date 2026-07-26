@@ -134,7 +134,7 @@
             @endphp
             <div x-data="{ open: {{ $childIsActive ? 'true' : 'false' }} }">
                 <button type="button" @click="open = !open"
-                    class="flex w-full items-center gap-3 rounded-lg border-s-2 px-4 py-2.5 text-sm font-medium transition {{ $childIsActive ? 'border-luxury-gold bg-luxury-gold/10 text-luxury-gold' : 'border-transparent text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white' }}">
+                    class="flex w-full cursor-pointer items-center gap-3 rounded-lg border-s-2 px-4 py-2.5 text-sm font-medium transition {{ $childIsActive ? 'border-luxury-gold bg-luxury-gold/10 text-luxury-gold' : 'border-transparent text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white' }}">
                     <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons[$item['icon']] }}" />
                     </svg>

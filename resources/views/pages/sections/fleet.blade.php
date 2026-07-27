@@ -2,7 +2,7 @@
 
 @php
     $settings = $section->fleet_settings;
-    $vehicles = \App\Models\Vehicle::active()->with(['category'])
+    $vehicles = \App\Models\Vehicle::active()->with(['category', 'images'])
         ->when($settings['category_id'], fn ($q) => $q->where('vehicle_category_id', $settings['category_id']))
         ->latest()->limit($settings['limit'])->get();
     $categories = \App\Models\VehicleCategory::active()->ordered()->get()
@@ -13,6 +13,17 @@
         'category' => (string) $vehicle->vehicle_category_id,
         'haystack' => strtolower($vehicle->name.' '.$vehicle->brand.' '.$vehicle->model),
     ]);
+    // A handful of vehicles don't fill a slider row — a scroll-snap slider
+    // with working arrows needs enough cards to actually scroll past. Below
+    // that, a centered wrap layout looks intentional instead of sparse. With
+    // only 1-2 vehicles (a single-car operator), a full-width wide card with
+    // the image on one side and details on the other reads better than a
+    // small narrow card floating alone on a wide screen.
+    $vehicleCount = $vehicles->count();
+    $layout = $vehicleCount > 3 ? 'slider' : ($vehicleCount <= 2 ? 'wide' : 'grid');
+    // Written out in full so Tailwind's build-time class scanner (which only
+    // matches literal text, not interpolated strings) picks these up.
+    $wideColSpanClass = $vehicleCount === 1 ? 'lg:col-span-12' : 'lg:col-span-6';
 @endphp
 
 @if ($vehicles->isNotEmpty())
@@ -53,27 +64,49 @@
                 </div>
             </div>
 
-            {{-- Slider --}}
-            <div class="relative mt-8">
-                <button type="button" @click="scrollPrev" aria-label="{{ __('Previous') }}"
-                    class="absolute -start-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-luxury-border bg-luxury-charcoal text-luxury-muted shadow-lg transition hover:border-luxury-gold/40 hover:text-luxury-gold lg:flex">
-                    <x-icon name="chevron-left" class="h-4 w-4" />
-                </button>
+            @if ($layout === 'slider')
+                {{-- Slider --}}
+                <div class="relative mt-8">
+                    <button type="button" @click="scrollPrev" aria-label="{{ __('Previous') }}"
+                        class="absolute -start-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-luxury-border bg-luxury-charcoal text-luxury-muted shadow-lg transition hover:border-luxury-gold/40 hover:text-luxury-gold lg:flex">
+                        <x-icon name="chevron-left" class="h-4 w-4" />
+                    </button>
 
-                <div x-ref="slider" class="scrollbar-luxury flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-4">
+                    <div x-ref="slider" class="scrollbar-luxury flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-4">
+                        @foreach ($vehicles as $vehicle)
+                            <div class="w-[85%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"
+                                x-show="matches({{ $vehicle->id }})">
+                                <x-vehicle-card :vehicle="$vehicle" />
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <button type="button" @click="scrollNext" aria-label="{{ __('Next') }}"
+                        class="absolute -end-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-luxury-border bg-luxury-charcoal text-luxury-muted shadow-lg transition hover:border-luxury-gold/40 hover:text-luxury-gold lg:flex">
+                        <x-icon name="chevron-right" class="h-4 w-4" />
+                    </button>
+                </div>
+            @elseif ($layout === 'wide')
+                {{-- 1-2 vehicles: full-width cards, image on one side and details on the other. --}}
+                <div class="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-12">
                     @foreach ($vehicles as $vehicle)
-                        <div class="w-[85%] shrink-0 snap-start sm:w-[46%] lg:w-[31%]"
+                        <div class="{{ $wideColSpanClass }}"
+                            x-show="matches({{ $vehicle->id }})">
+                            <x-vehicle-card :vehicle="$vehicle" :wide="true" />
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                {{-- A few vehicles: center them instead of using a slider built for scrolling past many. --}}
+                <div class="mt-8 flex flex-wrap justify-center gap-5">
+                    @foreach ($vehicles as $vehicle)
+                        <div class="w-full max-w-sm sm:w-[46%] lg:w-[31%]"
                             x-show="matches({{ $vehicle->id }})">
                             <x-vehicle-card :vehicle="$vehicle" />
                         </div>
                     @endforeach
                 </div>
-
-                <button type="button" @click="scrollNext" aria-label="{{ __('Next') }}"
-                    class="absolute -end-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-luxury-border bg-luxury-charcoal text-luxury-muted shadow-lg transition hover:border-luxury-gold/40 hover:text-luxury-gold lg:flex">
-                    <x-icon name="chevron-right" class="h-4 w-4" />
-                </button>
-            </div>
+            @endif
 
             <p x-show="matchingCount() === 0" x-cloak class="mt-6 text-center text-sm text-luxury-muted">
                 {{ __('No vehicles match your search.') }}

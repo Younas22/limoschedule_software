@@ -5,8 +5,7 @@
     $whatsappEnabled = (bool) ($bookingSettings->manual_booking_enabled && $bookingSettings->whatsapp_number);
 @endphp
 
-<div {{ $attributes->merge(['class' => '']) }}
-    class="flex h-full flex-col justify-between rounded-2xl border border-luxury-border bg-luxury-charcoal p-5 transition hover:border-luxury-gold/40">
+<div {{ $attributes->merge(['class' => 'flex h-full flex-col justify-between rounded-2xl border border-luxury-border bg-luxury-charcoal p-5 transition hover:border-luxury-gold/40']) }}>
     <div>
         <div class="flex items-start gap-3">
             <div class="mt-0.5 flex flex-col items-center">

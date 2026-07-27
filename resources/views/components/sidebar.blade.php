@@ -72,7 +72,7 @@
         </a>
     </nav>
 
-    <div class="space-y-4 border-t border-luxury-border px-4 py-4">
+    <div class="space-y-4 border-t border-luxury-border px-4 pt-4" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
         {{-- Switchers --}}
         <div class="grid grid-cols-2 gap-2">
             @if ($currentCurrency && $activeCurrencies->count() > 1)

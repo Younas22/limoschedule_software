@@ -92,6 +92,14 @@
                             </a>
                         </li>
                     @endif
+                    @if (setting('whatsapp'))
+                        <li>
+                            <a href="https://wa.me/{{ preg_replace('/\D+/', '', setting('whatsapp')) }}?text={{ rawurlencode(__("Hi! I'd like to inquire about booking a ride.")) }}" target="_blank" rel="noopener" class="flex items-center gap-2.5 text-sm text-[#25D366] transition hover:brightness-110">
+                                <x-whatsapp-icon class="h-4 w-4 shrink-0" />
+                                {{ setting('whatsapp') }}
+                            </a>
+                        </li>
+                    @endif
                     @if (setting('email'))
                         <li>
                             <a href="mailto:{{ setting('email') }}" class="flex items-center gap-2.5 text-sm text-luxury-muted transition hover:text-luxury-gold">

@@ -34,14 +34,14 @@
         @if (($section->button_text && $section->button_url) || ($section->button_text_2 && $section->button_url_2) || setting('phone'))
             <div class="animate-fade-up delay-2 mt-9 flex flex-row items-center justify-center gap-3">
                 @if ($section->button_text && $section->button_url)
-                    <a href="{{ $section->button_url }}" @if (str_starts_with($section->button_url, 'http')) target="_blank" rel="noopener" @endif
+                    <a href="{{ str_starts_with($section->button_url, 'http') ? $section->button_url : url($section->button_url) }}" @if (str_starts_with($section->button_url, 'http')) target="_blank" rel="noopener" @endif
                         class="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-luxury-gold px-4 py-3 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-sm">
                         <x-icon name="calendar" class="h-4 w-4 shrink-0" />
                         {{ $section->button_text }}
                     </a>
                 @endif
                 @if ($section->button_text_2 && $section->button_url_2)
-                    <a href="{{ $section->button_url_2 }}" @if (str_starts_with($section->button_url_2, 'http')) target="_blank" rel="noopener" @endif
+                    <a href="{{ str_starts_with($section->button_url_2, 'http') ? $section->button_url_2 : url($section->button_url_2) }}" @if (str_starts_with($section->button_url_2, 'http')) target="_blank" rel="noopener" @endif
                         class="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-luxury-white/30 bg-white/5 px-4 py-3 text-xs font-semibold text-luxury-white backdrop-blur transition hover:border-luxury-white/60 hover:bg-white/10 sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-sm">
                         {{ $section->button_text_2 }}
                     </a>

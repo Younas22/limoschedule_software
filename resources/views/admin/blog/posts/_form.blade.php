@@ -6,7 +6,7 @@
 <div class="space-y-6" x-data="{
     title: {{ \Illuminate\Support\Js::from(old('title', $post?->title ?? '')) }},
     slug: {{ \Illuminate\Support\Js::from(old('slug', $post?->slug ?? '')) }},
-    slugTouched: {{ $post ? 'true' : 'false' }},
+    slugTouched: false,
     status: {{ \Illuminate\Support\Js::from(old('status', $post?->status ?? 'draft')) }},
     slugify(value) {
         return value.toString().toLowerCase().trim()

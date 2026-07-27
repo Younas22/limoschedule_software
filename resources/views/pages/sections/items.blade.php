@@ -24,7 +24,7 @@
                     @if (! empty($item['title']))
                         <p class="mt-4 font-semibold text-luxury-white">
                             @if (! empty($item['link']))
-                                <a href="{{ $item['link'] }}" class="hover:text-luxury-gold hover:underline">{{ $item['title'] }}</a>
+                                <a href="{{ str_starts_with($item['link'], 'http') ? $item['link'] : url($item['link']) }}" class="hover:text-luxury-gold hover:underline">{{ $item['title'] }}</a>
                             @else
                                 {{ $item['title'] }}
                             @endif

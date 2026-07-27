@@ -16,7 +16,7 @@
         @endif
         @if ($section->button_text && $section->button_url)
             <div class="mt-7">
-                <a href="{{ $section->button_url }}" class="inline-flex items-center justify-center rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
+                <a href="{{ str_starts_with($section->button_url, 'http') ? $section->button_url : url($section->button_url) }}" class="inline-flex items-center justify-center rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
                     {{ $section->button_text }}
                 </a>
             </div>

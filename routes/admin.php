@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\PopularRouteController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\PricingRuleController;
 use App\Http\Controllers\Admin\ReportController;
@@ -82,6 +83,12 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('rich-text/upload-image', [RichTextUploadController::class, 'store'])->name('rich-text.upload-image');
+
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [ProfileController::class, 'update'])->name('update');
+        Route::put('password', [ProfileController::class, 'updatePassword'])->name('password');
+    });
 
     Route::prefix('reports')->name('reports.')->middleware('permission:reports.view')->group(function () {
         Route::get('/', [ReportController::class, 'index'])->name('index');

@@ -19,7 +19,7 @@
         </div>
 
         <div class="py-1">
-            <a href="#" class="flex items-center gap-2 px-4 py-2.5 text-sm text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white">
+            <a href="{{ route('admin.profile.edit') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white">
                 {{ __('My Profile') }}
             </a>
         </div>

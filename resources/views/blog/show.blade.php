@@ -11,8 +11,23 @@
     @endif
 
     <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 gap-10 lg:grid-cols-3">
-            <article class="lg:col-span-2">
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-4">
+            @if (! empty($post->table_of_contents))
+                <aside class="order-2 lg:order-1 lg:col-span-1">
+                    <div class="lg:sticky lg:top-24 rounded-2xl border border-luxury-border bg-luxury-charcoal p-5">
+                        <h3 class="text-sm font-semibold text-luxury-white">Table of Contents</h3>
+                        <nav class="mt-3 space-y-2.5 text-sm">
+                            @foreach ($post->table_of_contents as $item)
+                                <a href="#{{ $item['id'] }}" class="block text-luxury-muted transition hover:text-luxury-gold {{ $item['level'] === 3 ? 'ps-4 text-xs' : '' }}">
+                                    {{ $item['text'] }}
+                                </a>
+                            @endforeach
+                        </nav>
+                    </div>
+                </aside>
+            @endif
+
+            <article class="order-1 lg:order-2 {{ empty($post->table_of_contents) ? 'lg:col-span-4' : 'lg:col-span-3' }}">
                 @if ($post->category)
                     <a href="{{ route('blog.category', $post->category->slug) }}" class="text-xs font-medium uppercase tracking-wide text-luxury-gold hover:text-luxury-gold-light">
                         {{ $post->category->name }}
@@ -23,7 +38,10 @@
 
                 <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-luxury-muted">
                     @if ($post->author)
-                        <span>By {{ $post->author->name }}</span>
+                        <span class="flex items-center gap-2">
+                            <img src="{{ $post->author->avatar_url }}" alt="{{ $post->author->name }}" class="h-6 w-6 rounded-full object-cover">
+                            By {{ $post->author->name }}
+                        </span>
                         <span>&middot;</span>
                     @endif
                     <span>{{ $post->published_at?->format('M d, Y') }}</span>
@@ -38,7 +56,7 @@
                 </div>
 
                 <div class="richtext-content mt-8 text-luxury-muted">
-                    {!! $post->body !!}
+                    {!! $post->body_with_heading_ids !!}
                 </div>
 
                 @if ($post->tags->isNotEmpty())
@@ -88,8 +106,6 @@
                     </div>
                 @endif
             </article>
-
-            <x-blog.sidebar :categories="$categories" :popular-posts="$popularPosts" :tags="$tags" />
         </div>
     </div>
 
@@ -99,6 +115,7 @@
         .richtext-content p { margin: 0.75rem 0; line-height: 1.7; }
         .richtext-content ul { list-style: disc; padding-inline-start: 1.5rem; margin: 0.75rem 0; }
         .richtext-content ol { list-style: decimal; padding-inline-start: 1.5rem; margin: 0.75rem 0; }
+        .richtext-content img { display: block; max-width: 100%; height: auto; margin: 1rem auto; border-radius: 0.5rem; }
         .richtext-content a { color: #c9a227; text-decoration: underline; }
     </style>
 </x-layouts.public>

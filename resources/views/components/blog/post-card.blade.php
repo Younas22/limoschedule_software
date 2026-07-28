@@ -22,9 +22,11 @@
         <p class="mt-2 text-sm text-luxury-muted">{{ $post->excerpt_or_summary }}</p>
 
         <div class="mt-4 flex items-center gap-2 text-xs text-luxury-muted">
-            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-luxury-gold/10 text-[10px] font-semibold text-luxury-gold">
-                {{ strtoupper(substr($post->author?->name ?? 'A', 0, 1)) }}
-            </span>
+            @if ($post->author)
+                <img src="{{ $post->author->avatar_url }}" alt="{{ $post->author->name }}" class="h-6 w-6 shrink-0 rounded-full object-cover">
+            @else
+                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-luxury-gold/10 text-[10px] font-semibold text-luxury-gold">A</span>
+            @endif
             <span class="truncate">{{ $post->author?->name ?? __('Admin') }}</span>
             <span>&middot;</span>
             <span>{{ $post->published_at?->format('M d, Y') }}</span>

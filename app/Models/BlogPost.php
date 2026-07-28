@@ -16,6 +16,11 @@ class BlogPost extends Model
         'published' => 'Published',
     ];
 
+    /**
+     * @var array{html: string, toc: array<int, array{id: string, text: string, level: int}>}|null
+     */
+    private ?array $parsedContentCache = null;
+
     protected $fillable = [
         'blog_category_id',
         'author_id',
@@ -113,6 +118,79 @@ class BlogPost extends Model
         $words = str_word_count(strip_tags($this->body));
 
         return max(1, (int) ceil($words / 200));
+    }
+
+    /**
+     * The post body with `id` attributes injected into every h2/h3 so the
+     * table of contents (built from the same headings) can link to them.
+     */
+    public function getBodyWithHeadingIdsAttribute(): string
+    {
+        return $this->parsedContent()['html'];
+    }
+
+    /**
+     * @return array<int, array{id: string, text: string, level: int}>
+     */
+    public function getTableOfContentsAttribute(): array
+    {
+        return $this->parsedContent()['toc'];
+    }
+
+    /**
+     * @return array{html: string, toc: array<int, array{id: string, text: string, level: int}>}
+     */
+    private function parsedContent(): array
+    {
+        if ($this->parsedContentCache !== null) {
+            return $this->parsedContentCache;
+        }
+
+        $body = (string) $this->body;
+
+        if (trim($body) === '') {
+            return $this->parsedContentCache = ['html' => $body, 'toc' => []];
+        }
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'.$body.'</body></html>');
+        libxml_clear_errors();
+
+        $toc = [];
+        $seen = [];
+
+        foreach ((new \DOMXPath($dom))->query('//h2 | //h3') as $heading) {
+            $text = trim($heading->textContent);
+
+            if ($text === '') {
+                continue;
+            }
+
+            $base = Str::slug($text) ?: 'section';
+            $slug = $base;
+            $i = 1;
+
+            while (isset($seen[$slug])) {
+                $slug = $base.'-'.(++$i);
+            }
+
+            $seen[$slug] = true;
+            $heading->setAttribute('id', $slug);
+
+            $toc[] = [
+                'id' => $slug,
+                'text' => $text,
+                'level' => (int) substr($heading->nodeName, 1),
+            ];
+        }
+
+        $html = '';
+        foreach ($dom->getElementsByTagName('body')->item(0)->childNodes as $child) {
+            $html .= $dom->saveHTML($child);
+        }
+
+        return $this->parsedContentCache = ['html' => $html, 'toc' => $toc];
     }
 
     public function isPublished(): bool

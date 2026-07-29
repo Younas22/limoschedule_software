@@ -1,10 +1,10 @@
 @php
     $navItems = [
+        // Overview
         ['label' => __('Dashboard'), 'route' => 'admin.dashboard', 'permission' => 'dashboard.view', 'icon' => 'grid'],
         ['label' => __('Reports'), 'route' => 'admin.reports.index', 'permission' => 'reports.view', 'icon' => 'bar-chart'],
-        ['label' => __('Notifications'), 'route' => 'admin.notifications.index', 'permission' => null, 'icon' => 'bell'],
-        ['label' => __('Contact Messages'), 'route' => 'admin.contact-messages.index', 'permission' => 'messages.view', 'icon' => 'chat'],
-        ['label' => __('Support Tickets'), 'route' => 'admin.support-tickets.index', 'permission' => 'support.view', 'icon' => 'chat'],
+
+        // Core operations
         [
             'type' => 'group',
             'label' => __('Bookings'),
@@ -15,8 +15,6 @@
                 ['label' => 'Booking Settings', 'route' => 'admin.booking-settings.edit', 'permission' => 'bookings.edit'],
             ],
         ],
-        ['label' => __('Pricing'), 'route' => 'admin.pricing.index', 'permission' => 'pricing.view', 'icon' => 'trending-up'],
-        ['label' => __('Payments'), 'route' => 'admin.payment-gateways.index', 'permission' => 'payments.view', 'icon' => 'credit-card'],
         [
             'type' => 'group',
             'label' => __('Vehicles'),
@@ -38,19 +36,15 @@
                 ['label' => 'Reviews', 'route' => 'admin.reviews.index', 'permission' => 'reviews.view'],
             ],
         ],
-        ['label' => __('Pages'), 'route' => 'admin.pages.index', 'permission' => 'content.view', 'icon' => 'document'],
-        [
-            'type' => 'group',
-            'label' => __('Popular Routes'),
-            'permission' => 'routes.view',
-            'icon' => 'route',
-            'children' => [
-                ['label' => 'All Routes', 'route' => 'admin.popular-routes.index'],
-                ['label' => 'Route Types', 'route' => 'admin.popular-routes.route-types.index'],
-            ],
-        ],
+
+        // Money
+        ['label' => __('Pricing'), 'route' => 'admin.pricing.index', 'permission' => 'pricing.view', 'icon' => 'trending-up'],
+        ['label' => __('Payments'), 'route' => 'admin.payment-gateways.index', 'permission' => 'payments.view', 'icon' => 'credit-card'],
         ['label' => __('Coupons'), 'route' => 'admin.coupons.index', 'permission' => 'coupons.view', 'icon' => 'cash'],
         ['label' => __('Promotions'), 'route' => 'admin.promotions.index', 'permission' => 'promotions.view', 'icon' => 'sparkles'],
+
+        // Content / website
+        ['label' => __('Pages'), 'route' => 'admin.pages.index', 'permission' => 'content.view', 'icon' => 'document'],
         [
             'type' => 'group',
             'label' => __('Blog'),
@@ -60,6 +54,16 @@
                 ['label' => 'All Posts', 'route' => 'admin.blog.index', 'permission' => 'blog.view'],
                 ['label' => 'Categories', 'route' => 'admin.blog.categories.index', 'permission' => 'blog.view'],
                 ['label' => 'Tags', 'route' => 'admin.blog.tags.index', 'permission' => 'blog.view'],
+            ],
+        ],
+        [
+            'type' => 'group',
+            'label' => __('Popular Routes'),
+            'permission' => 'routes.view',
+            'icon' => 'route',
+            'children' => [
+                ['label' => 'All Routes', 'route' => 'admin.popular-routes.index'],
+                ['label' => 'Route Types', 'route' => 'admin.popular-routes.route-types.index'],
             ],
         ],
         [
@@ -76,6 +80,13 @@
                 ['label' => 'Pickup Points', 'route' => 'admin.locations.pickup-points.index'],
             ],
         ],
+
+        // Communication
+        ['label' => __('Notifications'), 'route' => 'admin.notifications.index', 'permission' => null, 'icon' => 'bell'],
+        ['label' => __('Contact Messages'), 'route' => 'admin.contact-messages.index', 'permission' => 'messages.view', 'icon' => 'chat'],
+        ['label' => __('Support Tickets'), 'route' => 'admin.support-tickets.index', 'permission' => 'support.view', 'icon' => 'chat'],
+
+        // System / configuration
         ['label' => __('Roles & Permissions'), 'route' => 'admin.roles.index', 'permission' => 'roles.view', 'icon' => 'shield'],
         ['label' => __('Languages'), 'route' => 'admin.languages.index', 'permission' => 'languages.view', 'icon' => 'globe'],
         ['label' => __('Currencies'), 'route' => 'admin.currencies.index', 'permission' => 'currencies.view', 'icon' => 'cash'],

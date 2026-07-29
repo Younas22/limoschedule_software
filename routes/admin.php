@@ -212,6 +212,7 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
 
         Route::get('{language}/translations', [TranslationController::class, 'edit'])->name('translations.edit')->middleware('permission:languages.edit');
         Route::put('{language}/translations', [TranslationController::class, 'update'])->name('translations.update')->middleware('permission:languages.edit');
+        Route::delete('{language}/translations', [TranslationController::class, 'destroy'])->name('translations.destroy')->middleware('permission:languages.edit');
     });
 
     Route::prefix('currencies')->name('currencies.')->group(function () {

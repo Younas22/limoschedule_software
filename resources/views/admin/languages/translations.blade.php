@@ -15,7 +15,7 @@
         </a>
     </div>
 
-    <form method="POST" action="{{ route('admin.languages.translations.update', $language) }}" x-data="translationEditor()" class="space-y-6">
+    <form method="POST" action="{{ route('admin.languages.translations.update', $language) }}" x-data="translationEditor({{ \Illuminate\Support\Js::from(route('admin.languages.translations.destroy', $language)) }})" class="space-y-6">
         @csrf
         @method('PUT')
 
@@ -28,7 +28,7 @@
 
             <div class="scrollbar-luxury max-h-[32rem] space-y-3 overflow-y-auto pe-1">
                 @forelse ($keys as $key)
-                    <div x-show="matches({{ \Illuminate\Support\Js::from($key) }})" class="grid grid-cols-1 gap-2 rounded-lg border border-luxury-border/60 p-3 sm:grid-cols-2 sm:gap-4">
+                    <div x-show="matches({{ \Illuminate\Support\Js::from($key) }})" class="grid grid-cols-1 gap-2 rounded-lg border border-luxury-border/60 p-3 sm:grid-cols-[1fr_1fr_auto] sm:gap-4">
                         <div>
                             <p class="text-[11px] uppercase tracking-wide text-luxury-muted">Source (English)</p>
                             <p class="mt-1 text-sm text-luxury-white">{{ $key }}</p>
@@ -38,6 +38,12 @@
                             <textarea name="translations[{{ $key }}]" rows="2"
                                 class="mt-1 w-full rounded-lg border border-luxury-border bg-luxury-graphite px-3 py-2 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition"
                                 dir="{{ $language->direction }}">{{ old("translations.$key", $values[$key] ?? '') }}</textarea>
+                        </div>
+                        <div class="flex items-start sm:items-end sm:pb-0.5">
+                            <button type="button" @click="deleteKey({{ \Illuminate\Support\Js::from($key) }}, $el)"
+                                class="w-full rounded-lg border border-red-500/30 px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10 sm:w-auto">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 @empty
@@ -80,7 +86,7 @@
     </form>
 
     <script>
-        function translationEditor() {
+        function translationEditor(destroyUrl) {
             return {
                 search: '',
                 rows: [],
@@ -93,6 +99,24 @@
                 },
                 matches(key) {
                     return this.search === '' || key.toLowerCase().includes(this.search.toLowerCase());
+                },
+                deleteKey(key, buttonEl) {
+                    if (! confirm('Delete this string? This removes the translation for this language only — it will fall back to the English text.')) {
+                        return;
+                    }
+
+                    axios.delete(destroyUrl, { data: { key } })
+                        .then(() => {
+                            buttonEl.closest('[x-show]').remove();
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: { type: 'success', message: 'String deleted successfully.' },
+                            }));
+                        })
+                        .catch(() => {
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: { type: 'error', message: 'Could not delete — please try again.' },
+                            }));
+                        });
                 },
             };
         }

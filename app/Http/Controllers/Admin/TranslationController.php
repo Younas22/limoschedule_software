@@ -50,4 +50,18 @@ class TranslationController extends Controller
 
         return back()->with('status', 'Translations updated successfully.');
     }
+
+    public function destroy(Request $request, Language $language): RedirectResponse
+    {
+        $data = $request->validate([
+            'key' => ['required', 'string'],
+        ]);
+
+        Translation::where('language_id', $language->id)
+            ->where('group', '*')
+            ->where('key', $data['key'])
+            ->delete();
+
+        return back()->with('status', 'String deleted successfully.');
+    }
 }

@@ -18,7 +18,7 @@
             @if (! empty($post->table_of_contents))
                 <aside class="order-2 lg:order-1 lg:col-span-1">
                     <div class="toc-scroll lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto rounded-2xl border border-luxury-border bg-luxury-graphite p-5">
-                        <h3 class="text-sm font-semibold text-luxury-white">Table of Contents</h3>
+                        <h3 class="text-sm font-semibold text-luxury-white">{{ __('Table of Contents') }}</h3>
                         <nav class="mt-3 space-y-2.5 text-sm">
                             @foreach ($post->table_of_contents as $item)
                                 <a href="#{{ $item['id'] }}" class="block text-luxury-muted transition hover:text-luxury-gold {{ $item['level'] === 3 ? 'ps-4 text-xs' : '' }}">
@@ -43,15 +43,15 @@
                     @if ($post->author)
                         <span class="flex items-center gap-2">
                             <img src="{{ $post->author->avatar_url }}" alt="{{ $post->author->name }}" class="h-6 w-6 rounded-full object-cover">
-                            By {{ $post->author->name }}
+                            {{ __('By') }} {{ $post->author->name }}
                         </span>
                         <span>&middot;</span>
                     @endif
                     <span>{{ $post->published_at?->format('M d, Y') }}</span>
                     <span>&middot;</span>
-                    <span>{{ $post->reading_time }} min read</span>
+                    <span>{{ $post->reading_time }} {{ __('min read') }}</span>
                     <span>&middot;</span>
-                    <span class="flex items-center gap-1"><x-icon name="eye" class="h-4 w-4" /> {{ number_format($post->views_count) }} views</span>
+                    <span class="flex items-center gap-1"><x-icon name="eye" class="h-4 w-4" /> {{ number_format($post->views_count) }} {{ __('views') }}</span>
                 </div>
 
                 <div class="mt-5">
@@ -100,7 +100,7 @@
 
                 @if ($related->isNotEmpty())
                     <div class="mt-12">
-                        <h2 class="mb-5 text-lg font-semibold text-luxury-white">Related Posts</h2>
+                        <h2 class="mb-5 text-lg font-semibold text-luxury-white">{{ __('Related Posts') }}</h2>
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             @foreach ($related as $relatedPost)
                                 <x-blog.post-card :post="$relatedPost" />

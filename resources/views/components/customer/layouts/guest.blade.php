@@ -41,7 +41,7 @@
             {{ $slot }}
         </div>
 
-        <p class="mt-6 text-center text-xs text-luxury-muted">&copy; {{ now()->year }} {{ setting('company_name', config('app.name')) }}. All rights reserved.</p>
+        <p class="mt-6 text-center text-xs text-luxury-muted">&copy; {{ now()->year }} {{ setting('company_name', config('app.name')) }}. {{ __('All rights reserved.') }}</p>
     </div>
 </body>
 </html>

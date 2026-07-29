@@ -1,6 +1,6 @@
 @php
     $search = $search ?? null;
-    $heading = $search ? 'Search Results' : (isset($activeCategory) ? $activeCategory->name : (isset($activeTag) ? '#'.$activeTag->name : 'Blog'));
+    $heading = $search ? __('Search Results') : (isset($activeCategory) ? $activeCategory->name : (isset($activeTag) ? '#'.$activeTag->name : __('Blog')));
     $description = isset($activeCategory) ? $activeCategory->description : null;
 @endphp
 
@@ -28,7 +28,7 @@
 
         @if ($featuredPosts->isNotEmpty())
             <div class="mb-12">
-                <h2 class="mb-5 text-lg font-semibold text-luxury-white">Featured</h2>
+                <h2 class="mb-5 text-lg font-semibold text-luxury-white">{{ __('Featured') }}</h2>
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($featuredPosts as $post)
                         <x-blog.post-card :post="$post" />

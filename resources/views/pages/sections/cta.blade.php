@@ -9,15 +9,15 @@
 
     <div class="relative mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 lg:px-8">
         @if ($section->heading)
-            <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ $section->heading }}</h2>
+            <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ __($section->heading) }}</h2>
         @endif
         @if ($section->subheading)
-            <p class="mt-3 text-luxury-muted">{{ $section->subheading }}</p>
+            <p class="mt-3 text-luxury-muted">{{ __($section->subheading) }}</p>
         @endif
         @if ($section->button_text && $section->button_url)
             <div class="mt-7">
                 <a href="{{ str_starts_with($section->button_url, 'http') ? $section->button_url : url($section->button_url) }}" class="inline-flex items-center justify-center rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                    {{ $section->button_text }}
+                    {{ __($section->button_text) }}
                 </a>
             </div>
         @endif

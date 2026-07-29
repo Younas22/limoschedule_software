@@ -55,7 +55,7 @@
                         @continue(in_array($slug, \App\Models\Page::LEGAL_PAGES, true) || in_array($slug, \App\Models\Page::SERVICE_PAGES, true))
                         <li>
                             <a href="{{ $slug === 'home' ? route('pages.home') : route('pages.show', $slug) }}" class="text-sm text-luxury-muted transition hover:text-luxury-gold">
-                                {{ $label }}
+                                {{ __($label) }}
                             </a>
                         </li>
                     @endforeach
@@ -69,7 +69,7 @@
                 <ul class="mt-4 space-y-2.5">
                     @foreach (\App\Models\Page::LEGAL_PAGES as $slug)
                         @continue(! isset($navPages[$slug]))
-                        <li><a href="{{ route('pages.show', $slug) }}" class="text-sm text-luxury-muted transition hover:text-luxury-gold">{{ \App\Models\Page::PAGES[$slug] }}</a></li>
+                        <li><a href="{{ route('pages.show', $slug) }}" class="text-sm text-luxury-muted transition hover:text-luxury-gold">{{ __(\App\Models\Page::PAGES[$slug]) }}</a></li>
                     @endforeach
                 </ul>
             </div>

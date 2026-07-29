@@ -16,10 +16,10 @@
             <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div class="mx-auto max-w-2xl text-center sm:mx-0 sm:text-start">
                     @if ($section->heading)
-                        <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ $section->heading }}</h2>
+                        <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ __($section->heading) }}</h2>
                     @endif
                     @if ($section->subheading)
-                        <p class="mt-3 text-luxury-muted">{{ $section->subheading }}</p>
+                        <p class="mt-3 text-luxury-muted">{{ __($section->subheading) }}</p>
                     @endif
                 </div>
 

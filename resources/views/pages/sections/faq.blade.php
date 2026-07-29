@@ -16,10 +16,10 @@
             @if ($section->heading || $section->subheading)
                 <div class="text-center">
                     @if ($section->heading)
-                        <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ $section->heading }}</h2>
+                        <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ __($section->heading) }}</h2>
                     @endif
                     @if ($section->subheading)
-                        <p class="mt-3 text-luxury-muted">{{ $section->subheading }}</p>
+                        <p class="mt-3 text-luxury-muted">{{ __($section->subheading) }}</p>
                     @endif
                 </div>
             @endif

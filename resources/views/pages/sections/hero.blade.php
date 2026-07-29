@@ -21,13 +21,13 @@
     <div class="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-28 text-center sm:px-6 lg:px-8">
         @if ($section->heading)
             <h1 class="animate-fade-up text-4xl font-semibold leading-tight tracking-tight text-luxury-white sm:text-6xl lg:text-7xl">
-                {{ $section->heading }}
+                {{ __($section->heading) }}
             </h1>
         @endif
 
         @if ($section->subheading)
             <p class="animate-fade-up delay-1 mx-auto mt-6 max-w-2xl text-base text-luxury-muted sm:text-lg">
-                {{ $section->subheading }}
+                {{ __($section->subheading) }}
             </p>
         @endif
 
@@ -37,13 +37,13 @@
                     <a href="{{ str_starts_with($section->button_url, 'http') ? $section->button_url : url($section->button_url) }}" @if (str_starts_with($section->button_url, 'http')) target="_blank" rel="noopener" @endif
                         class="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-luxury-gold px-4 py-3 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-sm">
                         <x-icon name="calendar" class="h-4 w-4 shrink-0" />
-                        {{ $section->button_text }}
+                        {{ __($section->button_text) }}
                     </a>
                 @endif
                 @if ($section->button_text_2 && $section->button_url_2)
                     <a href="{{ str_starts_with($section->button_url_2, 'http') ? $section->button_url_2 : url($section->button_url_2) }}" @if (str_starts_with($section->button_url_2, 'http')) target="_blank" rel="noopener" @endif
                         class="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-luxury-white/30 bg-white/5 px-4 py-3 text-xs font-semibold text-luxury-white backdrop-blur transition hover:border-luxury-white/60 hover:bg-white/10 sm:flex-none sm:gap-2 sm:px-7 sm:py-3.5 sm:text-sm">
-                        {{ $section->button_text_2 }}
+                        {{ __($section->button_text_2) }}
                     </a>
                 @endif
                 @if (setting('phone'))

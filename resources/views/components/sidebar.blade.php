@@ -62,7 +62,7 @@
                     'contact' => 'phone',
                     default => 'star',
                 } }}" class="h-5 w-5" />
-                {{ $label }}
+                {{ __($label) }}
             </a>
         @endforeach
         <a href="{{ route('blog.index') }}" @click="sidebarOpen = false"

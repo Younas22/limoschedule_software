@@ -46,11 +46,34 @@
         @endif
     </form>
 
+    <div x-data="{ selected: [] }">
+        @permission('bookings.delete')
+            <form method="POST" action="{{ route('admin.bookings.bulk-destroy') }}"
+                @submit="if (! confirm('Delete ' + selected.length + ' selected booking(s)? This cannot be undone.')) $event.preventDefault();">
+                @csrf
+                <template x-for="id in selected" :key="id">
+                    <input type="hidden" name="booking_ids[]" :value="id">
+                </template>
+                <div x-show="selected.length > 0" x-cloak class="mb-4 flex items-center justify-between rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-3">
+                    <p class="text-sm text-luxury-muted"><span x-text="selected.length"></span> booking(s) selected</p>
+                    <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                        Delete Selected
+                    </button>
+                </div>
+            </form>
+        @endpermission
+
     <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
+                        @permission('bookings.delete')
+                            <th class="w-10 px-6 py-3">
+                                <input type="checkbox" @change="selected = $event.target.checked ? {{ $bookings->pluck('id')->toJson() }} : []"
+                                    class="h-4 w-4 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                            </th>
+                        @endpermission
                         <th class="px-6 py-3 font-medium">Booking</th>
                         <th class="px-6 py-3 font-medium">Type</th>
                         <th class="px-6 py-3 font-medium">Customer</th>
@@ -64,6 +87,12 @@
                 <tbody class="divide-y divide-luxury-border/60">
                     @forelse ($bookings as $booking)
                         <tr class="hover:bg-luxury-graphite">
+                            @permission('bookings.delete')
+                                <td class="px-6 py-3">
+                                    <input type="checkbox" value="{{ $booking->id }}" x-model.number="selected"
+                                        class="h-4 w-4 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                                </td>
+                            @endpermission
                             <td class="px-6 py-3 font-medium text-luxury-white">{{ $booking->booking_number }}</td>
                             <td class="px-6 py-3 text-luxury-muted">{{ $booking->type_label }}</td>
                             <td class="px-6 py-3 text-luxury-muted">{{ $booking->customer?->name ?? '—' }}</td>
@@ -106,6 +135,12 @@
                             </td>
                             <td class="px-6 py-3">
                                 <div class="flex flex-wrap items-center justify-end gap-2">
+                                    <a href="{{ route('admin.bookings.show', $booking) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                        View
+                                    </a>
+                                    <a href="{{ route('booking.invoice', $booking->booking_number) }}" target="_blank" rel="noopener" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                        Invoice
+                                    </a>
                                     @php $waLink = $whatsapp->linkFor($booking); @endphp
                                     @if ($waLink)
                                         <a href="{{ $waLink }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-500/10">
@@ -155,11 +190,12 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-10 text-center text-luxury-muted">No bookings found.</td>
+                            <td colspan="9" class="px-6 py-10 text-center text-luxury-muted">No bookings found.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+    </div>
     </div>
 </x-admin.layouts.app>

@@ -205,6 +205,13 @@
             <p class="mb-4 text-xs text-luxury-muted">Default meta tags used site-wide when an individual page doesn't set its own.</p>
 
             <div class="mb-5">
+                <x-admin.input-label for="meta_title" value="Default Meta Title" />
+                <x-admin.text-input id="meta_title" name="meta_title" type="text" value="{{ old('meta_title', $settings->meta_title) }}" placeholder="e.g. Premium Chauffeur & Limousine Service" />
+                <p class="mt-1 text-xs text-luxury-muted">Used for the homepage and any page that doesn't set its own Meta Title.</p>
+                <x-admin.input-error :messages="$errors->get('meta_title')" />
+            </div>
+
+            <div class="mb-5">
                 <x-admin.input-label for="meta_description" value="Default Meta Description" />
                 <textarea id="meta_description" name="meta_description" rows="2" maxlength="500"
                     class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('meta_description', $settings->meta_description) }}</textarea>
@@ -238,11 +245,18 @@
                 <x-admin.input-error :messages="$errors->get('og_image')" />
             </div>
 
-            <div>
+            <div class="mb-5">
                 <x-admin.input-label for="google_site_verification" value="Google Search Console Verification Code (optional)" />
                 <x-admin.text-input id="google_site_verification" name="google_site_verification" type="text" value="{{ old('google_site_verification', $settings->google_site_verification) }}" placeholder="e.g. abc123XYZ..." />
                 <p class="mt-1 text-xs text-luxury-muted">Paste just the content value from Google's verification meta tag.</p>
                 <x-admin.input-error :messages="$errors->get('google_site_verification')" />
+            </div>
+
+            <div>
+                <x-admin.input-label for="google_analytics_id" value="Google Analytics Measurement ID (optional)" />
+                <x-admin.text-input id="google_analytics_id" name="google_analytics_id" type="text" value="{{ old('google_analytics_id', $settings->google_analytics_id) }}" placeholder="e.g. G-XXXXXXXXXX" />
+                <p class="mt-1 text-xs text-luxury-muted">Your GA4 Measurement ID. The tracking code is added to every page automatically once saved.</p>
+                <x-admin.input-error :messages="$errors->get('google_analytics_id')" />
             </div>
         </div>
 

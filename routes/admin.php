@@ -141,8 +141,10 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
 
     Route::prefix('bookings')->name('bookings.')->group(function () {
         Route::get('/', [BookingController::class, 'index'])->name('index')->middleware('permission:bookings.view');
+        Route::post('bulk-destroy', [BookingController::class, 'bulkDestroy'])->name('bulk-destroy')->middleware('permission:bookings.delete');
         Route::get('create', [BookingController::class, 'create'])->name('create')->middleware('permission:bookings.create');
         Route::post('/', [BookingController::class, 'store'])->name('store')->middleware('permission:bookings.create');
+        Route::get('{booking}', [BookingController::class, 'show'])->name('show')->middleware('permission:bookings.view');
         Route::get('{booking}/edit', [BookingController::class, 'edit'])->name('edit')->middleware('permission:bookings.edit');
         Route::put('{booking}', [BookingController::class, 'update'])->name('update')->middleware('permission:bookings.edit');
         Route::delete('{booking}', [BookingController::class, 'destroy'])->name('destroy')->middleware('permission:bookings.delete');

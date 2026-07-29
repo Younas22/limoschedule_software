@@ -32,6 +32,7 @@ class PageController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
+            'custom_schema' => ['nullable', 'string'],
         ]);
 
         $data['is_active'] = $request->boolean('is_active');

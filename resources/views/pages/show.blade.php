@@ -1,4 +1,8 @@
 <x-layouts.public :title="$page->meta_title ?: $page->name" :description="$page->meta_description" :current-slug="$page->slug" :nav-pages="$navPages">
+    @if ($page->custom_schema)
+        <x-slot:head>{!! $page->custom_schema !!}</x-slot:head>
+    @endif
+
     @forelse ($sections as $section)
         @include('pages.sections.'.str_replace('_', '-', $section->type), ['section' => $section])
     @empty

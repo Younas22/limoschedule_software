@@ -36,6 +36,7 @@ class BlogPost extends Model
         'meta_title',
         'meta_description',
         'meta_keywords',
+        'custom_schema',
     ];
 
     protected function casts(): array

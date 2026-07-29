@@ -12,6 +12,7 @@ class Setting extends Model
     protected $fillable = [
         'company_name',
         'tagline',
+        'meta_title',
         'logo',
         'favicon',
         'address',
@@ -32,6 +33,7 @@ class Setting extends Model
         'meta_keywords',
         'og_image',
         'google_site_verification',
+        'google_analytics_id',
         'facebook_url',
         'instagram_url',
         'twitter_url',

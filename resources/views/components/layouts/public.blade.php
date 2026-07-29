@@ -3,7 +3,7 @@
 @php
     $navPages = $navPages ?? \App\Models\Page::where('is_active', true)->get()->keyBy('slug');
     $direction = \App\Models\Language::findActiveByCode(app()->getLocale())?->direction ?? 'ltr';
-    $pageTitle = $title ? $title.' — '.setting('company_name', config('app.name', 'Limo Schedule')) : setting('company_name', config('app.name', 'Limo Schedule'));
+    $pageTitle = $title ? $title.' — '.setting('company_name', config('app.name', 'Limo Schedule')) : (setting('meta_title') ?: setting('company_name', config('app.name', 'Limo Schedule')));
     $metaDescription = $description ?: setting('meta_description') ?: setting('tagline');
     $resolvedOgImage = $ogImage ?: setting('og_image_url') ?: setting('logo_url');
 @endphp
@@ -22,6 +22,15 @@
     @endif
     @if (setting('google_site_verification'))
         <meta name="google-site-verification" content="{{ setting('google_site_verification') }}">
+    @endif
+    @if (setting('google_analytics_id'))
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ setting('google_analytics_id') }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){ dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', {{ \Illuminate\Support\Js::from(setting('google_analytics_id')) }});
+        </script>
     @endif
     <link rel="canonical" href="{{ url()->current() }}">
 

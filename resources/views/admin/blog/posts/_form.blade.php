@@ -69,6 +69,15 @@
                     <x-admin.text-input id="meta_keywords" name="meta_keywords" type="text" placeholder="comma, separated, keywords" value="{{ old('meta_keywords', $post?->meta_keywords) }}" />
                     <x-admin.input-error :messages="$errors->get('meta_keywords')" />
                 </div>
+
+                <div>
+                    <x-admin.input-label for="custom_schema" value="Schema Markup (optional)" />
+                    <textarea id="custom_schema" name="custom_schema" rows="6" spellcheck="false"
+                        class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 font-mono text-xs text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition"
+                        placeholder="&lt;script type=&quot;application/ld+json&quot;&gt;{ ... }&lt;/script&gt;">{{ old('custom_schema', $post?->custom_schema) }}</textarea>
+                    <p class="mt-1 text-xs text-luxury-muted">Paste the full &lt;script&gt; tag with your JSON-LD/structured data — it's added to this post's &lt;head&gt; exactly as pasted, alongside the automatic article schema.</p>
+                    <x-admin.input-error :messages="$errors->get('custom_schema')" />
+                </div>
             </div>
         </div>
 

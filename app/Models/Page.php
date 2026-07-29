@@ -55,6 +55,7 @@ class Page extends Model
         'name',
         'meta_title',
         'meta_description',
+        'custom_schema',
         'is_active',
     ];
 

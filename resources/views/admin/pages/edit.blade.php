@@ -36,6 +36,15 @@
                         class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('meta_description', $page->meta_description) }}</textarea>
                     <x-admin.input-error :messages="$errors->get('meta_description')" />
                 </div>
+
+                <div class="sm:col-span-2">
+                    <x-admin.input-label for="custom_schema" value="Schema Markup (optional)" />
+                    <textarea id="custom_schema" name="custom_schema" rows="6" spellcheck="false"
+                        class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 font-mono text-xs text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition"
+                        placeholder="&lt;script type=&quot;application/ld+json&quot;&gt;{ ... }&lt;/script&gt;">{{ old('custom_schema', $page->custom_schema) }}</textarea>
+                    <p class="mt-1 text-xs text-luxury-muted">Paste the full &lt;script&gt; tag with your JSON-LD/structured data — it's added to this page's &lt;head&gt; exactly as pasted.</p>
+                    <x-admin.input-error :messages="$errors->get('custom_schema')" />
+                </div>
             </div>
 
             <label class="flex items-center gap-2 text-sm text-luxury-muted">

@@ -41,6 +41,13 @@ class BookingController extends Controller
         return view('admin.bookings.index', compact('bookings', 'whatsapp'));
     }
 
+    public function show(Booking $booking): View
+    {
+        $booking->load(['customer', 'driver', 'vehicle.category']);
+
+        return view('admin.bookings.show', compact('booking'));
+    }
+
     public function create(): View|RedirectResponse
     {
         if (! booking_setting('manual_booking_enabled', true)) {
@@ -95,6 +102,18 @@ class BookingController extends Controller
         $booking->delete();
 
         return back()->with('status', 'Booking deleted successfully.');
+    }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'booking_ids' => ['required', 'array', 'min:1'],
+            'booking_ids.*' => ['integer', 'exists:bookings,id'],
+        ]);
+
+        $count = Booking::whereIn('id', $data['booking_ids'])->delete();
+
+        return back()->with('status', $count === 1 ? '1 booking deleted successfully.' : "{$count} bookings deleted successfully.");
     }
 
     public function updateStatus(Request $request, Booking $booking): RedirectResponse

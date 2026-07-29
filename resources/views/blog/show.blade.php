@@ -3,10 +3,13 @@
 
     <x-slot:head>
         <script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+        @if ($post->custom_schema)
+            {!! $post->custom_schema !!}
+        @endif
     </x-slot:head>
     @if ($post->featured_image_url)
-        <div class="h-64 w-full overflow-hidden border-b border-luxury-border sm:h-96">
-            <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="h-full w-full object-cover">
+        <div class="mx-auto max-w-6xl px-4 pt-12 sm:px-6 lg:px-8">
+            <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="mx-auto max-h-[32rem] w-full rounded-2xl object-contain">
         </div>
     @endif
 
@@ -14,7 +17,7 @@
         <div class="grid grid-cols-1 gap-10 lg:grid-cols-4">
             @if (! empty($post->table_of_contents))
                 <aside class="order-2 lg:order-1 lg:col-span-1">
-                    <div class="lg:sticky lg:top-24 rounded-2xl border border-luxury-border bg-luxury-charcoal p-5">
+                    <div class="toc-scroll lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto rounded-2xl border border-luxury-border bg-luxury-graphite p-5">
                         <h3 class="text-sm font-semibold text-luxury-white">Table of Contents</h3>
                         <nav class="mt-3 space-y-2.5 text-sm">
                             @foreach ($post->table_of_contents as $item)
@@ -110,12 +113,20 @@
     </div>
 
     <style>
-        .richtext-content h2 { font-size: 1.25rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f4f4f5; }
-        .richtext-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f4f4f5; }
+        .toc-scroll { scrollbar-width: thin; scrollbar-color: #c9a227 transparent; }
+        .toc-scroll::-webkit-scrollbar { width: 6px; }
+        .toc-scroll::-webkit-scrollbar-track { background: transparent; }
+        .toc-scroll::-webkit-scrollbar-thumb { background-color: #c9a227; border-radius: 9999px; }
+        .toc-scroll::-webkit-scrollbar-thumb:hover { background-color: #e0b830; }
+        .richtext-content h2 { font-size: 1.25rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f4f4f5; scroll-margin-top: 5.5rem; }
+        .richtext-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #f4f4f5; scroll-margin-top: 5.5rem; }
         .richtext-content p { margin: 0.75rem 0; line-height: 1.7; }
         .richtext-content ul { list-style: disc; padding-inline-start: 1.5rem; margin: 0.75rem 0; }
         .richtext-content ol { list-style: decimal; padding-inline-start: 1.5rem; margin: 0.75rem 0; }
         .richtext-content img { display: block; max-width: 100%; height: auto; margin: 1rem auto; border-radius: 0.5rem; }
         .richtext-content a { color: #c9a227; text-decoration: underline; }
+        .richtext-content table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.875rem; overflow-x: auto; display: block; }
+        .richtext-content th, .richtext-content td { border: 1px solid #2e2e33; padding: 0.6rem 0.9rem; text-align: start; }
+        .richtext-content th { background: #1c1c1f; font-weight: 600; color: #f4f4f5; }
     </style>
 </x-layouts.public>

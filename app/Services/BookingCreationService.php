@@ -36,7 +36,8 @@ class BookingCreationService
             $data['hours'] ?? null,
             $data['pickup_datetime'],
             (int) ($data['waiting_minutes'] ?? 0),
-            (bool) ($data['has_toll'] ?? false)
+            (bool) ($data['has_toll'] ?? false),
+            (int) ($data['passengers'] ?? 1)
         );
 
         $data['fare_amount'] = $data['fare_amount'] ?? $data['fare_breakdown']['total'];

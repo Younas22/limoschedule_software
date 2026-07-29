@@ -26,6 +26,11 @@ class PricingRule extends Model
         'toll_charge',
         'airport_surcharge',
         'service_fee',
+        'minimum_fare',
+        'included_km',
+        'included_hours',
+        'included_passengers',
+        'extra_passenger_charge',
         'is_active',
     ];
 
@@ -43,6 +48,11 @@ class PricingRule extends Model
             'toll_charge' => 'decimal:2',
             'airport_surcharge' => 'decimal:2',
             'service_fee' => 'decimal:2',
+            'minimum_fare' => 'decimal:2',
+            'included_km' => 'decimal:2',
+            'included_hours' => 'decimal:2',
+            'included_passengers' => 'integer',
+            'extra_passenger_charge' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }
@@ -69,6 +79,11 @@ class PricingRule extends Model
                 'toll_charge' => 8,
                 'airport_surcharge' => 20,
                 'service_fee' => 5,
+                'minimum_fare' => 0,
+                'included_km' => 0,
+                'included_hours' => 0,
+                'included_passengers' => 4,
+                'extra_passenger_charge' => 0,
             ]
         );
     }

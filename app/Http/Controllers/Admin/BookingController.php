@@ -244,6 +244,11 @@ class BookingController extends Controller
             'toll_charge' => (float) $rule->toll_charge,
             'airport_surcharge' => (float) $rule->airport_surcharge,
             'service_fee' => (float) $rule->service_fee,
+            'minimum_fare' => (float) $rule->minimum_fare,
+            'included_km' => (float) $rule->included_km,
+            'included_hours' => (float) $rule->included_hours,
+            'included_passengers' => (int) $rule->included_passengers,
+            'extra_passenger_charge' => (float) $rule->extra_passenger_charge,
             'is_active' => (bool) $rule->is_active,
         ];
 

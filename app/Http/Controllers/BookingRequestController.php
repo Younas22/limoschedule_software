@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\BookingSetting;
 use App\Models\Customer;
+use App\Models\QuoteRequest;
 use App\Models\Vehicle;
 use App\Services\BookingCreationService;
+use App\Services\BookingFareCalculator;
+use App\Services\GoogleMapsService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -33,12 +39,23 @@ class BookingRequestController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'vehicle_category_id' => ['required', 'exists:vehicle_categories,id'],
+            'type' => ['nullable', Rule::in(array_keys(Booking::TYPES))],
             'pickup_location' => ['required', 'string', 'max:255'],
-            'dropoff_location' => ['required', 'string', 'max:255'],
+            'pickup_lat' => ['nullable', 'numeric'],
+            'pickup_lng' => ['nullable', 'numeric'],
+            'pickup_place_id' => ['nullable', 'string', 'max:255'],
+            'dropoff_location' => ['nullable', 'required_unless:type,hourly', 'string', 'max:255'],
+            'dropoff_lat' => ['nullable', 'numeric'],
+            'dropoff_lng' => ['nullable', 'numeric'],
+            'dropoff_place_id' => ['nullable', 'string', 'max:255'],
             'stops' => ['nullable', 'array'],
             'stops.*' => ['nullable', 'string', 'max:255'],
             'pickup_date' => ['required', 'date', 'after_or_equal:today'],
             'pickup_time' => ['required', 'date_format:H:i'],
+            'return_date' => ['nullable', 'required_if:type,round_trip', 'date', 'after_or_equal:pickup_date'],
+            'return_time' => ['nullable', 'required_if:type,round_trip', 'date_format:H:i'],
+            'hours' => ['nullable', 'integer', 'min:1', 'max:24'],
+            'distance_km' => ['nullable', 'numeric', 'min:0'],
             'passengers' => ['required', 'integer', 'min:1', 'max:20'],
             'luggage' => ['required', 'integer', 'min:0', 'max:20'],
         ]);
@@ -61,14 +78,22 @@ class BookingRequestController extends Controller
             'customer_id' => $customer->id,
             'vehicle_id' => $vehicle->id,
             'driver_id' => null,
-            'type' => 'one_way',
+            'type' => $data['type'] ?? 'one_way',
             'pickup_location' => $data['pickup_location'],
-            'dropoff_location' => $data['dropoff_location'],
+            'pickup_lat' => $data['pickup_lat'] ?? null,
+            'pickup_lng' => $data['pickup_lng'] ?? null,
+            'pickup_place_id' => $data['pickup_place_id'] ?? null,
+            'dropoff_location' => $data['dropoff_location'] ?? '',
+            'dropoff_lat' => $data['dropoff_lat'] ?? null,
+            'dropoff_lng' => $data['dropoff_lng'] ?? null,
+            'dropoff_place_id' => $data['dropoff_place_id'] ?? null,
             'stops' => collect($data['stops'] ?? [])->filter(fn ($stop) => filled($stop))->values()->all(),
             'pickup_datetime' => Carbon::parse($data['pickup_date'].' '.$data['pickup_time']),
-            'return_datetime' => null,
-            'hours' => null,
-            'distance_km' => null,
+            'return_datetime' => ($data['return_date'] ?? null) && ($data['return_time'] ?? null)
+                ? Carbon::parse($data['return_date'].' '.$data['return_time'])
+                : null,
+            'hours' => $data['hours'] ?? null,
+            'distance_km' => $data['distance_km'] ?? null,
             'passengers' => $data['passengers'],
             'luggage' => $data['luggage'],
             'waiting_minutes' => 0,
@@ -87,6 +112,107 @@ class BookingRequestController extends Controller
         $bookingCreation->notifyCustomerOfCreation($booking);
 
         return redirect()->route('booking.confirmation', $booking->booking_number);
+    }
+
+    /**
+     * Live AJAX quote for the public booking widget: resolves distance via
+     * Google Distance Matrix (skipped for hourly bookings) and runs the same
+     * fare engine used for real bookings, so the preview never drifts from
+     * what the customer is actually charged.
+     */
+    public function quote(Request $request, GoogleMapsService $maps, BookingFareCalculator $calculator): JsonResponse
+    {
+        $data = $request->validate([
+            'vehicle_category_id' => ['required', 'exists:vehicle_categories,id'],
+            'type' => ['required', Rule::in(array_keys(Booking::TYPES))],
+            'pickup_location' => ['nullable', 'string', 'max:255'],
+            'pickup_lat' => ['nullable', 'numeric'],
+            'pickup_lng' => ['nullable', 'numeric'],
+            'pickup_place_id' => ['nullable', 'string', 'max:255'],
+            'dropoff_location' => ['nullable', 'string', 'max:255'],
+            'dropoff_lat' => ['nullable', 'numeric'],
+            'dropoff_lng' => ['nullable', 'numeric'],
+            'dropoff_place_id' => ['nullable', 'string', 'max:255'],
+            'hours' => ['nullable', 'integer', 'min:1', 'max:24'],
+            'passengers' => ['nullable', 'integer', 'min:1', 'max:60'],
+            'pickup_date' => ['nullable', 'date'],
+            'pickup_time' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        $vehicle = Vehicle::where('vehicle_category_id', $data['vehicle_category_id'])
+            ->where('status', true)
+            ->first();
+
+        if (! $vehicle) {
+            return response()->json(['message' => 'No vehicles are currently available in that category.'], 422);
+        }
+
+        $distanceKm = null;
+        $durationMinutes = null;
+
+        $needsDistance = $data['type'] !== 'hourly'
+            && isset($data['pickup_lat'], $data['pickup_lng'], $data['dropoff_lat'], $data['dropoff_lng']);
+
+        if ($needsDistance) {
+            $result = $maps->distance(
+                (float) $data['pickup_lat'],
+                (float) $data['pickup_lng'],
+                (float) $data['dropoff_lat'],
+                (float) $data['dropoff_lng']
+            );
+
+            if (! $result) {
+                return response()->json(['message' => 'Unable to calculate distance.'], 422);
+            }
+
+            $distanceKm = $result['distance_km'];
+            $durationMinutes = $result['duration_minutes'];
+        }
+
+        $pickupDateTime = ($data['pickup_date'] ?? null) && ($data['pickup_time'] ?? null)
+            ? Carbon::parse($data['pickup_date'].' '.$data['pickup_time'])
+            : now();
+
+        $breakdown = $calculator->breakdown(
+            $vehicle,
+            $data['type'],
+            $distanceKm,
+            $data['hours'] ?? null,
+            $pickupDateTime,
+            0,
+            false,
+            (int) ($data['passengers'] ?? 1)
+        );
+
+        try {
+            QuoteRequest::create([
+                'pickup_location' => $data['pickup_location'] ?? null,
+                'pickup_lat' => $data['pickup_lat'] ?? null,
+                'pickup_lng' => $data['pickup_lng'] ?? null,
+                'pickup_place_id' => $data['pickup_place_id'] ?? null,
+                'dropoff_location' => $data['dropoff_location'] ?? null,
+                'dropoff_lat' => $data['dropoff_lat'] ?? null,
+                'dropoff_lng' => $data['dropoff_lng'] ?? null,
+                'dropoff_place_id' => $data['dropoff_place_id'] ?? null,
+                'vehicle_category_id' => $data['vehicle_category_id'],
+                'type' => $data['type'],
+                'distance_km' => $distanceKm,
+                'duration_minutes' => $durationMinutes,
+                'hours' => $data['hours'] ?? null,
+                'passengers' => $data['passengers'] ?? null,
+                'fare_breakdown' => $breakdown,
+                'total' => $breakdown['total'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to log quote request: '.$e->getMessage());
+        }
+
+        return response()->json([
+            'distance_km' => $distanceKm,
+            'duration_minutes' => $durationMinutes,
+            'vehicle_name' => $vehicle->category?->name ?? $vehicle->name,
+            'breakdown' => $breakdown,
+        ]);
     }
 
     public function confirmation(string $bookingNumber): View

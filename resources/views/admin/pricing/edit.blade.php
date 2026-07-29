@@ -109,6 +109,42 @@
                 </div>
             </div>
 
+            {{-- Included Allowances & Minimum Fare --}}
+            <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                <h3 class="text-sm font-semibold text-luxury-white">Included Allowances &amp; Minimum Fare</h3>
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    <div>
+                        <x-admin.input-label for="minimum_fare" value="Minimum Fare" />
+                        <x-admin.text-input id="minimum_fare" name="minimum_fare" type="number" step="0.01" min="0" value="{{ old('minimum_fare', $rule->minimum_fare ?? 0) }}" required />
+                        <p class="mt-1 text-xs text-luxury-muted">Total never drops below this, if set above 0.</p>
+                        <x-admin.input-error :messages="$errors->get('minimum_fare')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="included_km" value="Included KM" />
+                        <x-admin.text-input id="included_km" name="included_km" type="number" step="0.01" min="0" value="{{ old('included_km', $rule->included_km ?? 0) }}" required />
+                        <p class="mt-1 text-xs text-luxury-muted">Distance covered by the base fare before per-km charges apply.</p>
+                        <x-admin.input-error :messages="$errors->get('included_km')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="included_hours" value="Included Hours" />
+                        <x-admin.text-input id="included_hours" name="included_hours" type="number" step="0.01" min="0" value="{{ old('included_hours', $rule->included_hours ?? 0) }}" required />
+                        <p class="mt-1 text-xs text-luxury-muted">Hours covered by the base fare on hourly bookings.</p>
+                        <x-admin.input-error :messages="$errors->get('included_hours')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="included_passengers" value="Included Passengers" />
+                        <x-admin.text-input id="included_passengers" name="included_passengers" type="number" min="0" value="{{ old('included_passengers', $rule->included_passengers ?? 4) }}" required />
+                        <x-admin.input-error :messages="$errors->get('included_passengers')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="extra_passenger_charge" value="Extra Passenger Charge" />
+                        <x-admin.text-input id="extra_passenger_charge" name="extra_passenger_charge" type="number" step="0.01" min="0" value="{{ old('extra_passenger_charge', $rule->extra_passenger_charge ?? 0) }}" required />
+                        <p class="mt-1 text-xs text-luxury-muted">Charged per passenger beyond the included count.</p>
+                        <x-admin.input-error :messages="$errors->get('extra_passenger_charge')" />
+                    </div>
+                </div>
+            </div>
+
             {{-- Surcharges & Fees --}}
             <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
                 <h3 class="text-sm font-semibold text-luxury-white">Surcharges &amp; Fees</h3>

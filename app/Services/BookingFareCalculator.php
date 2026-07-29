@@ -21,9 +21,10 @@ class BookingFareCalculator
         ?int $hours,
         Carbon $pickupDateTime,
         int $waitingMinutes = 0,
-        bool $hasToll = false
+        bool $hasToll = false,
+        int $passengers = 1
     ): float {
-        return $this->breakdown($vehicle, $type, $distanceKm, $hours, $pickupDateTime, $waitingMinutes, $hasToll)['total'];
+        return $this->breakdown($vehicle, $type, $distanceKm, $hours, $pickupDateTime, $waitingMinutes, $hasToll, $passengers)['total'];
     }
 
     /**
@@ -36,7 +37,8 @@ class BookingFareCalculator
         ?int $hours,
         Carbon $pickupDateTime,
         int $waitingMinutes = 0,
-        bool $hasToll = false
+        bool $hasToll = false,
+        int $passengers = 1
     ): array {
         $rule = PricingRule::resolveForVehicle($vehicle);
         $distanceKm = $distanceKm ?? 0;
@@ -45,12 +47,14 @@ class BookingFareCalculator
 
         $baseFare = round((float) $rule->base_fare * $legMultiplier, 2);
 
+        $billableKm = max($distanceKm - (float) $rule->included_km, 0);
         $distanceFare = $type === 'hourly'
             ? 0.0
-            : round((float) $rule->km_fare * $distanceKm * $legMultiplier, 2);
+            : round((float) $rule->km_fare * $billableKm * $legMultiplier, 2);
 
+        $billableHours = max(max($hours ?? 1, 1) - (float) $rule->included_hours, 0);
         $hourFare = $type === 'hourly'
-            ? round((float) $rule->hour_fare * max($hours ?? 1, 1), 2)
+            ? round((float) $rule->hour_fare * $billableHours, 2)
             : 0.0;
 
         $waitingChargeableMinutes = max($waitingMinutes - $rule->free_waiting_minutes, 0);
@@ -62,11 +66,18 @@ class BookingFareCalculator
         $airportSurcharge = $type === 'airport_transfer' ? round((float) $rule->airport_surcharge, 2) : 0.0;
         $serviceFee = round((float) $rule->service_fee, 2);
 
+        $extraPassengers = max($passengers - (int) $rule->included_passengers, 0);
+        $extraPassengerCharge = round((float) $rule->extra_passenger_charge * $extraPassengers, 2);
+
         $total = round(
             $baseFare + $distanceFare + $hourFare + $waitingCharge
-            + $nightCharge + $weekendCharge + $tollCharge + $airportSurcharge + $serviceFee,
+            + $nightCharge + $weekendCharge + $tollCharge + $airportSurcharge + $serviceFee + $extraPassengerCharge,
             2
         );
+
+        if ((float) $rule->minimum_fare > 0) {
+            $total = max($total, round((float) $rule->minimum_fare, 2));
+        }
 
         return [
             'base_fare' => $baseFare,
@@ -78,6 +89,7 @@ class BookingFareCalculator
             'toll_charge' => $tollCharge,
             'airport_surcharge' => $airportSurcharge,
             'service_fee' => $serviceFee,
+            'extra_passenger_charge' => $extraPassengerCharge,
             'total' => $total,
         ];
     }

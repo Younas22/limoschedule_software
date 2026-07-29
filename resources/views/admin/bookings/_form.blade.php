@@ -18,6 +18,7 @@
         pickupTime: {{ \Illuminate\Support\Js::from(old('pickup_time', $booking?->pickup_datetime?->format('H:i'))) }},
         waitingMinutes: {{ \Illuminate\Support\Js::from((int) old('waiting_minutes', $booking?->waiting_minutes ?? 0)) }},
         hasToll: {{ \Illuminate\Support\Js::from((bool) old('has_toll', $booking?->has_toll ?? false)) }},
+        passengers: {{ \Illuminate\Support\Js::from((int) old('passengers', $booking?->passengers ?? 1)) }},
         stops: {{ \Illuminate\Support\Js::from(array_values($stops) ?: ['']) }},
     })">
 
@@ -171,7 +172,7 @@
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
                 <x-admin.input-label for="passengers" value="Passengers" />
-                <x-admin.text-input id="passengers" name="passengers" type="number" min="1" max="60" value="{{ old('passengers', $booking?->passengers ?? 1) }}" required />
+                <x-admin.text-input id="passengers" name="passengers" type="number" min="1" max="60" x-model.number="passengers" value="{{ old('passengers', $booking?->passengers ?? 1) }}" required />
                 <x-admin.input-error :messages="$errors->get('passengers')" />
             </div>
 
@@ -251,6 +252,10 @@
                         <dt class="text-luxury-muted">Service Fee</dt>
                         <dd class="text-luxury-white" x-text="money(breakdown().service_fee)"></dd>
                     </div>
+                    <div class="flex items-center justify-between" x-show="breakdown().extra_passenger_charge > 0">
+                        <dt class="text-luxury-muted">Extra Passenger Charge</dt>
+                        <dd class="text-luxury-white" x-text="money(breakdown().extra_passenger_charge)"></dd>
+                    </div>
                     <div class="mt-2 flex items-center justify-between border-t border-luxury-border/60 pt-2 font-semibold">
                         <dt class="text-luxury-white">Suggested Total</dt>
                         <dd class="text-luxury-gold" x-text="money(breakdown().total)"></dd>
@@ -289,6 +294,7 @@
             pickupTime: config.pickupTime,
             waitingMinutes: config.waitingMinutes,
             hasToll: config.hasToll,
+            passengers: config.passengers,
             stops: config.stops.length ? config.stops : [''],
 
             activeRule() {
@@ -322,15 +328,17 @@
 
             breakdown() {
                 const rule = this.activeRule();
-                const empty = { base_fare: 0, distance_fare: 0, hour_fare: 0, waiting_charge: 0, night_charge: 0, weekend_charge: 0, toll_charge: 0, airport_surcharge: 0, service_fee: 0, total: 0 };
+                const empty = { base_fare: 0, distance_fare: 0, hour_fare: 0, waiting_charge: 0, night_charge: 0, weekend_charge: 0, toll_charge: 0, airport_surcharge: 0, service_fee: 0, extra_passenger_charge: 0, total: 0 };
                 if (!rule) return empty;
 
                 const distance = parseFloat(this.distanceKm) || 0;
                 const legMultiplier = this.type === 'round_trip' ? 2 : 1;
 
                 const baseFare = round(rule.base_fare * legMultiplier);
-                const distanceFare = this.type === 'hourly' ? 0 : round(rule.km_fare * distance * legMultiplier);
-                const hourFare = this.type === 'hourly' ? round(rule.hour_fare * Math.max(parseInt(this.hours) || 1, 1)) : 0;
+                const billableKm = Math.max(distance - (rule.included_km || 0), 0);
+                const distanceFare = this.type === 'hourly' ? 0 : round(rule.km_fare * billableKm * legMultiplier);
+                const billableHours = Math.max(Math.max(parseInt(this.hours) || 1, 1) - (rule.included_hours || 0), 0);
+                const hourFare = this.type === 'hourly' ? round(rule.hour_fare * billableHours) : 0;
 
                 const chargeableMinutes = Math.max((parseInt(this.waitingMinutes) || 0) - rule.free_waiting_minutes, 0);
                 const waitingCharge = round(rule.waiting_charge_per_minute * chargeableMinutes);
@@ -341,9 +349,16 @@
                 const airportSurcharge = this.type === 'airport_transfer' ? round(rule.airport_surcharge) : 0;
                 const serviceFee = round(rule.service_fee);
 
-                const total = round(baseFare + distanceFare + hourFare + waitingCharge + nightCharge + weekendCharge + tollCharge + airportSurcharge + serviceFee);
+                const extraPassengers = Math.max((parseInt(this.passengers) || 1) - (rule.included_passengers || 0), 0);
+                const extraPassengerCharge = round((rule.extra_passenger_charge || 0) * extraPassengers);
 
-                return { base_fare: baseFare, distance_fare: distanceFare, hour_fare: hourFare, waiting_charge: waitingCharge, night_charge: nightCharge, weekend_charge: weekendCharge, toll_charge: tollCharge, airport_surcharge: airportSurcharge, service_fee: serviceFee, total };
+                let total = round(baseFare + distanceFare + hourFare + waitingCharge + nightCharge + weekendCharge + tollCharge + airportSurcharge + serviceFee + extraPassengerCharge);
+
+                if ((rule.minimum_fare || 0) > 0) {
+                    total = Math.max(total, round(rule.minimum_fare));
+                }
+
+                return { base_fare: baseFare, distance_fare: distanceFare, hour_fare: hourFare, waiting_charge: waitingCharge, night_charge: nightCharge, weekend_charge: weekendCharge, toll_charge: tollCharge, airport_surcharge: airportSurcharge, service_fee: serviceFee, extra_passenger_charge: extraPassengerCharge, total };
             },
 
             money(value) {

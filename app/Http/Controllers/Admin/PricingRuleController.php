@@ -79,6 +79,11 @@ class PricingRuleController extends Controller
             'toll_charge' => ['required', 'numeric', 'min:0'],
             'airport_surcharge' => ['required', 'numeric', 'min:0'],
             'service_fee' => ['required', 'numeric', 'min:0'],
+            'minimum_fare' => ['required', 'numeric', 'min:0'],
+            'included_km' => ['required', 'numeric', 'min:0'],
+            'included_hours' => ['required', 'numeric', 'min:0'],
+            'included_passengers' => ['required', 'integer', 'min:0'],
+            'extra_passenger_charge' => ['required', 'numeric', 'min:0'],
         ]);
 
         $data['weekend_days'] = $data['weekend_days'] ?? [];

@@ -27,6 +27,7 @@ Route::post('contact', [ContactController::class, 'store'])->name('contact.store
 
 Route::prefix('booking')->name('booking.')->group(function () {
     Route::post('/', [BookingRequestController::class, 'store'])->name('store');
+    Route::post('quote', [BookingRequestController::class, 'quote'])->name('quote')->middleware('throttle:30,1');
     Route::get('confirmation/{bookingNumber}', [BookingRequestController::class, 'confirmation'])->name('confirmation');
     Route::get('invoice/{bookingNumber}', [BookingRequestController::class, 'invoice'])->name('invoice');
     Route::get('invoice/{bookingNumber}/download', [BookingRequestController::class, 'downloadInvoice'])->name('invoice.download');

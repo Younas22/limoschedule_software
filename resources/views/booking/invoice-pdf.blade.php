@@ -5,9 +5,12 @@
     <title>{{ $booking->payment_status === 'paid' ? 'Receipt' : 'Invoice' }} {{ $booking->invoice_number }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: Helvetica, Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 28px; font-size: 12px; }
+        @page { size: A4; margin: 18mm 16mm; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 0; font-size: 12px; }
         .brand-table { width: 100%; border-bottom: 2px solid #c9a24b; padding-bottom: 14px; margin-bottom: 20px; }
         .brand-table td { border: none; padding: 0; vertical-align: top; }
+        .brand-table td.logo-cell { width: 180px; padding-right: 14px; }
+        .brand-table img.logo { max-width: 170px; max-height: 44px; }
         .brand h1 { font-size: 17px; margin: 0; }
         .brand p { margin: 2px 0 0; font-size: 11px; color: #666; }
         .invoice-meta { text-align: right; }
@@ -32,6 +35,11 @@
 <body>
     <table class="brand-table">
         <tr>
+            @if ($logoPath)
+                <td class="logo-cell">
+                    <img class="logo" src="{{ $logoPath }}" alt="{{ setting('company_name') }}">
+                </td>
+            @endif
             <td class="brand">
                 <h1>{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</h1>
                 <p>{{ setting('address') }}</p>

@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\PopularRouteController;
+use App\Http\Controllers\Admin\RouteTypeController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\PricingRuleController;
@@ -232,6 +233,18 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::put('{popularRoute}', [PopularRouteController::class, 'update'])->name('update')->middleware('permission:routes.edit');
         Route::delete('{popularRoute}', [PopularRouteController::class, 'destroy'])->name('destroy')->middleware('permission:routes.delete');
         Route::post('{popularRoute}/toggle', [PopularRouteController::class, 'toggleStatus'])->name('toggle')->middleware('permission:routes.edit');
+
+        Route::prefix('route-types')->name('route-types.')->group(function () {
+            Route::get('/', [RouteTypeController::class, 'index'])->name('index')->middleware('permission:routes.view');
+            Route::get('create', [RouteTypeController::class, 'create'])->name('create')->middleware('permission:routes.create');
+            Route::post('/', [RouteTypeController::class, 'store'])->name('store')->middleware('permission:routes.create');
+            Route::get('{routeType}/edit', [RouteTypeController::class, 'edit'])->name('edit')->middleware('permission:routes.edit');
+            Route::put('{routeType}', [RouteTypeController::class, 'update'])->name('update')->middleware('permission:routes.edit');
+            Route::delete('{routeType}', [RouteTypeController::class, 'destroy'])->name('destroy')->middleware('permission:routes.delete');
+            Route::post('{routeType}/toggle', [RouteTypeController::class, 'toggleStatus'])->name('toggle')->middleware('permission:routes.edit');
+            Route::post('{routeType}/move-up', [RouteTypeController::class, 'moveUp'])->name('move-up')->middleware('permission:routes.edit');
+            Route::post('{routeType}/move-down', [RouteTypeController::class, 'moveDown'])->name('move-down')->middleware('permission:routes.edit');
+        });
     });
 
     Route::prefix('coupons')->name('coupons.')->group(function () {

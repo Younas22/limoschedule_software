@@ -2,14 +2,17 @@
 
 <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
     <div>
-        <x-admin.input-label for="type" value="Route Type" />
-        <select id="type" name="type" required
+        <x-admin.input-label for="route_type_id" value="Route Type" />
+        <select id="route_type_id" name="route_type_id" required
             class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition sm:max-w-sm">
-            @foreach (\App\Models\PopularRoute::TYPES as $value => $label)
-                <option value="{{ $value }}" @selected(old('type', $route?->type) === $value)>{{ $label }}</option>
+            @foreach ($routeTypes as $routeTypeOption)
+                <option value="{{ $routeTypeOption->id }}" @selected((int) old('route_type_id', $route?->route_type_id) === $routeTypeOption->id)>{{ $routeTypeOption->name }}</option>
             @endforeach
         </select>
-        <x-admin.input-error :messages="$errors->get('type')" />
+        <p class="mt-1 text-xs text-luxury-muted">
+            Need a different type? <a href="{{ route('admin.popular-routes.route-types.create') }}" class="text-luxury-gold hover:text-luxury-gold-light">Add a route type</a>.
+        </p>
+        <x-admin.input-error :messages="$errors->get('route_type_id')" />
     </div>
 
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">

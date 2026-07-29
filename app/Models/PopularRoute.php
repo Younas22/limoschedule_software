@@ -4,17 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PopularRoute extends Model
 {
-    public const TYPES = [
-        'airport' => 'Airport Route',
-        'city' => 'City Route',
-        'intercity' => 'Intercity Route',
-    ];
-
     protected $fillable = [
-        'type',
+        'route_type_id',
         'pickup',
         'dropoff',
         'distance',
@@ -32,18 +27,18 @@ class PopularRoute extends Model
         ];
     }
 
+    public function routeType(): BelongsTo
+    {
+        return $this->belongsTo(RouteType::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeOfType(Builder $query, string $type): Builder
+    public function scopeOfType(Builder $query, int $routeTypeId): Builder
     {
-        return $query->where('type', $type);
-    }
-
-    public function getTypeLabelAttribute(): string
-    {
-        return self::TYPES[$this->type] ?? $this->type;
+        return $query->where('route_type_id', $routeTypeId);
     }
 }

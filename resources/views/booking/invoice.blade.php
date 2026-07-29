@@ -5,8 +5,13 @@
     <title>{{ $booking->payment_status === 'paid' ? 'Receipt' : 'Invoice' }} {{ $booking->invoice_number }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 32px; }
-        .brand { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 2px solid #c9a24b; padding-bottom: 16px; margin-bottom: 24px; }
+        html { background: #d9d9d9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1a1a1a; margin: 0; padding: 0; }
+        .toolbar { max-width: 210mm; margin: 20px auto 0; padding: 0 16px; display: flex; gap: 10px; }
+        .page { width: 210mm; min-height: 297mm; max-width: calc(100% - 32px); margin: 20px auto 40px; padding: 18mm 16mm; background: #fff; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18); }
+        .brand { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 2px solid #c9a24b; padding-bottom: 16px; margin-bottom: 24px; }
+        .brand .brand-identity { display: flex; align-items: flex-start; gap: 14px; }
+        .brand .logo { max-width: 190px; max-height: 48px; object-fit: contain; display: block; }
         .brand h1 { font-size: 18px; margin: 0; }
         .brand p { margin: 2px 0 0; font-size: 12px; color: #666; }
         .brand .invoice-meta { text-align: right; }
@@ -30,8 +35,9 @@
         .toolbar a.secondary { background: transparent; border: 1px solid #c9a24b; color: #c9a24b; }
         .footer-note { margin-top: 32px; font-size: 11px; color: #999; text-align: center; }
         @media print {
+            html { background: #fff; }
             .toolbar { display: none; }
-            body { padding: 0; }
+            .page { width: auto; min-height: 0; max-width: none; margin: 0; padding: 0; box-shadow: none; }
         }
     </style>
 </head>
@@ -41,12 +47,18 @@
         <a href="{{ route('booking.invoice.download', $booking->booking_number) }}">Download PDF</a>
     </div>
 
+    <div class="page">
     <div class="brand">
-        <div>
-            <h1>{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</h1>
-            <p>{{ setting('address') }}</p>
-            @if (setting('email'))<p>{{ setting('email') }}</p>@endif
-            @if (setting('phone'))<p>{{ setting('phone') }}</p>@endif
+        <div class="brand-identity">
+            @if (setting('invoice_logo_url'))
+                <img class="logo" src="{{ setting('invoice_logo_url') }}" alt="{{ setting('company_name') }}">
+            @endif
+            <div>
+                <h1>{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</h1>
+                <p>{{ setting('address') }}</p>
+                @if (setting('email'))<p>{{ setting('email') }}</p>@endif
+                @if (setting('phone'))<p>{{ setting('phone') }}</p>@endif
+            </div>
         </div>
         <div class="invoice-meta">
             <h2>{{ $booking->payment_status === 'paid' ? 'PAYMENT RECEIPT' : 'INVOICE' }}</h2>
@@ -135,5 +147,6 @@
     </table>
 
     <p class="footer-note">Thank you for choosing {{ setting('company_name', config('app.name', 'Limo Schedule')) }}. This {{ $booking->payment_status === 'paid' ? 'receipt' : 'invoice' }} was generated on {{ now()->format('M d, Y H:i') }}.</p>
+    </div>
 </body>
 </html>

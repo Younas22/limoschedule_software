@@ -39,7 +39,16 @@
             ],
         ],
         ['label' => __('Pages'), 'route' => 'admin.pages.index', 'permission' => 'content.view', 'icon' => 'document'],
-        ['label' => __('Popular Routes'), 'route' => 'admin.popular-routes.index', 'permission' => 'routes.view', 'icon' => 'route'],
+        [
+            'type' => 'group',
+            'label' => __('Popular Routes'),
+            'permission' => 'routes.view',
+            'icon' => 'route',
+            'children' => [
+                ['label' => 'All Routes', 'route' => 'admin.popular-routes.index'],
+                ['label' => 'Route Types', 'route' => 'admin.popular-routes.route-types.index'],
+            ],
+        ],
         ['label' => __('Coupons'), 'route' => 'admin.coupons.index', 'permission' => 'coupons.view', 'icon' => 'cash'],
         ['label' => __('Promotions'), 'route' => 'admin.promotions.index', 'permission' => 'promotions.view', 'icon' => 'sparkles'],
         [

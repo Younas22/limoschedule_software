@@ -29,13 +29,13 @@
         {{-- Branding --}}
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
             <h3 class="mb-4 text-sm font-semibold text-luxury-white">Branding</h3>
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div x-data="{ preview: '{{ $settings->logo_url }}' }">
-                    <x-admin.input-label value="Logo" />
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <div x-data="{ preview: '{{ $settings->logo_url }}' }" class="rounded-xl border border-luxury-border bg-luxury-slate p-4">
+                    <x-admin.input-label value="Logo (White)" />
                     <div class="flex items-center gap-4">
-                        <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-luxury-border bg-luxury-graphite">
+                        <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-luxury-border bg-luxury-black">
                             <template x-if="preview">
-                                <img :src="preview" alt="Logo preview" class="h-full w-full object-contain">
+                                <img :src="preview" alt="White logo preview" class="h-full w-full object-contain">
                             </template>
                             <template x-if="!preview">
                                 <span class="text-xs text-luxury-muted">No logo</span>
@@ -47,11 +47,32 @@
                                 @change="preview = $event.target.files.length ? URL.createObjectURL($event.target.files[0]) : preview">
                         </label>
                     </div>
-                    <p class="mt-2 text-xs text-luxury-muted">PNG or SVG recommended. Max 2MB.</p>
+                    <p class="mt-2 text-xs text-luxury-muted">For dark backgrounds — site header, admin panel. PNG or SVG recommended. Max 2MB.</p>
                     <x-admin.input-error :messages="$errors->get('logo')" />
                 </div>
 
-                <div x-data="{ preview: '{{ $settings->favicon_url }}' }">
+                <div x-data="{ preview: '{{ $settings->logo_dark_url }}' }" class="rounded-xl border border-luxury-border bg-luxury-slate p-4">
+                    <x-admin.input-label value="Logo (Black)" />
+                    <div class="flex items-center gap-4">
+                        <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-luxury-border bg-white">
+                            <template x-if="preview">
+                                <img :src="preview" alt="Black logo preview" class="h-full w-full object-contain">
+                            </template>
+                            <template x-if="!preview">
+                                <span class="text-xs text-luxury-muted">No logo</span>
+                            </template>
+                        </div>
+                        <label class="flex-1 cursor-pointer rounded-lg border border-dashed border-luxury-border px-4 py-3 text-center text-xs text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            <span>Click to upload logo</span>
+                            <input type="file" name="logo_dark" accept="image/*" class="hidden"
+                                @change="preview = $event.target.files.length ? URL.createObjectURL($event.target.files[0]) : preview">
+                        </label>
+                    </div>
+                    <p class="mt-2 text-xs text-luxury-muted">For light backgrounds — invoices, printed documents. PNG or SVG recommended. Max 2MB.</p>
+                    <x-admin.input-error :messages="$errors->get('logo_dark')" />
+                </div>
+
+                <div x-data="{ preview: '{{ $settings->favicon_url }}' }" class="rounded-xl border border-luxury-border bg-luxury-slate p-4">
                     <x-admin.input-label value="Favicon" />
                     <div class="flex items-center gap-4">
                         <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-luxury-border bg-luxury-graphite">
@@ -71,6 +92,11 @@
                     <p class="mt-2 text-xs text-luxury-muted">Square PNG or ICO recommended. Max 512KB.</p>
                     <x-admin.input-error :messages="$errors->get('favicon')" />
                 </div>
+            </div>
+
+            <div class="mt-6">
+                <x-admin.toggle name="invoice_logo_dark" :checked="old('invoice_logo_dark', $settings->invoice_logo_dark)"
+                    label="Use Black Logo on Invoices" description="Off = White logo shown on invoices. On = Black logo shown instead." />
             </div>
         </div>
 

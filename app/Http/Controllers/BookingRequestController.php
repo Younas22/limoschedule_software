@@ -107,9 +107,11 @@ class BookingRequestController extends Controller
     {
         $booking = Booking::with(['vehicle.category', 'driver', 'customer'])->where('booking_number', $bookingNumber)->firstOrFail();
 
+        $logoPath = setting('invoice_logo_path');
+
         $filename = ($booking->payment_status === 'paid' ? 'receipt-' : 'invoice-').$booking->invoice_number.'.pdf';
 
-        return Pdf::loadView('booking.invoice-pdf', compact('booking'))
+        return Pdf::loadView('booking.invoice-pdf', compact('booking', 'logoPath'))
             ->setPaper('a4')
             ->download($filename);
     }

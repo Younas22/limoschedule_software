@@ -32,10 +32,10 @@
     @else
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($vehicles as $vehicle)
-                <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal transition hover:border-luxury-gold/40">
+                <div class="overflow-hidden rounded-2xl border {{ $vehicle->status ? 'border-luxury-border' : 'border-red-500/30' }} bg-luxury-charcoal transition hover:border-luxury-gold/40">
                     <div class="relative aspect-[16/10] w-full overflow-hidden bg-luxury-graphite">
                         @if ($vehicle->image_url)
-                            <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->name }}" class="h-full w-full object-cover">
+                            <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->name }}" class="h-full w-full object-cover {{ $vehicle->status ? '' : 'opacity-50 grayscale' }}">
                         @else
                             <div class="flex h-full w-full items-center justify-center">
                                 <svg class="h-10 w-10 text-luxury-muted" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@
                         </div>
 
                         <div class="absolute end-3 top-3">
-                            <x-admin.status-badge :active="$vehicle->status" />
+                            <x-admin.status-badge :active="$vehicle->status" class="backdrop-blur" />
                         </div>
                     </div>
 
@@ -110,9 +110,15 @@
                         @permission('vehicles.edit')
                             <form method="POST" action="{{ route('admin.vehicles.toggle', $vehicle) }}" class="mt-3">
                                 @csrf
-                                <button type="submit" class="w-full rounded-lg border border-luxury-border py-2 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                    {{ $vehicle->status ? 'Disable Vehicle' : 'Enable Vehicle' }}
-                                </button>
+                                @if ($vehicle->status)
+                                    <button type="submit" class="w-full rounded-lg border border-red-500/30 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                                        Disable Vehicle
+                                    </button>
+                                @else
+                                    <button type="submit" class="w-full rounded-lg border border-emerald-500/30 py-2 text-xs font-medium text-emerald-400 transition hover:bg-emerald-500/10">
+                                        Enable Vehicle
+                                    </button>
+                                @endif
                             </form>
                         @endpermission
                     </div>

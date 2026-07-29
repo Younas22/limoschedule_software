@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PopularRoute;
+use App\Models\RouteType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -13,17 +14,22 @@ class PopularRouteController extends Controller
     public function index(Request $request): View
     {
         $routes = PopularRoute::query()
-            ->when($request->filled('type'), fn ($q) => $q->where('type', $request->query('type')))
+            ->with('routeType')
+            ->when($request->filled('route_type_id'), fn ($q) => $q->where('route_type_id', $request->query('route_type_id')))
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        return view('admin.popular-routes.index', compact('routes'));
+        $routeTypes = RouteType::ordered()->get();
+
+        return view('admin.popular-routes.index', compact('routes', 'routeTypes'));
     }
 
     public function create(): View
     {
-        return view('admin.popular-routes.create');
+        $routeTypes = RouteType::active()->ordered()->get();
+
+        return view('admin.popular-routes.create', compact('routeTypes'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -39,7 +45,9 @@ class PopularRouteController extends Controller
 
     public function edit(PopularRoute $popularRoute): View
     {
-        return view('admin.popular-routes.edit', ['route' => $popularRoute]);
+        $routeTypes = RouteType::active()->ordered()->get();
+
+        return view('admin.popular-routes.edit', ['route' => $popularRoute, 'routeTypes' => $routeTypes]);
     }
 
     public function update(Request $request, PopularRoute $popularRoute): RedirectResponse
@@ -68,7 +76,7 @@ class PopularRouteController extends Controller
     private function validateRoute(Request $request): array
     {
         return $request->validate([
-            'type' => ['required', 'in:'.implode(',', array_keys(PopularRoute::TYPES))],
+            'route_type_id' => ['required', 'exists:route_types,id'],
             'pickup' => ['required', 'string', 'max:255'],
             'dropoff' => ['required', 'string', 'max:255'],
             'distance' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],

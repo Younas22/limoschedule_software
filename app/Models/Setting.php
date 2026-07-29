@@ -14,6 +14,8 @@ class Setting extends Model
         'tagline',
         'meta_title',
         'logo',
+        'logo_dark',
+        'invoice_logo_dark',
         'favicon',
         'address',
         'email',
@@ -45,6 +47,7 @@ class Setting extends Model
     {
         return [
             'tax_rate' => 'decimal:2',
+            'invoice_logo_dark' => 'boolean',
         ];
     }
 
@@ -66,9 +69,44 @@ class Setting extends Model
         return $this->logo ? asset('public/uploads/settings/'.$this->logo) : null;
     }
 
+    public function getLogoDarkUrlAttribute(): ?string
+    {
+        return $this->logo_dark ? asset('public/uploads/settings/'.$this->logo_dark) : null;
+    }
+
+    /**
+     * The logo to render on invoices, honoring the Black/White toggle with a
+     * fallback to whichever logo is actually uploaded.
+     */
+    public function getInvoiceLogoUrlAttribute(): ?string
+    {
+        return $this->invoice_logo_dark
+            ? ($this->logo_dark_url ?? $this->logo_url)
+            : ($this->logo_url ?? $this->logo_dark_url);
+    }
+
     public function getFaviconUrlAttribute(): ?string
     {
         return $this->favicon ? asset('public/uploads/settings/'.$this->favicon) : null;
+    }
+
+    /**
+     * Local filesystem path (not a URL) of the active invoice logo, for
+     * dompdf which reads image files directly rather than over HTTP.
+     */
+    public function getInvoiceLogoPathAttribute(): ?string
+    {
+        $filename = $this->invoice_logo_dark
+            ? ($this->logo_dark ?: $this->logo)
+            : ($this->logo ?: $this->logo_dark);
+
+        if (! $filename) {
+            return null;
+        }
+
+        $path = public_path('uploads/settings/'.$filename);
+
+        return file_exists($path) ? $path : null;
     }
 
     public function getOgImageUrlAttribute(): ?string

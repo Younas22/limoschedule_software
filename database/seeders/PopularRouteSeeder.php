@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\PopularRoute;
+use App\Models\RouteType;
 use Illuminate\Database\Seeder;
 
 class PopularRouteSeeder extends Seeder
@@ -12,6 +13,8 @@ class PopularRouteSeeder extends Seeder
      */
     public function run(): void
     {
+        $typeIds = RouteType::pluck('id', 'slug');
+
         $routes = [
             ['type' => 'airport', 'pickup' => 'JFK International Airport', 'dropoff' => 'Manhattan, NYC', 'distance' => 26, 'estimated_price' => 95],
             ['type' => 'airport', 'pickup' => 'LaGuardia Airport', 'dropoff' => 'Downtown Brooklyn', 'distance' => 18, 'estimated_price' => 70],
@@ -25,9 +28,12 @@ class PopularRouteSeeder extends Seeder
         ];
 
         foreach ($routes as $route) {
+            $routeTypeId = $typeIds[$route['type']] ?? $typeIds->first();
+            unset($route['type']);
+
             PopularRoute::firstOrCreate(
                 ['pickup' => $route['pickup'], 'dropoff' => $route['dropoff']],
-                $route + ['distance_unit' => 'mi', 'is_active' => true]
+                $route + ['route_type_id' => $routeTypeId, 'distance_unit' => 'mi', 'is_active' => true]
             );
         }
     }

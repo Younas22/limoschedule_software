@@ -35,6 +35,7 @@ class SettingController extends Controller
             'company_name' => ['required', 'string', 'max:255'],
             'tagline' => ['nullable', 'string', 'max:255'],
             'logo' => ['nullable', 'image', 'max:2048'],
+            'logo_dark' => ['nullable', 'image', 'max:2048'],
             'favicon' => ['nullable', 'image', 'max:512'],
             'address' => ['nullable', 'string', 'max:1000'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -63,10 +64,16 @@ class SettingController extends Controller
             'youtube_url' => ['nullable', 'url', 'max:255'],
         ]);
 
+        $data['invoice_logo_dark'] = $request->boolean('invoice_logo_dark');
+
         $settings = Setting::current();
 
         if ($request->hasFile('logo')) {
             $data['logo'] = $this->storeUpload($request->file('logo'), 'logo', $settings->logo);
+        }
+
+        if ($request->hasFile('logo_dark')) {
+            $data['logo_dark'] = $this->storeUpload($request->file('logo_dark'), 'logo-dark', $settings->logo_dark);
         }
 
         if ($request->hasFile('favicon')) {

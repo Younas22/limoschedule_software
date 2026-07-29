@@ -5,29 +5,37 @@
             <p class="mt-1 text-sm text-luxury-muted">Airport, city, and intercity routes shown on the public website.</p>
         </div>
 
-        @permission('routes.create')
-            <a href="{{ route('admin.popular-routes.create') }}">
-                <x-admin.button type="button" variant="primary">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    Add Route
-                </x-admin.button>
-            </a>
-        @endpermission
+        <div class="flex items-center gap-2">
+            @permission('routes.view')
+                <a href="{{ route('admin.popular-routes.route-types.index') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                    Route Types
+                </a>
+            @endpermission
+
+            @permission('routes.create')
+                <a href="{{ route('admin.popular-routes.create') }}">
+                    <x-admin.button type="button" variant="primary">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        Add Route
+                    </x-admin.button>
+                </a>
+            @endpermission
+        </div>
     </div>
 
     {{-- Filter --}}
     <form method="GET" class="mb-6 flex flex-wrap items-center gap-3">
-        <select name="type" onchange="this.form.submit()"
+        <select name="route_type_id" onchange="this.form.submit()"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
             <option value="">All Types</option>
-            @foreach (\App\Models\PopularRoute::TYPES as $value => $label)
-                <option value="{{ $value }}" @selected(request('type') === $value)>{{ $label }}</option>
+            @foreach ($routeTypes as $routeType)
+                <option value="{{ $routeType->id }}" @selected((string) request('route_type_id') === (string) $routeType->id)>{{ $routeType->name }}</option>
             @endforeach
         </select>
 
-        @if (request()->filled('type'))
+        @if (request()->filled('route_type_id'))
             <a href="{{ route('admin.popular-routes.index') }}" class="text-xs text-luxury-muted hover:text-luxury-gold">Clear filter</a>
         @endif
     </form>
@@ -50,7 +58,7 @@
                     @forelse ($routes as $route)
                         <tr class="hover:bg-luxury-graphite">
                             <td class="px-6 py-3">
-                                <span class="rounded-full bg-luxury-gold/10 px-2.5 py-1 text-xs font-medium text-luxury-gold">{{ $route->type_label }}</span>
+                                <span class="rounded-full bg-luxury-gold/10 px-2.5 py-1 text-xs font-medium text-luxury-gold">{{ $route->routeType?->name ?? '—' }}</span>
                             </td>
                             <td class="px-6 py-3 font-medium text-luxury-white">{{ $route->pickup }}</td>
                             <td class="px-6 py-3 text-luxury-muted">{{ $route->dropoff }}</td>

@@ -2,10 +2,9 @@
 
 @php
     $settings = $section->route_settings;
-    $groups = collect(\App\Models\PopularRoute::TYPES)->map(fn ($label, $type) => [
-        'type' => $type,
-        'label' => $label,
-        'routes' => \App\Models\PopularRoute::active()->ofType($type)->latest()->limit($settings['limit'])->get(),
+    $groups = \App\Models\RouteType::active()->ordered()->get()->map(fn ($routeType) => [
+        'label' => $routeType->name,
+        'routes' => \App\Models\PopularRoute::active()->ofType($routeType->id)->latest()->limit($settings['limit'])->get(),
     ])->filter(fn ($group) => $group['routes']->isNotEmpty())->values();
 @endphp
 

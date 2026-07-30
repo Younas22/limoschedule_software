@@ -37,7 +37,8 @@ class BookingCreationService
             $data['pickup_datetime'],
             (int) ($data['waiting_minutes'] ?? 0),
             (bool) ($data['has_toll'] ?? false),
-            (int) ($data['passengers'] ?? 1)
+            (int) ($data['passengers'] ?? 1),
+            isset($data['return_distance_km']) ? (float) $data['return_distance_km'] : null
         );
 
         $data['fare_amount'] = $data['fare_amount'] ?? $data['fare_breakdown']['total'];

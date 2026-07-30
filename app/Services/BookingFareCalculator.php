@@ -22,9 +22,10 @@ class BookingFareCalculator
         Carbon $pickupDateTime,
         int $waitingMinutes = 0,
         bool $hasToll = false,
-        int $passengers = 1
+        int $passengers = 1,
+        ?float $returnDistanceKm = null
     ): float {
-        return $this->breakdown($vehicle, $type, $distanceKm, $hours, $pickupDateTime, $waitingMinutes, $hasToll, $passengers)['total'];
+        return $this->breakdown($vehicle, $type, $distanceKm, $hours, $pickupDateTime, $waitingMinutes, $hasToll, $passengers, $returnDistanceKm)['total'];
     }
 
     /**
@@ -38,7 +39,8 @@ class BookingFareCalculator
         Carbon $pickupDateTime,
         int $waitingMinutes = 0,
         bool $hasToll = false,
-        int $passengers = 1
+        int $passengers = 1,
+        ?float $returnDistanceKm = null
     ): array {
         $rule = PricingRule::resolveForVehicle($vehicle);
         $distanceKm = $distanceKm ?? 0;
@@ -47,10 +49,18 @@ class BookingFareCalculator
 
         $baseFare = round((float) $rule->base_fare * $legMultiplier, 2);
 
-        $billableKm = max($distanceKm - (float) $rule->included_km, 0);
+        // Round trip: sum both legs' real distances when the return leg's
+        // distance is known (independent return route); fall back to
+        // doubling the outbound leg when it isn't (e.g. hourly/no return
+        // route captured yet).
+        $totalDistance = $isRoundTrip
+            ? $distanceKm + ($returnDistanceKm ?? $distanceKm)
+            : $distanceKm;
+
+        $billableKm = max($totalDistance - (float) $rule->included_km, 0);
         $distanceFare = $type === 'hourly'
             ? 0.0
-            : round((float) $rule->km_fare * $billableKm * $legMultiplier, 2);
+            : round((float) $rule->km_fare * $billableKm, 2);
 
         $billableHours = max(max($hours ?? 1, 1) - (float) $rule->included_hours, 0);
         $hourFare = $type === 'hourly'

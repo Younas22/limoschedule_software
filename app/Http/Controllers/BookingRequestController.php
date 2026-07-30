@@ -54,6 +54,17 @@ class BookingRequestController extends Controller
             'pickup_time' => ['required', 'date_format:H:i'],
             'return_date' => ['nullable', 'required_if:type,round_trip', 'date', 'after_or_equal:pickup_date'],
             'return_time' => ['nullable', 'required_if:type,round_trip', 'date_format:H:i'],
+            'return_pickup_location' => ['nullable', 'required_if:type,round_trip', 'string', 'max:255'],
+            'return_pickup_lat' => ['nullable', 'numeric'],
+            'return_pickup_lng' => ['nullable', 'numeric'],
+            'return_pickup_place_id' => ['nullable', 'string', 'max:255'],
+            'return_dropoff_location' => ['nullable', 'required_if:type,round_trip', 'string', 'max:255'],
+            'return_dropoff_lat' => ['nullable', 'numeric'],
+            'return_dropoff_lng' => ['nullable', 'numeric'],
+            'return_dropoff_place_id' => ['nullable', 'string', 'max:255'],
+            'return_stops' => ['nullable', 'array'],
+            'return_stops.*' => ['nullable', 'string', 'max:255'],
+            'return_distance_km' => ['nullable', 'numeric', 'min:0'],
             'hours' => ['nullable', 'integer', 'min:1', 'max:24'],
             'distance_km' => ['nullable', 'numeric', 'min:0'],
             'passengers' => ['required', 'integer', 'min:1', 'max:20'],
@@ -92,6 +103,16 @@ class BookingRequestController extends Controller
             'return_datetime' => ($data['return_date'] ?? null) && ($data['return_time'] ?? null)
                 ? Carbon::parse($data['return_date'].' '.$data['return_time'])
                 : null,
+            'return_pickup_location' => $data['return_pickup_location'] ?? null,
+            'return_pickup_lat' => $data['return_pickup_lat'] ?? null,
+            'return_pickup_lng' => $data['return_pickup_lng'] ?? null,
+            'return_pickup_place_id' => $data['return_pickup_place_id'] ?? null,
+            'return_dropoff_location' => $data['return_dropoff_location'] ?? null,
+            'return_dropoff_lat' => $data['return_dropoff_lat'] ?? null,
+            'return_dropoff_lng' => $data['return_dropoff_lng'] ?? null,
+            'return_dropoff_place_id' => $data['return_dropoff_place_id'] ?? null,
+            'return_stops' => collect($data['return_stops'] ?? [])->filter(fn ($stop) => filled($stop))->values()->all(),
+            'return_distance_km' => $data['return_distance_km'] ?? null,
             'hours' => $data['hours'] ?? null,
             'distance_km' => $data['distance_km'] ?? null,
             'passengers' => $data['passengers'],
@@ -133,6 +154,12 @@ class BookingRequestController extends Controller
             'dropoff_lat' => ['nullable', 'numeric'],
             'dropoff_lng' => ['nullable', 'numeric'],
             'dropoff_place_id' => ['nullable', 'string', 'max:255'],
+            'return_pickup_location' => ['nullable', 'string', 'max:255'],
+            'return_pickup_lat' => ['nullable', 'numeric'],
+            'return_pickup_lng' => ['nullable', 'numeric'],
+            'return_dropoff_location' => ['nullable', 'string', 'max:255'],
+            'return_dropoff_lat' => ['nullable', 'numeric'],
+            'return_dropoff_lng' => ['nullable', 'numeric'],
             'hours' => ['nullable', 'integer', 'min:1', 'max:24'],
             'passengers' => ['nullable', 'integer', 'min:1', 'max:60'],
             'pickup_date' => ['nullable', 'date'],
@@ -169,6 +196,30 @@ class BookingRequestController extends Controller
             $durationMinutes = $result['duration_minutes'];
         }
 
+        $returnDistanceKm = null;
+        $returnDurationMinutes = null;
+
+        $needsReturnDistance = $data['type'] === 'round_trip'
+            && isset($data['return_pickup_lat'], $data['return_pickup_lng'], $data['return_dropoff_lat'], $data['return_dropoff_lng']);
+
+        if ($needsReturnDistance) {
+            $returnResult = $maps->distance(
+                (float) $data['return_pickup_lat'],
+                (float) $data['return_pickup_lng'],
+                (float) $data['return_dropoff_lat'],
+                (float) $data['return_dropoff_lng']
+            );
+
+            // The return leg is optional context for a better quote — if it
+            // fails, fall back to the outbound-leg estimate rather than
+            // failing the whole quote (the calculator already does this via
+            // the null $returnDistanceKm fallback).
+            if ($returnResult) {
+                $returnDistanceKm = $returnResult['distance_km'];
+                $returnDurationMinutes = $returnResult['duration_minutes'];
+            }
+        }
+
         $pickupDateTime = ($data['pickup_date'] ?? null) && ($data['pickup_time'] ?? null)
             ? Carbon::parse($data['pickup_date'].' '.$data['pickup_time'])
             : now();
@@ -181,7 +232,8 @@ class BookingRequestController extends Controller
             $pickupDateTime,
             0,
             false,
-            (int) ($data['passengers'] ?? 1)
+            (int) ($data['passengers'] ?? 1),
+            $returnDistanceKm
         );
 
         try {
@@ -198,6 +250,14 @@ class BookingRequestController extends Controller
                 'type' => $data['type'],
                 'distance_km' => $distanceKm,
                 'duration_minutes' => $durationMinutes,
+                'return_pickup_location' => $data['return_pickup_location'] ?? null,
+                'return_pickup_lat' => $data['return_pickup_lat'] ?? null,
+                'return_pickup_lng' => $data['return_pickup_lng'] ?? null,
+                'return_dropoff_location' => $data['return_dropoff_location'] ?? null,
+                'return_dropoff_lat' => $data['return_dropoff_lat'] ?? null,
+                'return_dropoff_lng' => $data['return_dropoff_lng'] ?? null,
+                'return_distance_km' => $returnDistanceKm,
+                'return_duration_minutes' => $returnDurationMinutes,
                 'hours' => $data['hours'] ?? null,
                 'passengers' => $data['passengers'] ?? null,
                 'fare_breakdown' => $breakdown,
@@ -210,6 +270,8 @@ class BookingRequestController extends Controller
         return response()->json([
             'distance_km' => $distanceKm,
             'duration_minutes' => $durationMinutes,
+            'return_distance_km' => $returnDistanceKm,
+            'return_duration_minutes' => $returnDurationMinutes,
             'vehicle_name' => $vehicle->category?->name ?? $vehicle->name,
             'breakdown' => $breakdown,
         ]);

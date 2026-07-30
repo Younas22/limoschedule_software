@@ -13,7 +13,7 @@
     @foreach ($tabs as $tab)
         <a href="{{ route($tab['route']) }}"
             class="shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition {{ request()->routeIs($tab['route']) ? 'bg-luxury-gold/10 text-luxury-gold' : 'text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white' }}">
-            {{ $tab['label'] }}
+            {{ __($tab['label']) }}
         </a>
     @endforeach
 </div>

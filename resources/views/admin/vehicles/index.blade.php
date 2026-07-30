@@ -1,14 +1,14 @@
-<x-admin.layouts.app :title="'Vehicles'">
+<x-admin.layouts.app :title="__('Vehicles')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Vehicles</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Manage your fleet — pricing, features, and photos.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Vehicles') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Manage your fleet — pricing, features, and photos.') }}</p>
         </div>
 
         <div class="flex items-center gap-2">
             @permission('vehicles.view')
                 <a href="{{ route('admin.vehicles.categories.index') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                    Categories
+                    {{ __('Categories') }}
                 </a>
             @endpermission
 
@@ -18,7 +18,7 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                        Add Vehicle
+                        {{ __('Add Vehicle') }}
                     </x-admin.button>
                 </a>
             @endpermission
@@ -27,7 +27,7 @@
 
     @if ($vehicles->isEmpty())
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal px-6 py-16 text-center text-luxury-muted">
-            No vehicles added yet.
+            {{ __('No vehicles added yet.') }}
         </div>
     @else
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -72,35 +72,35 @@
                         <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-luxury-muted">
                             <div class="rounded-lg bg-luxury-graphite py-2">
                                 <p class="font-semibold text-luxury-white">{{ $vehicle->seats }}</p>
-                                <p>Seats</p>
+                                <p>{{ __('Seats') }}</p>
                             </div>
                             <div class="rounded-lg bg-luxury-graphite py-2">
                                 <p class="font-semibold text-luxury-white">{{ $vehicle->luggage }}</p>
-                                <p>Luggage</p>
+                                <p>{{ __('Luggage') }}</p>
                             </div>
                             <div class="rounded-lg bg-luxury-graphite py-2">
                                 <p class="font-semibold capitalize text-luxury-white">{{ $vehicle->transmission }}</p>
-                                <p>Gear</p>
+                                <p>{{ __('Gear') }}</p>
                             </div>
                         </div>
 
                         <div class="mt-4 flex items-center justify-between border-t border-luxury-border pt-4">
                             <div>
-                                <p class="text-[11px] uppercase tracking-wide text-luxury-muted">Base Fare</p>
+                                <p class="text-[11px] uppercase tracking-wide text-luxury-muted">{{ __('Base Fare') }}</p>
                                 <p class="text-lg font-semibold text-luxury-gold">{{ currency($vehicle->base_fare) }}</p>
                             </div>
                             <div class="flex items-center gap-2">
                                 @permission('vehicles.edit')
                                     <a href="{{ route('admin.vehicles.edit', $vehicle) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                        Edit
+                                        {{ __('Edit') }}
                                     </a>
                                 @endpermission
                                 @permission('vehicles.delete')
-                                    <form method="POST" action="{{ route('admin.vehicles.destroy', $vehicle) }}" onsubmit="return confirm('Delete this vehicle?');">
+                                    <form method="POST" action="{{ route('admin.vehicles.destroy', $vehicle) }}" onsubmit="return confirm('{{ __('Delete this vehicle?') }}');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                            Delete
+                                            {{ __('Delete') }}
                                         </button>
                                     </form>
                                 @endpermission
@@ -112,11 +112,11 @@
                                 @csrf
                                 @if ($vehicle->status)
                                     <button type="submit" class="w-full rounded-lg border border-red-500/30 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                        Disable Vehicle
+                                        {{ __('Disable Vehicle') }}
                                     </button>
                                 @else
                                     <button type="submit" class="w-full rounded-lg border border-emerald-500/30 py-2 text-xs font-medium text-emerald-400 transition hover:bg-emerald-500/10">
-                                        Enable Vehicle
+                                        {{ __('Enable Vehicle') }}
                                     </button>
                                 @endif
                             </form>

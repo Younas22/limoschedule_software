@@ -49,7 +49,10 @@ class BookingRequestController extends Controller
             'dropoff_lng' => ['nullable', 'numeric'],
             'dropoff_place_id' => ['nullable', 'string', 'max:255'],
             'stops' => ['nullable', 'array'],
-            'stops.*' => ['nullable', 'string', 'max:255'],
+            'stops.*.location' => ['nullable', 'string', 'max:255'],
+            'stops.*.lat' => ['nullable', 'numeric'],
+            'stops.*.lng' => ['nullable', 'numeric'],
+            'stops.*.place_id' => ['nullable', 'string', 'max:255'],
             'pickup_date' => ['required', 'date', 'after_or_equal:today'],
             'pickup_time' => ['required', 'date_format:H:i'],
             'return_date' => ['nullable', 'required_if:type,round_trip', 'date', 'after_or_equal:pickup_date'],
@@ -63,7 +66,10 @@ class BookingRequestController extends Controller
             'return_dropoff_lng' => ['nullable', 'numeric'],
             'return_dropoff_place_id' => ['nullable', 'string', 'max:255'],
             'return_stops' => ['nullable', 'array'],
-            'return_stops.*' => ['nullable', 'string', 'max:255'],
+            'return_stops.*.location' => ['nullable', 'string', 'max:255'],
+            'return_stops.*.lat' => ['nullable', 'numeric'],
+            'return_stops.*.lng' => ['nullable', 'numeric'],
+            'return_stops.*.place_id' => ['nullable', 'string', 'max:255'],
             'return_distance_km' => ['nullable', 'numeric', 'min:0'],
             'hours' => ['nullable', 'integer', 'min:1', 'max:24'],
             'distance_km' => ['nullable', 'numeric', 'min:0'],
@@ -98,7 +104,7 @@ class BookingRequestController extends Controller
             'dropoff_lat' => $data['dropoff_lat'] ?? null,
             'dropoff_lng' => $data['dropoff_lng'] ?? null,
             'dropoff_place_id' => $data['dropoff_place_id'] ?? null,
-            'stops' => collect($data['stops'] ?? [])->filter(fn ($stop) => filled($stop))->values()->all(),
+            'stops' => $this->normalizeStops($data['stops'] ?? []),
             'pickup_datetime' => Carbon::parse($data['pickup_date'].' '.$data['pickup_time']),
             'return_datetime' => ($data['return_date'] ?? null) && ($data['return_time'] ?? null)
                 ? Carbon::parse($data['return_date'].' '.$data['return_time'])
@@ -111,7 +117,7 @@ class BookingRequestController extends Controller
             'return_dropoff_lat' => $data['return_dropoff_lat'] ?? null,
             'return_dropoff_lng' => $data['return_dropoff_lng'] ?? null,
             'return_dropoff_place_id' => $data['return_dropoff_place_id'] ?? null,
-            'return_stops' => collect($data['return_stops'] ?? [])->filter(fn ($stop) => filled($stop))->values()->all(),
+            'return_stops' => $this->normalizeStops($data['return_stops'] ?? []),
             'return_distance_km' => $data['return_distance_km'] ?? null,
             'hours' => $data['hours'] ?? null,
             'distance_km' => $data['distance_km'] ?? null,
@@ -154,12 +160,20 @@ class BookingRequestController extends Controller
             'dropoff_lat' => ['nullable', 'numeric'],
             'dropoff_lng' => ['nullable', 'numeric'],
             'dropoff_place_id' => ['nullable', 'string', 'max:255'],
+            'stops' => ['nullable', 'array'],
+            'stops.*.location' => ['nullable', 'string', 'max:255'],
+            'stops.*.lat' => ['nullable', 'numeric'],
+            'stops.*.lng' => ['nullable', 'numeric'],
             'return_pickup_location' => ['nullable', 'string', 'max:255'],
             'return_pickup_lat' => ['nullable', 'numeric'],
             'return_pickup_lng' => ['nullable', 'numeric'],
             'return_dropoff_location' => ['nullable', 'string', 'max:255'],
             'return_dropoff_lat' => ['nullable', 'numeric'],
             'return_dropoff_lng' => ['nullable', 'numeric'],
+            'return_stops' => ['nullable', 'array'],
+            'return_stops.*.location' => ['nullable', 'string', 'max:255'],
+            'return_stops.*.lat' => ['nullable', 'numeric'],
+            'return_stops.*.lng' => ['nullable', 'numeric'],
             'hours' => ['nullable', 'integer', 'min:1', 'max:24'],
             'passengers' => ['nullable', 'integer', 'min:1', 'max:60'],
             'pickup_date' => ['nullable', 'date'],
@@ -181,12 +195,13 @@ class BookingRequestController extends Controller
             && isset($data['pickup_lat'], $data['pickup_lng'], $data['dropoff_lat'], $data['dropoff_lng']);
 
         if ($needsDistance) {
-            $result = $maps->distance(
-                (float) $data['pickup_lat'],
-                (float) $data['pickup_lng'],
-                (float) $data['dropoff_lat'],
-                (float) $data['dropoff_lng']
-            );
+            $waypoints = [
+                ['lat' => (float) $data['pickup_lat'], 'lng' => (float) $data['pickup_lng']],
+                ...$this->stopWaypoints($data['stops'] ?? []),
+                ['lat' => (float) $data['dropoff_lat'], 'lng' => (float) $data['dropoff_lng']],
+            ];
+
+            $result = $maps->routeDistance($waypoints);
 
             if (! $result) {
                 return response()->json(['message' => 'Unable to calculate distance.'], 422);
@@ -203,12 +218,13 @@ class BookingRequestController extends Controller
             && isset($data['return_pickup_lat'], $data['return_pickup_lng'], $data['return_dropoff_lat'], $data['return_dropoff_lng']);
 
         if ($needsReturnDistance) {
-            $returnResult = $maps->distance(
-                (float) $data['return_pickup_lat'],
-                (float) $data['return_pickup_lng'],
-                (float) $data['return_dropoff_lat'],
-                (float) $data['return_dropoff_lng']
-            );
+            $returnWaypoints = [
+                ['lat' => (float) $data['return_pickup_lat'], 'lng' => (float) $data['return_pickup_lng']],
+                ...$this->stopWaypoints($data['return_stops'] ?? []),
+                ['lat' => (float) $data['return_dropoff_lat'], 'lng' => (float) $data['return_dropoff_lng']],
+            ];
+
+            $returnResult = $maps->routeDistance($returnWaypoints);
 
             // The return leg is optional context for a better quote — if it
             // fails, fall back to the outbound-leg estimate rather than
@@ -302,5 +318,45 @@ class BookingRequestController extends Controller
         return Pdf::loadView('booking.invoice-pdf', compact('booking', 'logoPath'))
             ->setPaper('a4')
             ->download($filename);
+    }
+
+    /**
+     * Turns submitted stops into ordered {lat, lng} waypoints for
+     * GoogleMapsService::routeDistance() — only stops the user actually
+     * picked from Autocomplete (and therefore have coordinates) can
+     * contribute to the route distance; free-typed-only stops are skipped
+     * rather than failing the whole quote.
+     *
+     * @param  array<int, array{location?: string, lat?: mixed, lng?: mixed}>  $stops
+     * @return array<int, array{lat: float, lng: float}>
+     */
+    private function stopWaypoints(array $stops): array
+    {
+        return collect($stops)
+            ->filter(fn ($stop) => is_array($stop) && isset($stop['lat'], $stop['lng']) && $stop['lat'] !== '' && $stop['lng'] !== '')
+            ->map(fn ($stop) => ['lat' => (float) $stop['lat'], 'lng' => (float) $stop['lng']])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Normalizes submitted stops into the {location, lat, lng, place_id}
+     * shape stored on the booking, dropping any row without a location.
+     *
+     * @param  array<int, array{location?: string, lat?: mixed, lng?: mixed, place_id?: string}>  $stops
+     * @return array<int, array{location: string, lat: ?float, lng: ?float, place_id: ?string}>
+     */
+    private function normalizeStops(array $stops): array
+    {
+        return collect($stops)
+            ->filter(fn ($stop) => is_array($stop) && filled($stop['location'] ?? null))
+            ->map(fn ($stop) => [
+                'location' => $stop['location'],
+                'lat' => filled($stop['lat'] ?? null) ? (float) $stop['lat'] : null,
+                'lng' => filled($stop['lng'] ?? null) ? (float) $stop['lng'] : null,
+                'place_id' => $stop['place_id'] ?? null,
+            ])
+            ->values()
+            ->all();
     }
 }

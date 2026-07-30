@@ -1,14 +1,14 @@
-<x-admin.layouts.app :title="'Customers'">
+<x-admin.layouts.app :title="__('Customers')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Customers</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Manage customer profiles, wallets, loyalty, and bookings.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Customers') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Manage customer profiles, wallets, loyalty, and bookings.') }}</p>
         </div>
 
         <div class="flex items-center gap-2">
             @permission('reviews.view')
                 <a href="{{ route('admin.reviews.index') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                    Reviews
+                    {{ __('Reviews') }}
                 </a>
             @endpermission
 
@@ -18,7 +18,7 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                        Add Customer
+                        {{ __('Add Customer') }}
                     </x-admin.button>
                 </a>
             @endpermission
@@ -30,13 +30,13 @@
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">Customer</th>
-                        <th class="px-6 py-3 font-medium">Contact</th>
-                        <th class="px-6 py-3 font-medium">Bookings</th>
-                        <th class="px-6 py-3 font-medium">Wallet</th>
-                        <th class="px-6 py-3 font-medium">Loyalty</th>
-                        <th class="px-6 py-3 font-medium">Status</th>
-                        <th class="px-6 py-3 text-end font-medium">Actions</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Customer') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Contact') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Bookings') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Wallet') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Loyalty') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Status') }}</th>
+                        <th class="px-6 py-3 text-end font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-luxury-border/60">
@@ -66,20 +66,20 @@
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     @permission('customers.view')
                                         <a href="{{ route('admin.customers.show', $customer) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Profile
+                                            {{ __('Profile') }}
                                         </a>
                                     @endpermission
                                     @permission('customers.edit')
                                         <a href="{{ route('admin.customers.edit', $customer) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </a>
                                     @endpermission
                                     @permission('customers.delete')
-                                        <form method="POST" action="{{ route('admin.customers.destroy', $customer) }}" onsubmit="return confirm('Delete this customer?');">
+                                        <form method="POST" action="{{ route('admin.customers.destroy', $customer) }}" onsubmit="return confirm('{{ __('Delete this customer?') }}');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                                Delete
+                                                {{ __('Delete') }}
                                             </button>
                                         </form>
                                     @endpermission
@@ -88,7 +88,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-10 text-center text-luxury-muted">No customers added yet.</td>
+                            <td colspan="7" class="px-6 py-10 text-center text-luxury-muted">{{ __('No customers added yet.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

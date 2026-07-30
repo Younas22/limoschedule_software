@@ -1,8 +1,8 @@
-<x-admin.layouts.app :title="'Fleet Categories'">
+<x-admin.layouts.app :title="__('Fleet Categories')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Fleet Categories</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Organize your fleet into categories such as Sedan, SUV, or Limousine.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Fleet Categories') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Organize your fleet into categories such as Sedan, SUV, or Limousine.') }}</p>
         </div>
 
         @permission('vehicles.create')
@@ -11,7 +11,7 @@
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
-                    Add Category
+                    {{ __('Add Category') }}
                 </x-admin.button>
             </a>
         @endpermission
@@ -22,12 +22,12 @@
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">Order</th>
-                        <th class="px-6 py-3 font-medium">Icon</th>
-                        <th class="px-6 py-3 font-medium">Image</th>
-                        <th class="px-6 py-3 font-medium">Category</th>
-                        <th class="px-6 py-3 font-medium">Status</th>
-                        <th class="px-6 py-3 text-end font-medium">Actions</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Order') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Icon') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Image') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Category') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Status') }}</th>
+                        <th class="px-6 py-3 text-end font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-luxury-border/60">
@@ -62,7 +62,7 @@
                             <td class="px-6 py-3">
                                 <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-luxury-border bg-luxury-graphite">
                                     @if ($category->icon_url)
-                                        <img src="{{ $category->icon_url }}" alt="{{ $category->name }} icon" class="h-full w-full object-cover">
+                                        <img src="{{ $category->icon_url }}" alt="{{ __(':name icon', ['name' => $category->name]) }}" class="h-full w-full object-cover">
                                     @else
                                         <svg class="h-5 w-5 text-luxury-muted" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 17a2 2 0 11-4 0 2 2 0 014 0zM20 17a2 2 0 11-4 0 2 2 0 014 0zM6 17H4v-4l1.5-4.5A2 2 0 017.4 7h9.2a2 2 0 011.9 1.5L20 13v4h-2m-12 0h8m-8 0H4" />
@@ -75,7 +75,7 @@
                                     @if ($category->image_url)
                                         <img src="{{ $category->image_url }}" alt="{{ $category->name }}" class="h-full w-full object-cover">
                                     @else
-                                        <span class="text-[10px] text-luxury-muted">No image</span>
+                                        <span class="text-[10px] text-luxury-muted">{{ __('No image') }}</span>
                                     @endif
                                 </div>
                             </td>
@@ -90,22 +90,22 @@
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     @permission('vehicles.edit')
                                         <a href="{{ route('admin.vehicles.categories.edit', $category) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </a>
                                         <form method="POST" action="{{ route('admin.vehicles.categories.toggle', $category) }}">
                                             @csrf
                                             <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                                {{ $category->is_active ? 'Disable' : 'Enable' }}
+                                                {{ $category->is_active ? __('Disable') : __('Enable') }}
                                             </button>
                                         </form>
                                     @endpermission
 
                                     @permission('vehicles.delete')
-                                        <form method="POST" action="{{ route('admin.vehicles.categories.destroy', $category) }}" onsubmit="return confirm('Delete this category?');">
+                                        <form method="POST" action="{{ route('admin.vehicles.categories.destroy', $category) }}" onsubmit="return confirm('{{ __('Delete this category?') }}');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                                Delete
+                                                {{ __('Delete') }}
                                             </button>
                                         </form>
                                     @endpermission
@@ -114,7 +114,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-luxury-muted">No fleet categories added yet.</td>
+                            <td colspan="6" class="px-6 py-10 text-center text-luxury-muted">{{ __('No fleet categories added yet.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

@@ -3,10 +3,10 @@
 <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div class="sm:col-span-2">
-            <x-admin.input-label for="city_id" value="City" />
+            <x-admin.input-label for="city_id" value="{{ __('City') }}" />
             <select id="city_id" name="city_id" required
                 class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
-                <option value="">Select a city</option>
+                <option value="">{{ __('Select a city') }}</option>
                 @foreach ($cities->groupBy(fn ($city) => $city->country->name) as $countryName => $countryCities)
                     <optgroup label="{{ $countryName }}">
                         @foreach ($countryCities as $city)
@@ -19,13 +19,13 @@
         </div>
 
         <div>
-            <x-admin.input-label for="name" value="Pickup Point Name" />
-            <x-admin.text-input id="name" name="name" type="text" value="{{ old('name', $model?->name) }}" placeholder="e.g. The Plaza Hotel" required autofocus />
+            <x-admin.input-label for="name" value="{{ __('Pickup Point Name') }}" />
+            <x-admin.text-input id="name" name="name" type="text" value="{{ old('name', $model?->name) }}" placeholder="{{ __('e.g. The Plaza Hotel') }}" required autofocus />
             <x-admin.input-error :messages="$errors->get('name')" />
         </div>
 
         <div>
-            <x-admin.input-label for="type" value="Type" />
+            <x-admin.input-label for="type" value="{{ __('Type') }}" />
             <select id="type" name="type" required
                 class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
                 @foreach ($types as $value => $label)
@@ -36,8 +36,8 @@
         </div>
 
         <div class="sm:col-span-2">
-            <x-admin.input-label for="address" value="Address" />
-            <x-admin.text-input id="address" name="address" type="text" value="{{ old('address', $model?->address) }}" placeholder="Optional full address" />
+            <x-admin.input-label for="address" value="{{ __('Address') }}" />
+            <x-admin.text-input id="address" name="address" type="text" value="{{ old('address', $model?->address) }}" placeholder="{{ __('Optional full address') }}" />
             <x-admin.input-error :messages="$errors->get('address')" />
         </div>
     </div>

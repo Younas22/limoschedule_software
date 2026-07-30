@@ -9,7 +9,11 @@
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $direction }}"
-    data-theme="{{ setting('theme_mode', 'dark') }}" class="{{ setting('theme_mode', 'dark') === 'light' ? '' : 'dark' }}">
+    {{-- The public marketing site always stays on the luxury dark theme —
+         Admin Settings → Light Mode is an admin/customer-panel-only
+         preference (Setting::theme_mode) and must never bleed into the
+         public site's branding. --}}
+    data-theme="dark" class="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

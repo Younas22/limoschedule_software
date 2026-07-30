@@ -10,7 +10,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="flex min-h-screen items-center justify-center bg-luxury-black px-4 font-sans text-luxury-white antialiased">
+<body class="flex min-h-screen items-center justify-center bg-luxury-charcoal px-4 font-sans text-luxury-white antialiased">
     <div class="pointer-events-none fixed inset-0 overflow-hidden">
         <div class="absolute left-1/2 top-0 h-96 w-96 -translate-x-1/2 rounded-full bg-luxury-gold/10 blur-3xl"></div>
     </div>

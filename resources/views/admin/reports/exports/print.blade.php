@@ -25,7 +25,7 @@
 </head>
 <body>
     <div class="toolbar">
-        <button onclick="window.print()">Print / Save as PDF</button>
+        <button onclick="window.print()">{{ __('Print / Save as PDF') }}</button>
     </div>
 
     <div class="brand">
@@ -33,11 +33,11 @@
             <h1>{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</h1>
             <p>{{ setting('address') }}</p>
         </div>
-        <p>Generated {{ now()->format('M d, Y H:i') }}</p>
+        <p>{{ __('Generated :date', ['date' => now()->format('M d, Y H:i')]) }}</p>
     </div>
 
     <h2>{{ $title }}</h2>
-    <p class="meta">{{ $from->format('M d, Y') }} &ndash; {{ $to->format('M d, Y') }} &middot; {{ count($rows) }} record{{ count($rows) === 1 ? '' : 's' }}</p>
+    <p class="meta">{{ $from->format('M d, Y') }} &ndash; {{ $to->format('M d, Y') }} &middot; {{ trans_choice(':count record|:count records', count($rows)) }}</p>
 
     <table>
         <thead>
@@ -56,7 +56,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ count($headers) }}" style="text-align:center; color:#888;">No records found.</td>
+                    <td colspan="{{ count($headers) }}" style="text-align:center; color:#888;">{{ __('No records found.') }}</td>
                 </tr>
             @endforelse
         </tbody>

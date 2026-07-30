@@ -1,17 +1,17 @@
-<x-admin.layouts.app :title="'Translate — '.$language->name">
+<x-admin.layouts.app :title="__('Translate — :name', ['name' => $language->name])">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Translation Editor</h2>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Translation Editor') }}</h2>
             <p class="mt-1 text-sm text-luxury-muted">
-                Editing <span class="text-luxury-white">{{ $language->name }}</span> ({{ $language->native_name }}) &mdash;
-                changes apply across the panel immediately after saving.
+                {{ __('Editing') }} <span class="text-luxury-white">{{ $language->name }}</span> ({{ $language->native_name }}) &mdash;
+                {{ __('changes apply across the panel immediately after saving.') }}
             </p>
         </div>
         <a href="{{ route('admin.languages.index') }}" class="flex items-center gap-1.5 text-sm text-luxury-muted hover:text-luxury-white">
             <svg class="h-4 w-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
-            Back to Languages
+            {{ __('Back to Languages') }}
         </a>
     </div>
 
@@ -21,8 +21,8 @@
 
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
             <div class="mb-4 flex items-center justify-between gap-4">
-                <h3 class="text-sm font-semibold text-luxury-white">Existing Strings</h3>
-                <input type="search" x-model="search" placeholder="Search keys..."
+                <h3 class="text-sm font-semibold text-luxury-white">{{ __('Existing Strings') }}</h3>
+                <input type="search" x-model="search" placeholder="{{ __('Search keys...') }}"
                     class="w-full max-w-xs rounded-lg border border-luxury-border bg-luxury-graphite px-3 py-2 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
             </div>
 
@@ -30,7 +30,7 @@
                 @forelse ($keys as $key)
                     <div x-show="matches({{ \Illuminate\Support\Js::from($key) }})" class="grid grid-cols-1 gap-2 rounded-lg border border-luxury-border/60 p-3 sm:grid-cols-[1fr_1fr_auto] sm:gap-4">
                         <div>
-                            <p class="text-[11px] uppercase tracking-wide text-luxury-muted">Source (English)</p>
+                            <p class="text-[11px] uppercase tracking-wide text-luxury-muted">{{ __('Source (English)') }}</p>
                             <p class="mt-1 text-sm text-luxury-white">{{ $key }}</p>
                         </div>
                         <div>
@@ -42,38 +42,38 @@
                         <div class="flex items-start sm:items-end sm:pb-0.5">
                             <button type="button" @click="deleteKey({{ \Illuminate\Support\Js::from($key) }}, $el)"
                                 class="w-full rounded-lg border border-red-500/30 px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10 sm:w-auto">
-                                Delete
+                                {{ __('Delete') }}
                             </button>
                         </div>
                     </div>
                 @empty
-                    <p class="py-6 text-center text-sm text-luxury-muted">No translation strings yet. Add one below.</p>
+                    <p class="py-6 text-center text-sm text-luxury-muted">{{ __('No translation strings yet. Add one below.') }}</p>
                 @endforelse
             </div>
         </div>
 
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
             <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-sm font-semibold text-luxury-white">Add New String</h3>
+                <h3 class="text-sm font-semibold text-luxury-white">{{ __('Add New String') }}</h3>
                 <button type="button" @click="addRow()" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                    + Add Row
+                    {{ __('+ Add Row') }}
                 </button>
             </div>
 
             <template x-if="rows.length === 0">
-                <p class="text-sm text-luxury-muted">No new strings queued. Click "Add Row" to create one.</p>
+                <p class="text-sm text-luxury-muted">{{ __('No new strings queued. Click "Add Row" to create one.') }}</p>
             </template>
 
             <div class="space-y-3">
                 <template x-for="(row, index) in rows" :key="row.id">
                     <div class="grid grid-cols-1 gap-2 rounded-lg border border-luxury-border/60 p-3 sm:grid-cols-[1fr_1fr_auto] sm:gap-3">
-                        <input type="text" :name="'new_translations['+index+'][key]'" x-model="row.key" placeholder="Source key (English text)"
+                        <input type="text" :name="'new_translations['+index+'][key]'" x-model="row.key" placeholder="{{ __('Source key (English text)') }}"
                             class="w-full rounded-lg border border-luxury-border bg-luxury-graphite px-3 py-2 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                        <input type="text" :name="'new_translations['+index+'][value]'" x-model="row.value" placeholder="Translation"
+                        <input type="text" :name="'new_translations['+index+'][value]'" x-model="row.value" placeholder="{{ __('Translation') }}"
                             dir="{{ $language->direction }}"
                             class="w-full rounded-lg border border-luxury-border bg-luxury-graphite px-3 py-2 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
                         <button type="button" @click="removeRow(index)" class="rounded-lg border border-red-500/30 px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                            Remove
+                            {{ __('Remove') }}
                         </button>
                     </div>
                 </template>
@@ -81,7 +81,7 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <x-admin.button type="submit" variant="primary">Save Translations</x-admin.button>
+            <x-admin.button type="submit" variant="primary">{{ __('Save Translations') }}</x-admin.button>
         </div>
     </form>
 
@@ -101,7 +101,7 @@
                     return this.search === '' || key.toLowerCase().includes(this.search.toLowerCase());
                 },
                 deleteKey(key, buttonEl) {
-                    if (! confirm('Delete this string? This removes the translation for this language only — it will fall back to the English text.')) {
+                    if (! confirm('{{ __('Delete this string? This removes the translation for this language only — it will fall back to the English text.') }}')) {
                         return;
                     }
 
@@ -109,12 +109,12 @@
                         .then(() => {
                             buttonEl.closest('[x-show]').remove();
                             window.dispatchEvent(new CustomEvent('notify', {
-                                detail: { type: 'success', message: 'String deleted successfully.' },
+                                detail: { type: 'success', message: '{{ __('String deleted successfully.') }}' },
                             }));
                         })
                         .catch(() => {
                             window.dispatchEvent(new CustomEvent('notify', {
-                                detail: { type: 'error', message: 'Could not delete — please try again.' },
+                                detail: { type: 'error', message: '{{ __('Could not delete — please try again.') }}' },
                             }));
                         });
                 },

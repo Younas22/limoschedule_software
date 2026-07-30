@@ -3,10 +3,10 @@
 <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div class="sm:col-span-2">
-            <x-admin.input-label for="city_id" value="City" />
+            <x-admin.input-label for="city_id" value="{{ __('City') }}" />
             <select id="city_id" name="city_id" required
                 class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
-                <option value="">Select a city</option>
+                <option value="">{{ __('Select a city') }}</option>
                 @foreach ($cities->groupBy(fn ($city) => $city->country->name) as $countryName => $countryCities)
                     <optgroup label="{{ $countryName }}">
                         @foreach ($countryCities as $city)
@@ -19,14 +19,14 @@
         </div>
 
         <div>
-            <x-admin.input-label for="name" value="Airport Name" />
-            <x-admin.text-input id="name" name="name" type="text" value="{{ old('name', $model?->name) }}" placeholder="e.g. Los Angeles International Airport" required autofocus />
+            <x-admin.input-label for="name" value="{{ __('Airport Name') }}" />
+            <x-admin.text-input id="name" name="name" type="text" value="{{ old('name', $model?->name) }}" placeholder="{{ __('e.g. Los Angeles International Airport') }}" required autofocus />
             <x-admin.input-error :messages="$errors->get('name')" />
         </div>
 
         <div>
-            <x-admin.input-label for="code" value="IATA Code" />
-            <x-admin.text-input id="code" name="code" type="text" value="{{ old('code', $model?->code) }}" placeholder="e.g. LAX" maxlength="10" class="uppercase" />
+            <x-admin.input-label for="code" value="{{ __('IATA Code') }}" />
+            <x-admin.text-input id="code" name="code" type="text" value="{{ old('code', $model?->code) }}" placeholder="{{ __('e.g. LAX') }}" maxlength="10" class="uppercase" />
             <x-admin.input-error :messages="$errors->get('code')" />
         </div>
     </div>

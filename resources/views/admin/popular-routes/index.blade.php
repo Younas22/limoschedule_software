@@ -1,14 +1,14 @@
-<x-admin.layouts.app :title="'Popular Routes'">
+<x-admin.layouts.app :title="__('Popular Routes')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Popular Routes</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Airport, city, and intercity routes shown on the public website.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Popular Routes') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Airport, city, and intercity routes shown on the public website.') }}</p>
         </div>
 
         <div class="flex items-center gap-2">
             @permission('routes.view')
                 <a href="{{ route('admin.popular-routes.route-types.index') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                    Route Types
+                    {{ __('Route Types') }}
                 </a>
             @endpermission
 
@@ -18,7 +18,7 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                        Add Route
+                        {{ __('Add Route') }}
                     </x-admin.button>
                 </a>
             @endpermission
@@ -29,14 +29,14 @@
     <form method="GET" class="mb-6 flex flex-wrap items-center gap-3">
         <select name="route_type_id" onchange="this.form.submit()"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-            <option value="">All Types</option>
+            <option value="">{{ __('All Types') }}</option>
             @foreach ($routeTypes as $routeType)
                 <option value="{{ $routeType->id }}" @selected((string) request('route_type_id') === (string) $routeType->id)>{{ $routeType->name }}</option>
             @endforeach
         </select>
 
         @if (request()->filled('route_type_id'))
-            <a href="{{ route('admin.popular-routes.index') }}" class="text-xs text-luxury-muted hover:text-luxury-gold">Clear filter</a>
+            <a href="{{ route('admin.popular-routes.index') }}" class="text-xs text-luxury-muted hover:text-luxury-gold">{{ __('Clear filter') }}</a>
         @endif
     </form>
 
@@ -45,13 +45,13 @@
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">Type</th>
-                        <th class="px-6 py-3 font-medium">Pickup</th>
-                        <th class="px-6 py-3 font-medium">Dropoff</th>
-                        <th class="px-6 py-3 font-medium">Distance</th>
-                        <th class="px-6 py-3 font-medium">Est. Price</th>
-                        <th class="px-6 py-3 font-medium">Status</th>
-                        <th class="px-6 py-3 text-end font-medium">Actions</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Type') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Pickup') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Dropoff') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Distance') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Est. Price') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Status') }}</th>
+                        <th class="px-6 py-3 text-end font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-luxury-border/60">
@@ -69,22 +69,22 @@
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     @permission('routes.edit')
                                         <a href="{{ route('admin.popular-routes.edit', $route) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </a>
                                         <form method="POST" action="{{ route('admin.popular-routes.toggle', $route) }}">
                                             @csrf
                                             <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                                {{ $route->is_active ? 'Disable' : 'Enable' }}
+                                                {{ $route->is_active ? __('Disable') : __('Enable') }}
                                             </button>
                                         </form>
                                     @endpermission
 
                                     @permission('routes.delete')
-                                        <form method="POST" action="{{ route('admin.popular-routes.destroy', $route) }}" onsubmit="return confirm('Delete this route?');">
+                                        <form method="POST" action="{{ route('admin.popular-routes.destroy', $route) }}" onsubmit="return confirm('{{ __('Delete this route?') }}');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                                Delete
+                                                {{ __('Delete') }}
                                             </button>
                                         </form>
                                     @endpermission
@@ -93,7 +93,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-10 text-center text-luxury-muted">No popular routes added yet.</td>
+                            <td colspan="7" class="px-6 py-10 text-center text-luxury-muted">{{ __('No popular routes added yet.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -105,17 +105,17 @@
         <div class="mt-6 flex items-center justify-between text-sm text-luxury-muted">
             <div>
                 @if ($routes->onFirstPage())
-                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">Previous</span>
+                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">{{ __('Previous') }}</span>
                 @else
-                    <a href="{{ $routes->previousPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">Previous</a>
+                    <a href="{{ $routes->previousPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">{{ __('Previous') }}</a>
                 @endif
             </div>
-            <p>Page {{ $routes->currentPage() }} of {{ $routes->lastPage() }}</p>
+            <p>{{ __('Page :current of :last', ['current' => $routes->currentPage(), 'last' => $routes->lastPage()]) }}</p>
             <div>
                 @if ($routes->hasMorePages())
-                    <a href="{{ $routes->nextPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">Next</a>
+                    <a href="{{ $routes->nextPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">{{ __('Next') }}</a>
                 @else
-                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">Next</span>
+                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">{{ __('Next') }}</span>
                 @endif
             </div>
         </div>

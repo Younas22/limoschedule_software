@@ -1,13 +1,13 @@
-<x-admin.layouts.app :title="'Reviews'">
+<x-admin.layouts.app :title="__('Reviews')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Reviews</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Moderate customer, driver, and vehicle reviews before they appear as testimonials.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Reviews') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Moderate customer, driver, and vehicle reviews before they appear as testimonials.') }}</p>
         </div>
 
         <div class="flex items-center gap-3">
             <a href="{{ route('admin.customers.index') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                Customers
+                {{ __('Customers') }}
             </a>
             @permission('reviews.create')
                 <a href="{{ route('admin.reviews.create') }}">
@@ -15,7 +15,7 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                        Add Review
+                        {{ __('Add Review') }}
                     </x-admin.button>
                 </a>
             @endpermission
@@ -26,7 +26,7 @@
     <form method="GET" class="mb-6 flex flex-wrap items-center gap-3">
         <select name="status" onchange="this.form.submit()"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-            <option value="">All Statuses</option>
+            <option value="">{{ __('All Statuses') }}</option>
             @foreach (\App\Models\Review::STATUSES as $value => $label)
                 <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
             @endforeach
@@ -34,21 +34,21 @@
 
         <select name="type" onchange="this.form.submit()"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-            <option value="">All Reviews</option>
-            <option value="driver" @selected(request('type') === 'driver')>Driver Reviews</option>
-            <option value="vehicle" @selected(request('type') === 'vehicle')>Vehicle Reviews</option>
+            <option value="">{{ __('All Reviews') }}</option>
+            <option value="driver" @selected(request('type') === 'driver')>{{ __('Driver Reviews') }}</option>
+            <option value="vehicle" @selected(request('type') === 'vehicle')>{{ __('Vehicle Reviews') }}</option>
         </select>
 
         <select name="rating" onchange="this.form.submit()"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-            <option value="">All Ratings</option>
+            <option value="">{{ __('All Ratings') }}</option>
             @for ($i = 5; $i >= 1; $i--)
-                <option value="{{ $i }}" @selected((string) request('rating') === (string) $i)>{{ $i }} Star{{ $i > 1 ? 's' : '' }}</option>
+                <option value="{{ $i }}" @selected((string) request('rating') === (string) $i)>{{ $i }} {{ $i > 1 ? __('Stars') : __('Star') }}</option>
             @endfor
         </select>
 
         @if (request()->filled('status') || request()->filled('type') || request()->filled('rating'))
-            <a href="{{ route('admin.reviews.index') }}" class="text-xs text-luxury-muted hover:text-luxury-gold">Clear filters</a>
+            <a href="{{ route('admin.reviews.index') }}" class="text-xs text-luxury-muted hover:text-luxury-gold">{{ __('Clear filters') }}</a>
         @endif
     </form>
 
@@ -57,12 +57,12 @@
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">Customer</th>
-                        <th class="px-6 py-3 font-medium">Rating</th>
-                        <th class="px-6 py-3 font-medium">Comment</th>
-                        <th class="px-6 py-3 font-medium">Driver / Vehicle</th>
-                        <th class="px-6 py-3 font-medium">Status</th>
-                        <th class="px-6 py-3 text-end font-medium">Actions</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Customer') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Rating') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Comment') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Driver / Vehicle') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Status') }}</th>
+                        <th class="px-6 py-3 text-end font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-luxury-border/60">
@@ -92,13 +92,13 @@
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     @permission('reviews.edit')
                                         <a href="{{ route('admin.reviews.edit', $review) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </a>
                                         @if ($review->status !== 'approved')
                                             <form method="POST" action="{{ route('admin.reviews.approve', $review) }}">
                                                 @csrf
                                                 <button type="submit" class="rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-500/10">
-                                                    Approve
+                                                    {{ __('Approve') }}
                                                 </button>
                                             </form>
                                         @endif
@@ -106,17 +106,17 @@
                                             <form method="POST" action="{{ route('admin.reviews.reject', $review) }}">
                                                 @csrf
                                                 <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-red-500/40 hover:text-red-400">
-                                                    Reject
+                                                    {{ __('Reject') }}
                                                 </button>
                                             </form>
                                         @endif
                                     @endpermission
                                     @permission('reviews.delete')
-                                        <form method="POST" action="{{ route('admin.reviews.destroy', $review) }}" onsubmit="return confirm('Delete this review?');">
+                                        <form method="POST" action="{{ route('admin.reviews.destroy', $review) }}" onsubmit="return confirm('{{ __('Delete this review?') }}');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                                Delete
+                                                {{ __('Delete') }}
                                             </button>
                                         </form>
                                     @endpermission
@@ -125,7 +125,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-luxury-muted">No reviews found.</td>
+                            <td colspan="6" class="px-6 py-10 text-center text-luxury-muted">{{ __('No reviews found.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -137,17 +137,17 @@
         <div class="mt-6 flex items-center justify-between text-sm text-luxury-muted">
             <div>
                 @if ($reviews->onFirstPage())
-                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">Previous</span>
+                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">{{ __('Previous') }}</span>
                 @else
-                    <a href="{{ $reviews->previousPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">Previous</a>
+                    <a href="{{ $reviews->previousPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">{{ __('Previous') }}</a>
                 @endif
             </div>
-            <p>Page {{ $reviews->currentPage() }} of {{ $reviews->lastPage() }}</p>
+            <p>{{ __('Page :current of :last', ['current' => $reviews->currentPage(), 'last' => $reviews->lastPage()]) }}</p>
             <div>
                 @if ($reviews->hasMorePages())
-                    <a href="{{ $reviews->nextPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">Next</a>
+                    <a href="{{ $reviews->nextPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">{{ __('Next') }}</a>
                 @else
-                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">Next</span>
+                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">{{ __('Next') }}</span>
                 @endif
             </div>
         </div>

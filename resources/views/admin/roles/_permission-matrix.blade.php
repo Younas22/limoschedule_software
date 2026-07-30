@@ -14,7 +14,7 @@
                             class="rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-luxury-gold"
                             @change="$el.closest('table').querySelectorAll('input[type=checkbox][name]').forEach(cb => cb.checked = $el.checked)"
                             {{ $disabled ?? false ? 'disabled' : '' }}>
-                        Module
+                        {{ __('Module') }}
                     </label>
                 </th>
                 @foreach ($actionLabels as $actionSlug => $actionLabel)
@@ -65,5 +65,5 @@
 </div>
 
 @if ($disabled ?? false)
-    <p class="mt-3 text-xs text-luxury-muted">This is a system role and always has full access. Permissions cannot be modified.</p>
+    <p class="mt-3 text-xs text-luxury-muted">{{ __('This is a system role and always has full access. Permissions cannot be modified.') }}</p>
 @endif

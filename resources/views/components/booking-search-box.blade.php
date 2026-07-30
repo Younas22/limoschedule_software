@@ -7,11 +7,29 @@
 
 @if ($websiteBookingEnabled)
 @php
-    $categories = \App\Models\VehicleCategory::active()->ordered()->get(['id', 'name']);
+    $categories = \App\Models\VehicleCategory::active()->ordered()->get(['id', 'name', 'description', 'image'])
+        ->map(fn ($category) => [
+            'id' => $category->id,
+            'name' => $category->name,
+            'description' => $category->description,
+            'image_url' => $category->image_url,
+        ])->values();
     $voiceSearchEnabled = (bool) $settings->voice_search_enabled;
     $initialStops = old('stops', []);
+    $initialReturnStops = old('return_stops', []);
     $serviceTypes = collect(\App\Models\Booking::TYPES)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values();
     $googleMapsKey = config('services.google_maps.key');
+    $dialCodes = \App\Models\DialCode::query()
+        ->whereNotNull('iso2')
+        ->whereNotNull('phone_code')
+        ->where('phone_code', '!=', '')
+        ->orderBy('name')
+        ->get(['name', 'iso2', 'phone_code'])
+        ->map(fn ($country) => [
+            'name' => $country->name,
+            'iso2' => strtolower($country->iso2),
+            'dial' => $country->dial,
+        ])->values();
 @endphp
 
 @once
@@ -38,14 +56,48 @@
     @endif
 @endonce
 
+<style>
+    /* Browsers don't show a pointer/hand cursor on <button> by default (unlike <a>) —
+       every interactive control in this widget is a <button>, so without this the
+       cursor never changes on hover anywhere in the card. */
+    #booking-widget button:not(:disabled) {
+        cursor: pointer;
+    }
+
+    /* Slim, theme-colored scrollbars for the dropdown lists (Vehicle Category,
+       Phone country list, Trip Type) instead of the bulky default OS scrollbar
+       with up/down arrow buttons. */
+    #booking-widget * {
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--color-luxury-gold) 45%, transparent) transparent;
+    }
+    #booking-widget *::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    #booking-widget *::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #booking-widget *::-webkit-scrollbar-thumb {
+        background-color: color-mix(in srgb, var(--color-luxury-gold) 45%, transparent);
+        border-radius: 9999px;
+    }
+    #booking-widget *::-webkit-scrollbar-thumb:hover {
+        background-color: color-mix(in srgb, var(--color-luxury-gold) 65%, transparent);
+    }
+</style>
+
 <div id="booking-widget" data-booking-widget
     @select-vehicle-category.window="vehicleCategory = $event.detail"
     @select-route.window="pickup = $event.detail.pickup; dropoff = $event.detail.dropoff"
+    @keydown.escape="tripTypeOpen = false; vehicleOpen = false; phoneCodeOpen = false"
     x-data="bookingSearchBox({
         categories: {{ \Illuminate\Support\Js::from($categories) }},
+        serviceTypes: {{ \Illuminate\Support\Js::from($serviceTypes) }},
+        dialCodes: {{ \Illuminate\Support\Js::from($dialCodes) }},
         quoteUrl: {{ \Illuminate\Support\Js::from(route('booking.quote')) }},
         initial: {
-            {{-- "Rebook" links (from a past trip) prefill via query string; normal
+            {{-- 'Rebook' links (from a past trip) prefill via query string; normal
                  validation-error redisplay prefills via old() — old() wins if both
                  are somehow present, since it reflects the user's own last input. --}}
             pickup: {{ \Illuminate\Support\Js::from(old('pickup_location', request()->query('pickup'))) }},
@@ -60,195 +112,457 @@
             returnDate: {{ \Illuminate\Support\Js::from(old('return_date')) }},
             returnTime: {{ \Illuminate\Support\Js::from(old('return_time')) }},
             stops: {{ \Illuminate\Support\Js::from(!empty($initialStops) ? array_values($initialStops) : []) }},
+            returnPickup: {{ \Illuminate\Support\Js::from(old('return_pickup_location')) }},
+            returnDropoff: {{ \Illuminate\Support\Js::from(old('return_dropoff_location')) }},
+            returnStops: {{ \Illuminate\Support\Js::from(!empty($initialReturnStops) ? array_values($initialReturnStops) : []) }},
             name: {{ \Illuminate\Support\Js::from(old('name')) }},
             email: {{ \Illuminate\Support\Js::from(old('email')) }},
             phone: {{ \Illuminate\Support\Js::from(old('phone')) }},
         },
     })"
-    {{ $attributes->merge(['class' => 'rounded-2xl border border-luxury-border bg-luxury-black p-4 shadow-2xl shadow-black/40 sm:p-5 '.$class]) }}>
+    {{ $attributes->merge(['class' => 'relative rounded-3xl border border-luxury-border bg-luxury-black p-4 shadow-2xl shadow-black/40 sm:p-6 '.$class]) }}>
 
     @if (session('error'))
-        <div class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        <div class="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {{ session('error') }}
         </div>
     @endif
 
-    <form method="POST" action="{{ route('booking.store') }}" @submit="handleSubmit($event)" class="space-y-3">
-        @csrf
+    {{-- Trip Type — compact pill, top-left --}}
+    <div class="mb-4">
+        <div class="relative isolate inline-block" :class="tripTypeOpen ? 'z-30' : 'z-20'" @click.outside="tripTypeOpen = false">
+            <button type="button" @click="tripTypeOpen = !tripTypeOpen" aria-haspopup="listbox" :aria-expanded="tripTypeOpen"
+                class="flex items-center gap-2 rounded-full border border-luxury-border bg-luxury-graphite/60 py-1.5 ps-3 pe-2 text-[11px] font-semibold text-luxury-white transition hover:border-luxury-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                <x-icon name="car" class="h-3 w-3 text-luxury-gold" />
+                <span x-text="typeLabel()"></span>
+                <x-icon name="chevron-down" class="h-3 w-3 text-luxury-muted transition-transform" x-bind:class="{ 'rotate-180': tripTypeOpen }" />
+            </button>
 
-        <div class="grid grid-cols-1 gap-3 lg:grid-cols-12">
+            <div x-show="tripTypeOpen" x-cloak
+                x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                role="listbox" class="absolute start-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal py-1.5 shadow-2xl shadow-black/50">
+                <template x-for="option in serviceTypes" :key="option.value">
+                    <button type="button" role="option" :aria-selected="type === option.value" @click="type = option.value; tripTypeOpen = false"
+                        class="flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-sm transition hover:bg-luxury-graphite"
+                        :class="type === option.value ? 'text-luxury-gold' : 'text-luxury-muted'">
+                        <span x-text="option.label"></span>
+                        <x-icon name="check-circle" class="h-3.5 w-3.5" x-show="type === option.value" x-cloak />
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('booking.store') }}" @submit="handleSubmit($event)" class="space-y-5">
+        @csrf
+        <input type="hidden" name="type" :value="type">
+
+        {{-- Outbound route --}}
+        <div class="relative space-y-3 ps-1">
+            <div class="pointer-events-none absolute start-[9px] top-4 bottom-4 w-px bg-luxury-border"></div>
+
             {{-- Pickup --}}
-            <div class="lg:col-span-3">
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="map-pin" class="h-3.5 w-3.5" />
-                    {{ __('Pickup Location') }}
-                </label>
-                <div class="flex items-center gap-1.5 rounded-lg border border-luxury-border bg-luxury-black/40 pe-1.5 focus-within:border-luxury-gold focus-within:ring-1 focus-within:ring-luxury-gold">
-                    <input type="text" name="pickup_location" x-ref="pickupInput" x-model="pickup" required placeholder="{{ __('Airport, hotel, address...') }}"
+            <div class="relative flex items-start gap-3">
+                <span class="relative z-10 mt-4 h-4 w-4 shrink-0 rounded-full border-2 border-luxury-gold bg-luxury-black"></span>
+                <div class="relative flex-1">
+                    <input type="text" id="pickup_location" name="pickup_location" x-ref="pickupInput" x-model="pickup" required placeholder=" "
                         @input="pickupLat = null; pickupLng = null; pickupPlaceId = null"
-                        class="w-full border-0 bg-transparent px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:outline-none focus:ring-0">
+                        class="peer w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-4 pb-2 pt-5 text-sm text-luxury-white placeholder-transparent transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                    <label for="pickup_location" class="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-sm text-luxury-muted transition-all duration-150 peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:text-luxury-gold peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px]">
+                        {{ __('Pick-Up Location') }}
+                    </label>
                     @if ($voiceSearchEnabled)
                         <button type="button" @click="startVoiceSearch" aria-label="{{ __('Voice search') }}"
-                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-gold">
-                            <x-icon name="mic" class="h-4 w-4" />
+                            class="absolute end-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-gold">
+                            <x-icon name="mic" class="h-3.5 w-3.5" />
                         </button>
                     @endif
+                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('pickup_location') }}</p>
                 </div>
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('pickup_location') }}</p>
             </div>
 
-            {{-- Dropoff --}}
-            <div class="lg:col-span-3">
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="map-pin" class="h-3.5 w-3.5" />
-                    {{ __('Drop-off Location') }}
-                </label>
-                <input type="text" name="dropoff_location" x-ref="dropoffInput" x-model="dropoff" :required="type !== 'hourly'" placeholder="{{ __('Destination address') }}"
-                    @input="dropoffLat = null; dropoffLng = null; dropoffPlaceId = null"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('dropoff_location') }}</p>
-            </div>
-
-            {{-- Vehicle Category --}}
-            <div class="lg:col-span-3">
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="car" class="h-3.5 w-3.5" />
-                    {{ __('Vehicle Category') }}
-                </label>
-                <select name="vehicle_category_id" x-model="vehicleCategory"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
-                    @endforeach
-                </select>
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('vehicle_category_id') }}</p>
-            </div>
-
-            {{-- Type --}}
-            <div class="lg:col-span-3">
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="car" class="h-3.5 w-3.5" />
-                    {{ __('Type') }}
-                </label>
-                <select name="type" x-model="type"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                    @foreach ($serviceTypes as $serviceType)
-                        <option value="{{ $serviceType['value'] }}">{{ $serviceType['label'] }}</option>
-                    @endforeach
-                </select>
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('type') }}</p>
-            </div>
-        </div>
-
-        {{-- Extra details for Hourly / Round Trip --}}
-        <div x-show="type === 'hourly' || type === 'round_trip'" x-cloak class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div x-show="type === 'hourly'" x-cloak>
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="clock" class="h-3.5 w-3.5" />
-                    {{ __('Number of Hours') }}
-                </label>
-                <input type="number" name="hours" x-model.number="hours" min="1" max="24"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('hours') }}</p>
-            </div>
-
-            <div x-show="type === 'round_trip'" x-cloak>
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="calendar" class="h-3.5 w-3.5" />
-                    {{ __('Return Date') }}
-                </label>
-                <input type="date" name="return_date" x-model="returnDate" :required="type === 'round_trip'" :min="date || today"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold [color-scheme:dark]">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('return_date') }}</p>
-            </div>
-
-            <div x-show="type === 'round_trip'" x-cloak>
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="clock" class="h-3.5 w-3.5" />
-                    {{ __('Return Time') }}
-                </label>
-                <input type="time" name="return_time" x-model="returnTime" :required="type === 'round_trip'"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold [color-scheme:dark]">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('return_time') }}</p>
-            </div>
-        </div>
-
-        {{-- Stops --}}
-        <div>
-            <div class="mb-1.5 flex items-center justify-between">
-                <label class="flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="map-pin" class="h-3.5 w-3.5" />
-                    {{ __('Stops (optional)') }}
-                </label>
-                <button type="button" @click="stops.push('')" class="text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">
-                    + {{ __('Add Stop') }}
-                </button>
-            </div>
-            <template x-for="(stop, index) in stops" :key="index">
-                <div class="mb-2 flex items-center gap-2">
-                    <input type="text" :name="'stops[' + index + ']'" x-model="stops[index]" placeholder="{{ __('Stop address') }}"
-                        class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                    <button type="button" @click="stops.splice(index, 1)" aria-label="{{ __('Remove stop') }}"
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10">
-                        <x-icon name="close" class="h-4 w-4" />
-                    </button>
+            {{-- Stops --}}
+            <template x-for="(stop, index) in stops" :key="'stop-'+index">
+                <div class="relative flex items-start gap-3" x-transition>
+                    <span class="relative z-10 mt-4 ms-[3px] h-2.5 w-2.5 shrink-0 rounded-full bg-luxury-muted"></span>
+                    <div class="relative flex-1">
+                        <input type="text" :name="'stops[' + index + '][location]'" x-model="stops[index].location" placeholder=" "
+                            x-init="initStopAutocomplete($el, index, false)"
+                            @input="stops[index].lat = null; stops[index].lng = null; stops[index].placeId = null"
+                            class="peer w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-4 pb-2 pt-5 text-sm text-luxury-white placeholder-transparent transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        <input type="hidden" :name="'stops[' + index + '][lat]'" :value="stops[index].lat ?? ''">
+                        <input type="hidden" :name="'stops[' + index + '][lng]'" :value="stops[index].lng ?? ''">
+                        <input type="hidden" :name="'stops[' + index + '][place_id]'" :value="stops[index].placeId ?? ''">
+                        <label class="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-sm text-luxury-muted transition-all duration-150 peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:text-luxury-gold peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px]"
+                            x-text="'{{ __('Stop') }} ' + (index + 1)"></label>
+                        <button type="button" @click="stops.splice(index, 1)" aria-label="{{ __('Remove stop') }}"
+                            class="absolute end-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-red-500/10 hover:text-red-400">
+                            <x-icon name="close" class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
                 </div>
             </template>
+
+            {{-- Drop-off --}}
+            <div class="relative flex items-start gap-3">
+                <span class="relative z-10 mt-4 h-4 w-4 shrink-0 rounded-full border-2 border-red-400 bg-luxury-black"></span>
+                <div class="relative flex-1">
+                    <input type="text" id="dropoff_location" name="dropoff_location" x-ref="dropoffInput" x-model="dropoff" :required="type !== 'hourly'" placeholder=" "
+                        @input="dropoffLat = null; dropoffLng = null; dropoffPlaceId = null"
+                        class="peer w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-4 pb-2 pt-5 text-sm text-luxury-white placeholder-transparent transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                    <label for="dropoff_location" class="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-sm text-luxury-muted transition-all duration-150 peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:text-luxury-gold peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px]">
+                        {{ __('Drop-off Location') }}
+                    </label>
+                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('dropoff_location') }}</p>
+                </div>
+            </div>
+
+            <button type="button" @click="stops.push({ location: '', lat: null, lng: null, placeId: null })" class="ms-7 text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">
+                + {{ __('Add Stop') }}
+            </button>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {{-- Date --}}
-            <div>
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="calendar" class="h-3.5 w-3.5" />
-                    {{ __('Date') }}
+        {{-- Pick-Up Date / Pick-Up Time — custom Material-style pickers --}}
+        <div class="grid grid-cols-2 gap-3">
+            <div class="relative isolate" :class="(datePickerOpen && datePickerField === 'date') ? 'z-30' : 'z-20'">
+                <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                    <x-icon name="calendar" class="h-3 w-3" />
+                    {{ __('Pick-Up Date') }}
                 </label>
-                <input type="date" name="pickup_date" x-model="date" required :min="today"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold [color-scheme:dark]">
+                <button type="button" @click="openDatePicker('date')"
+                    class="flex w-full items-center gap-2 rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-start transition hover:border-luxury-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                    <x-icon name="calendar" class="h-3.5 w-3.5 shrink-0 text-luxury-muted" />
+                    <span class="flex-1 truncate text-sm text-luxury-white" x-text="formatDateDisplay('date') || '{{ __('Select date') }}'"></span>
+                </button>
+                <input type="hidden" name="pickup_date" :value="date">
+
+                <div x-show="datePickerOpen && datePickerField === 'date'" x-cloak @click.outside="datePickerOpen = false"
+                    x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                    class="absolute start-0 top-full z-50 mt-2 w-72 rounded-2xl border border-luxury-border bg-luxury-charcoal p-3 shadow-2xl shadow-black/50">
+                    <div class="mb-2 flex items-center justify-between">
+                        <button type="button" @click="calendarPrevMonth()" aria-label="{{ __('Previous month') }}"
+                            class="flex h-7 w-7 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                            <x-icon name="chevron-left" class="h-3.5 w-3.5" />
+                        </button>
+                        <span class="text-sm font-semibold text-luxury-white" x-text="calendarMonthLabel()"></span>
+                        <button type="button" @click="calendarNextMonth()" aria-label="{{ __('Next month') }}"
+                            class="flex h-7 w-7 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                            <x-icon name="chevron-right" class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-luxury-muted">
+                        <template x-for="wd in weekdayLabels()" :key="wd"><span x-text="wd"></span></template>
+                    </div>
+                    <div class="mt-1 grid grid-cols-7 gap-1">
+                        <template x-for="(cell, idx) in calendarDays()" :key="idx">
+                            <button type="button" x-show="cell" :disabled="cell?.disabled" @click="cell && selectDate(cell.dateStr)"
+                                class="flex h-8 w-8 items-center justify-center rounded-full text-xs transition"
+                                :class="{
+                                    'bg-luxury-gold text-luxury-black font-semibold': cell?.selected,
+                                    'text-luxury-gold ring-1 ring-luxury-gold': cell?.today && !cell?.selected,
+                                    'text-luxury-white hover:bg-luxury-graphite': cell && !cell.selected && !cell.disabled && !cell.today,
+                                    'text-luxury-muted/30': cell?.disabled,
+                                }"
+                                x-text="cell?.day"></button>
+                        </template>
+                    </div>
+                </div>
                 <p class="mt-1 text-xs text-red-400">{{ $errors->first('pickup_date') }}</p>
             </div>
 
-            {{-- Time --}}
-            <div>
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="clock" class="h-3.5 w-3.5" />
-                    {{ __('Time') }}
+            <div class="relative isolate" :class="(timePickerOpen && timePickerField === 'time') ? 'z-30' : 'z-20'">
+                <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                    <x-icon name="clock" class="h-3 w-3" />
+                    {{ __('Pick-Up Time') }}
                 </label>
-                <input type="time" name="pickup_time" x-model="time" required
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold [color-scheme:dark]">
+                <button type="button" @click="openTimePicker('time')"
+                    class="flex w-full items-center gap-2 rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-start transition hover:border-luxury-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                    <x-icon name="clock" class="h-3.5 w-3.5 shrink-0 text-luxury-muted" />
+                    <span class="flex-1 truncate text-sm text-luxury-white" x-text="formatTimeDisplay('time') || '{{ __('Select time') }}'"></span>
+                </button>
+                <input type="hidden" name="pickup_time" :value="time">
+
+                <div x-show="timePickerOpen && timePickerField === 'time'" x-cloak @click.outside="timePickerOpen = false"
+                    x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                    class="absolute start-0 top-full z-50 mt-2 max-h-64 w-40 overflow-y-auto rounded-2xl border border-luxury-border bg-luxury-charcoal p-1.5 shadow-2xl shadow-black/50">
+                    <template x-for="slot in timeSlots" :key="slot">
+                        <button type="button" @click="selectTime(slot)"
+                            class="flex w-full items-center rounded-lg px-3 py-2 text-start text-sm transition hover:bg-luxury-graphite"
+                            :class="isTimeSelected(slot) ? 'text-luxury-gold font-medium' : 'text-luxury-white'"
+                            x-text="formatTimeLabel(slot)"></button>
+                    </template>
+                </div>
                 <p class="mt-1 text-xs text-red-400">{{ $errors->first('pickup_time') }}</p>
             </div>
+        </div>
 
-            {{-- Passengers --}}
-            <div>
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="users" class="h-3.5 w-3.5" />
-                    {{ __('Passengers') }}
-                </label>
-                <div class="flex items-center justify-between rounded-lg border border-luxury-border bg-luxury-black/40 px-2 py-1.5">
-                    <button type="button" @click="incrementPassengers(-1)" aria-label="{{ __('Decrease passengers') }}"
-                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">&minus;</button>
-                    <span class="text-sm font-medium text-luxury-white" x-text="passengers"></span>
-                    <input type="hidden" name="passengers" :value="passengers">
-                    <button type="button" @click="incrementPassengers(1)" aria-label="{{ __('Increase passengers') }}"
-                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">+</button>
+        {{-- Hourly: Number of Hours --}}
+        <div x-show="type === 'hourly'" x-cloak x-transition class="max-w-[12rem]">
+            <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                <x-icon name="clock" class="h-3 w-3" />
+                {{ __('Number of Hours') }}
+            </label>
+            <input type="number" name="hours" x-model.number="hours" min="1" max="24"
+                class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+            <p class="mt-1 text-xs text-red-400">{{ $errors->first('hours') }}</p>
+        </div>
+
+        {{-- Round Trip: Return Journey --}}
+        <div x-show="type === 'round_trip'" x-cloak
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 -translate-y-2"
+            class="space-y-4 rounded-2xl border border-luxury-border bg-luxury-graphite/30 p-4">
+            <p class="flex items-center justify-center gap-2 text-center text-xs font-semibold uppercase tracking-wide text-luxury-gold">
+                <x-icon name="arrow-down" class="h-3 w-3" />
+                {{ __('Return Journey Details') }}
+            </p>
+
+            <div class="relative space-y-3 ps-1">
+                <div class="pointer-events-none absolute start-[9px] top-4 bottom-4 w-px bg-luxury-border"></div>
+
+                {{-- Return Pickup --}}
+                <div class="relative flex items-start gap-3">
+                    <span class="relative z-10 mt-4 h-4 w-4 shrink-0 rounded-full border-2 border-luxury-gold bg-luxury-black"></span>
+                    <div class="relative flex-1">
+                        <input type="text" id="return_pickup_location" name="return_pickup_location" x-ref="returnPickupInput" x-model="returnPickup" :required="type === 'round_trip'" placeholder=" "
+                            @input="returnPickupLat = null; returnPickupLng = null; returnPickupPlaceId = null"
+                            class="peer w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-4 pb-2 pt-5 text-sm text-luxury-white placeholder-transparent transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        <label for="return_pickup_location" class="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-sm text-luxury-muted transition-all duration-150 peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:text-luxury-gold peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px]">
+                            {{ __('Return Pickup Location') }}
+                        </label>
+                        <p class="mt-1 text-xs text-red-400">{{ $errors->first('return_pickup_location') }}</p>
+                    </div>
                 </div>
+
+                {{-- Return Stops --}}
+                <template x-for="(stop, index) in returnStops" :key="'return-stop-'+index">
+                    <div class="relative flex items-start gap-3" x-transition>
+                        <span class="relative z-10 mt-4 ms-[3px] h-2.5 w-2.5 shrink-0 rounded-full bg-luxury-muted"></span>
+                        <div class="relative flex-1">
+                            <input type="text" :name="'return_stops[' + index + '][location]'" x-model="returnStops[index].location" placeholder=" "
+                                x-init="initStopAutocomplete($el, index, true)"
+                                @input="returnStops[index].lat = null; returnStops[index].lng = null; returnStops[index].placeId = null"
+                                class="peer w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-4 pb-2 pt-5 text-sm text-luxury-white placeholder-transparent transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                            <input type="hidden" :name="'return_stops[' + index + '][lat]'" :value="returnStops[index].lat ?? ''">
+                            <input type="hidden" :name="'return_stops[' + index + '][lng]'" :value="returnStops[index].lng ?? ''">
+                            <input type="hidden" :name="'return_stops[' + index + '][place_id]'" :value="returnStops[index].placeId ?? ''">
+                            <label class="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-sm text-luxury-muted transition-all duration-150 peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:text-luxury-gold peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px]"
+                                x-text="'{{ __('Stop') }} ' + (index + 1)"></label>
+                            <button type="button" @click="returnStops.splice(index, 1)" aria-label="{{ __('Remove stop') }}"
+                                class="absolute end-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-red-500/10 hover:text-red-400">
+                                <x-icon name="close" class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                {{-- Return Drop-off --}}
+                <div class="relative flex items-start gap-3">
+                    <span class="relative z-10 mt-4 h-4 w-4 shrink-0 rounded-full border-2 border-red-400 bg-luxury-black"></span>
+                    <div class="relative flex-1">
+                        <input type="text" id="return_dropoff_location" name="return_dropoff_location" x-ref="returnDropoffInput" x-model="returnDropoff" :required="type === 'round_trip'" placeholder=" "
+                            @input="returnDropoffLat = null; returnDropoffLng = null; returnDropoffPlaceId = null"
+                            class="peer w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-4 pb-2 pt-5 text-sm text-luxury-white placeholder-transparent transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        <label for="return_dropoff_location" class="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-sm text-luxury-muted transition-all duration-150 peer-focus:top-3.5 peer-focus:text-[11px] peer-focus:text-luxury-gold peer-[:not(:placeholder-shown)]:top-3.5 peer-[:not(:placeholder-shown)]:text-[11px]">
+                            {{ __('Return Drop-off Location') }}
+                        </label>
+                        <p class="mt-1 text-xs text-red-400">{{ $errors->first('return_dropoff_location') }}</p>
+                    </div>
+                </div>
+
+                <button type="button" @click="returnStops.push({ location: '', lat: null, lng: null, placeId: null })" class="ms-7 text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">
+                    + {{ __('Add Stop') }}
+                </button>
             </div>
 
-            {{-- Luggage --}}
-            <div>
-                <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-luxury-muted">
-                    <x-icon name="briefcase" class="h-3.5 w-3.5" />
-                    {{ __('Luggage') }}
-                </label>
-                <div class="flex items-center justify-between rounded-lg border border-luxury-border bg-luxury-black/40 px-2 py-1.5">
-                    <button type="button" @click="incrementLuggage(-1)" aria-label="{{ __('Decrease luggage') }}"
-                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">&minus;</button>
-                    <span class="text-sm font-medium text-luxury-white" x-text="luggage"></span>
-                    <input type="hidden" name="luggage" :value="luggage">
-                    <button type="button" @click="incrementLuggage(1)" aria-label="{{ __('Increase luggage') }}"
-                        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">+</button>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="relative isolate" :class="(datePickerOpen && datePickerField === 'returnDate') ? 'z-30' : 'z-20'">
+                    <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                        <x-icon name="calendar" class="h-3 w-3" />
+                        {{ __('Return Date') }}
+                    </label>
+                    <button type="button" @click="openDatePicker('returnDate')"
+                        class="flex w-full items-center gap-2 rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-start transition hover:border-luxury-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                        <x-icon name="calendar" class="h-3.5 w-3.5 shrink-0 text-luxury-muted" />
+                        <span class="flex-1 truncate text-sm text-luxury-white" x-text="formatDateDisplay('returnDate') || '{{ __('Select date') }}'"></span>
+                    </button>
+                    <input type="hidden" name="return_date" :value="returnDate">
+
+                    <div x-show="datePickerOpen && datePickerField === 'returnDate'" x-cloak @click.outside="datePickerOpen = false"
+                        x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                        class="absolute start-0 top-full z-50 mt-2 w-72 rounded-2xl border border-luxury-border bg-luxury-charcoal p-3 shadow-2xl shadow-black/50">
+                        <div class="mb-2 flex items-center justify-between">
+                            <button type="button" @click="calendarPrevMonth()" aria-label="{{ __('Previous month') }}"
+                                class="flex h-7 w-7 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                                <x-icon name="chevron-left" class="h-3.5 w-3.5" />
+                            </button>
+                            <span class="text-sm font-semibold text-luxury-white" x-text="calendarMonthLabel()"></span>
+                            <button type="button" @click="calendarNextMonth()" aria-label="{{ __('Next month') }}"
+                                class="flex h-7 w-7 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                                <x-icon name="chevron-right" class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-luxury-muted">
+                            <template x-for="wd in weekdayLabels()" :key="wd"><span x-text="wd"></span></template>
+                        </div>
+                        <div class="mt-1 grid grid-cols-7 gap-1">
+                            <template x-for="(cell, idx) in calendarDays()" :key="idx">
+                                <button type="button" x-show="cell" :disabled="cell?.disabled" @click="cell && selectDate(cell.dateStr)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-full text-xs transition"
+                                    :class="{
+                                        'bg-luxury-gold text-luxury-black font-semibold': cell?.selected,
+                                        'text-luxury-gold ring-1 ring-luxury-gold': cell?.today && !cell?.selected,
+                                        'text-luxury-white hover:bg-luxury-graphite': cell && !cell.selected && !cell.disabled && !cell.today,
+                                        'text-luxury-muted/30': cell?.disabled,
+                                    }"
+                                    x-text="cell?.day"></button>
+                            </template>
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('return_date') }}</p>
                 </div>
+                <div class="relative isolate" :class="(timePickerOpen && timePickerField === 'returnTime') ? 'z-30' : 'z-20'">
+                    <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                        <x-icon name="clock" class="h-3 w-3" />
+                        {{ __('Return Time') }}
+                    </label>
+                    <button type="button" @click="openTimePicker('returnTime')"
+                        class="flex w-full items-center gap-2 rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-start transition hover:border-luxury-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                        <x-icon name="clock" class="h-3.5 w-3.5 shrink-0 text-luxury-muted" />
+                        <span class="flex-1 truncate text-sm text-luxury-white" x-text="formatTimeDisplay('returnTime') || '{{ __('Select time') }}'"></span>
+                    </button>
+                    <input type="hidden" name="return_time" :value="returnTime">
+
+                    <div x-show="timePickerOpen && timePickerField === 'returnTime'" x-cloak @click.outside="timePickerOpen = false"
+                        x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                        class="absolute start-0 top-full z-50 mt-2 max-h-64 w-40 overflow-y-auto rounded-2xl border border-luxury-border bg-luxury-charcoal p-1.5 shadow-2xl shadow-black/50">
+                        <template x-for="slot in timeSlots" :key="slot">
+                            <button type="button" @click="selectTime(slot)"
+                                class="flex w-full items-center rounded-lg px-3 py-2 text-start text-sm transition hover:bg-luxury-graphite"
+                                :class="isTimeSelected(slot) ? 'text-luxury-gold font-medium' : 'text-luxury-white'"
+                                x-text="formatTimeLabel(slot)"></button>
+                        </template>
+                    </div>
+                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('return_time') }}</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Vehicle Category / Full Name / Email / Phone — 4 equal columns on wide screens --}}
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {{-- Vehicle Category — rich searchable listbox --}}
+            <div class="relative isolate" :class="vehicleOpen ? 'z-30' : 'z-20'" @click.outside="vehicleOpen = false">
+                <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                    <x-icon name="car" class="h-3 w-3" />
+                    {{ __('Vehicle Category') }}
+                </label>
+                <button type="button" @click="vehicleOpen = !vehicleOpen" aria-haspopup="listbox" :aria-expanded="vehicleOpen"
+                    class="flex w-full items-center gap-2 rounded-xl border border-luxury-border bg-luxury-black/40 px-2 py-1.5 text-start transition hover:border-luxury-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                    <template x-if="currentCategory()?.image_url">
+                        <img :src="currentCategory().image_url" alt="" class="h-7 w-10 shrink-0 rounded-lg object-cover">
+                    </template>
+                    <template x-if="!currentCategory()?.image_url">
+                        <span class="flex h-7 w-10 shrink-0 items-center justify-center rounded-lg bg-luxury-graphite text-luxury-muted">
+                            <x-icon name="car" class="h-3.5 w-3.5" />
+                        </span>
+                    </template>
+                    <span class="min-w-0 flex-1 truncate text-sm font-medium text-luxury-white" x-text="currentCategory()?.name || '{{ __('Any Vehicle') }}'"></span>
+                    <x-icon name="chevron-down" class="h-3.5 w-3.5 shrink-0 text-luxury-muted transition-transform" x-bind:class="{ 'rotate-180': vehicleOpen }" />
+                </button>
+                <input type="hidden" name="vehicle_category_id" :value="vehicleCategory">
+
+                <div x-show="vehicleOpen" x-cloak
+                    x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                    role="listbox" class="absolute start-0 end-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-luxury-border bg-luxury-charcoal p-1.5 shadow-2xl shadow-black/50">
+                    <template x-for="category in categories" :key="category.id">
+                        <button type="button" role="option" :aria-selected="vehicleCategory == category.id" @click="vehicleCategory = category.id; vehicleOpen = false"
+                            class="flex w-full items-center gap-2 rounded-xl px-1.5 py-1.5 text-start transition hover:bg-luxury-graphite">
+                            <template x-if="category.image_url">
+                                <img :src="category.image_url" alt="" class="h-7 w-10 shrink-0 rounded-lg object-cover">
+                            </template>
+                            <template x-if="!category.image_url">
+                                <span class="flex h-7 w-10 shrink-0 items-center justify-center rounded-lg bg-luxury-graphite text-luxury-muted">
+                                    <x-icon name="car" class="h-3.5 w-3.5" />
+                                </span>
+                            </template>
+                            <span class="min-w-0 flex-1">
+                                <span class="block truncate text-sm font-medium" :class="vehicleCategory == category.id ? 'text-luxury-gold' : 'text-luxury-white'" x-text="category.name"></span>
+                            </span>
+                            <x-icon name="check-circle" class="h-3.5 w-3.5 shrink-0 text-luxury-gold" x-show="vehicleCategory == category.id" x-cloak />
+                        </button>
+                    </template>
+                </div>
+                <p class="mt-1 text-xs text-red-400">{{ $errors->first('vehicle_category_id') }}</p>
+            </div>
+
+            {{-- Full Name --}}
+            <div>
+                <label for="name" class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                    <x-icon name="user" class="h-3 w-3" />
+                    {{ __('Full Name') }}
+                </label>
+                <input type="text" id="name" name="name" x-model="name" required placeholder="{{ __('Full Name') }}"
+                    class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                <p class="mt-1 text-xs text-red-400">{{ $errors->first('name') }}</p>
+            </div>
+
+            {{-- Email --}}
+            <div>
+                <label for="email" class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                    <x-icon name="mail" class="h-3 w-3" />
+                    {{ __('Email') }}
+                </label>
+                <input type="email" id="email" name="email" x-model="email" required placeholder="{{ __('Email') }}"
+                    class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                <p class="mt-1 text-xs text-red-400">{{ $errors->first('email') }}</p>
+            </div>
+
+            {{-- Phone: country code + number, one unified box --}}
+            <div>
+                <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                    <x-icon name="phone" class="h-3 w-3" />
+                    {{ __('Phone') }}
+                </label>
+                <div class="relative isolate flex items-stretch rounded-xl border border-luxury-border bg-luxury-black/40 transition focus-within:border-luxury-gold focus-within:ring-1 focus-within:ring-luxury-gold" :class="phoneCodeOpen ? 'z-30' : 'z-20'" @click.outside="phoneCodeOpen = false; dialSearch = ''">
+                    <button type="button" @click="phoneCodeOpen = !phoneCodeOpen; dialSearch = ''; $nextTick(() => $refs.dialSearchInput?.focus())" aria-haspopup="listbox" :aria-expanded="phoneCodeOpen"
+                        class="flex shrink-0 items-center gap-1.5 rounded-s-xl border-e border-luxury-border/60 px-2 py-2.5 text-sm text-luxury-white transition hover:bg-luxury-graphite/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                        <span class="fi" :class="'fi-' + dialCountry().iso2"></span>
+                        <span x-text="dialCode"></span>
+                        <x-icon name="chevron-down" class="h-3 w-3 text-luxury-muted transition-transform" x-bind:class="{ 'rotate-180': phoneCodeOpen }" />
+                    </button>
+                    <input type="tel" id="phone_number" x-model="phoneNumber" placeholder="{{ __('Phone Number') }}"
+                        class="min-w-0 flex-1 rounded-e-xl bg-transparent px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted focus:outline-none">
+
+                    {{-- Panel anchors to the whole merged box (not just the code button) so it
+                         can never be wider than its own field column — no more page overflow. --}}
+                    <div x-show="phoneCodeOpen" x-cloak
+                        x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                        role="listbox" class="absolute start-0 end-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal shadow-2xl shadow-black/50">
+                        <div class="border-b border-luxury-border/60 p-2">
+                            <input type="text" x-ref="dialSearchInput" x-model="dialSearch" placeholder="{{ __('Search country or code') }}"
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-1.5 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        </div>
+                        <div class="max-h-56 overflow-y-auto p-1.5">
+                            <template x-for="country in filteredDialCodes()" :key="country.iso2 + country.dial">
+                                <button type="button" role="option" @click="dialCode = country.dial; phoneCodeOpen = false; dialSearch = ''"
+                                    class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-sm transition hover:bg-luxury-graphite"
+                                    :class="dialCode === country.dial ? 'text-luxury-gold' : 'text-luxury-muted'">
+                                    <span class="fi" :class="'fi-' + country.iso2"></span>
+                                    <span class="min-w-0 flex-1 truncate" x-text="country.name"></span>
+                                    <span x-text="country.dial"></span>
+                                </button>
+                            </template>
+                            <p x-show="filteredDialCodes().length === 0" class="px-3 py-4 text-center text-xs text-luxury-muted">{{ __('No countries found.') }}</p>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="phone" :value="phoneNumber ? (dialCode + ' ' + phoneNumber) : ''">
             </div>
         </div>
 
@@ -260,25 +574,38 @@
         <input type="hidden" name="dropoff_lng" :value="dropoffLng ?? ''">
         <input type="hidden" name="dropoff_place_id" :value="dropoffPlaceId ?? ''">
         <input type="hidden" name="distance_km" :value="distanceKm ?? ''">
+        <input type="hidden" name="return_pickup_lat" :value="returnPickupLat ?? ''">
+        <input type="hidden" name="return_pickup_lng" :value="returnPickupLng ?? ''">
+        <input type="hidden" name="return_pickup_place_id" :value="returnPickupPlaceId ?? ''">
+        <input type="hidden" name="return_dropoff_lat" :value="returnDropoffLat ?? ''">
+        <input type="hidden" name="return_dropoff_lng" :value="returnDropoffLng ?? ''">
+        <input type="hidden" name="return_dropoff_place_id" :value="returnDropoffPlaceId ?? ''">
+        <input type="hidden" name="return_distance_km" :value="returnDistanceKm ?? ''">
 
         {{-- Live Quote --}}
-        <div x-show="calculating" x-cloak class="rounded-lg border border-luxury-border bg-luxury-black/40 px-4 py-3 text-center text-sm text-luxury-muted">
-            {{ __('Calculating...') }}
+        <div x-show="calculating" x-cloak x-transition class="rounded-xl border border-luxury-border bg-luxury-black/40 px-4 py-3 text-center text-sm text-luxury-muted">
+            <span class="inline-flex items-center gap-2">
+                <svg class="h-4 w-4 animate-spin text-luxury-gold" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                {{ __('Calculating...') }}
+            </span>
         </div>
 
-        <div x-show="quoteError" x-cloak class="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400" x-text="quoteError"></div>
+        <div x-show="quoteError" x-cloak x-transition class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400" x-text="quoteError"></div>
 
-        <div x-show="quote && !calculating" x-cloak class="space-y-3 rounded-lg border border-luxury-border bg-luxury-black/40 p-4">
+        <div x-show="quote && !calculating" x-cloak x-transition class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-black/40 p-4">
             <p class="text-xs font-semibold uppercase tracking-wide text-luxury-muted">{{ __('Estimated Fare') }}</p>
 
             <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
                 <div>
                     <dt class="text-xs text-luxury-muted">{{ __('Distance') }}</dt>
-                    <dd class="text-luxury-white" x-text="distanceKm ? distanceKm + ' km' : '—'"></dd>
+                    <dd class="text-luxury-white" x-text="totalDistanceLabel()"></dd>
                 </div>
                 <div>
                     <dt class="text-xs text-luxury-muted">{{ __('Duration') }}</dt>
-                    <dd class="text-luxury-white" x-text="durationMinutes ? durationMinutes + ' min' : '—'"></dd>
+                    <dd class="text-luxury-white" x-text="totalDurationLabel()"></dd>
                 </div>
                 <div>
                     <dt class="text-xs text-luxury-muted">{{ __('Vehicle') }}</dt>
@@ -312,33 +639,57 @@
             </p>
         </div>
 
-        {{-- Guest contact details --}}
-        <div class="grid grid-cols-1 gap-3 border-t border-luxury-border/60 pt-3 sm:grid-cols-3">
-            <div>
-                <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Full Name') }}</label>
-                <input type="text" name="name" x-model="name" required placeholder="{{ __('Your name') }}"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('name') }}</p>
-            </div>
-            <div>
-                <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Email') }}</label>
-                <input type="email" name="email" x-model="email" required placeholder="{{ __('you@example.com') }}"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('email') }}</p>
-            </div>
-            <div>
-                <label class="mb-1.5 block text-xs font-medium text-luxury-muted">{{ __('Phone (optional)') }}</label>
-                <input type="tel" name="phone" x-model="phone" placeholder="{{ __('+1 555 123 4567') }}"
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3.5 py-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-            </div>
-        </div>
+        {{-- Passengers / Luggage (left) + Book Now (right) --}}
+        <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-end sm:justify-between">
+            <div class="grid grid-cols-2 gap-2 sm:w-52">
+                <div>
+                    <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                        <x-icon name="users" class="h-3 w-3" />
+                        {{ __('Passengers') }}
+                    </label>
+                    <div class="flex items-center justify-between rounded-xl border border-luxury-border bg-luxury-black/40 px-1.5 py-1">
+                        <button type="button" @click="incrementPassengers(-1)" aria-label="{{ __('Decrease passengers') }}"
+                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white active:scale-90">&minus;</button>
+                        <span class="text-sm font-medium text-luxury-white" x-text="passengers"></span>
+                        <input type="hidden" name="passengers" :value="passengers">
+                        <button type="button" @click="incrementPassengers(1)" aria-label="{{ __('Increase passengers') }}"
+                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white active:scale-90">+</button>
+                    </div>
+                </div>
 
-        {{-- Actions --}}
-        <div class="pt-1">
-            <button type="submit"
-                class="flex w-full items-center justify-center gap-2 rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:w-auto sm:flex-1">
-                <x-icon name="search" class="h-4 w-4" />
-                {{ __('Book Now') }}
+                <div>
+                    <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                        <x-icon name="briefcase" class="h-3 w-3" />
+                        {{ __('Luggage') }}
+                    </label>
+                    <div class="flex items-center justify-between rounded-xl border border-luxury-border bg-luxury-black/40 px-1.5 py-1">
+                        <button type="button" @click="incrementLuggage(-1)" aria-label="{{ __('Decrease luggage') }}"
+                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white active:scale-90">&minus;</button>
+                        <span class="text-sm font-medium text-luxury-white" x-text="luggage"></span>
+                        <input type="hidden" name="luggage" :value="luggage">
+                        <button type="button" @click="incrementLuggage(1)" aria-label="{{ __('Increase luggage') }}"
+                            class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white active:scale-90">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" :disabled="submitting"
+                class="flex w-full items-center justify-center gap-2 rounded-xl bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[12rem]">
+                <template x-if="!submitting">
+                    <span class="flex items-center gap-2">
+                        <x-icon name="search" class="h-3.5 w-3.5" />
+                        {{ __('Book Now') }}
+                    </span>
+                </template>
+                <template x-if="submitting">
+                    <span class="flex items-center gap-2">
+                        <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        {{ __('Book Now') }}
+                    </span>
+                </template>
             </button>
         </div>
     </form>
@@ -354,15 +705,41 @@
             passengers: config.initial.passengers || 1,
             luggage: config.initial.luggage || 0,
             vehicleCategory: config.initial.vehicleCategory || (config.categories[0]?.id ?? ''),
+            categories: config.categories,
+            serviceTypes: config.serviceTypes,
+            dialCodes: config.dialCodes,
             type: config.initial.type || 'one_way',
             hours: config.initial.hours || 2,
             returnDate: config.initial.returnDate || '',
             returnTime: config.initial.returnTime || '',
+            returnPickup: config.initial.returnPickup || '',
+            returnDropoff: config.initial.returnDropoff || '',
+            returnStops: config.initial.returnStops.length ? config.initial.returnStops : [],
             stops: config.initial.stops.length ? config.initial.stops : [],
             name: config.initial.name || '',
             email: config.initial.email || '',
             phone: config.initial.phone || '',
+            dialCode: '+1',
+            dialSearch: '',
+            phoneNumber: config.initial.phone || '',
             today: new Date().toISOString().split('T')[0],
+
+            // UI state for the custom dropdowns.
+            tripTypeOpen: false,
+            vehicleOpen: false,
+            phoneCodeOpen: false,
+            submitting: false,
+            autocompleteReady: false,
+
+            // Custom date/time pickers (replace native <input type="date/time">
+            // so the whole field is clickable and the popup matches the theme
+            // instead of the browser's default OS picker).
+            datePickerOpen: false,
+            datePickerField: null,
+            calendarViewMonth: '',
+            timePickerOpen: false,
+            timePickerField: null,
+            timeSlots: [],
 
             // Populated by Google Places Autocomplete (see initAutocomplete()).
             pickupLat: null,
@@ -371,10 +748,18 @@
             dropoffLat: null,
             dropoffLng: null,
             dropoffPlaceId: null,
+            returnPickupLat: null,
+            returnPickupLng: null,
+            returnPickupPlaceId: null,
+            returnDropoffLat: null,
+            returnDropoffLng: null,
+            returnDropoffPlaceId: null,
 
             // Live quote state.
             distanceKm: null,
             durationMinutes: null,
+            returnDistanceKm: null,
+            returnDurationMinutes: null,
             vehicleName: null,
             quote: null,
             calculating: false,
@@ -384,10 +769,20 @@
             quoteRequestId: 0,
 
             init() {
+                for (let h = 0; h < 24; h++) {
+                    for (let m = 0; m < 60; m += 30) {
+                        this.timeSlots.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+                    }
+                }
+
                 this.$watch('pickup', () => this.scheduleQuote());
                 this.$watch('dropoff', () => this.scheduleQuote());
                 this.$watch('pickupLat', () => this.scheduleQuote());
                 this.$watch('dropoffLat', () => this.scheduleQuote());
+                this.$watch('returnPickupLat', () => this.scheduleQuote());
+                this.$watch('returnDropoffLat', () => this.scheduleQuote());
+                this.$watch('stops', () => this.scheduleQuote());
+                this.$watch('returnStops', () => this.scheduleQuote());
                 this.$watch('vehicleCategory', () => this.scheduleQuote());
                 this.$watch('type', () => this.scheduleQuote());
                 this.$watch('hours', () => this.scheduleQuote());
@@ -406,9 +801,14 @@
                 if (!window.google?.maps?.places || this.autocompleteReady) return;
                 this.autocompleteReady = true;
 
-                const pickupAutocomplete = new google.maps.places.Autocomplete(this.$refs.pickupInput, { fields: ['place_id', 'geometry', 'formatted_address'] });
-                pickupAutocomplete.addListener('place_changed', () => {
-                    const place = pickupAutocomplete.getPlace();
+                const bind = (inputRef, onPlace) => {
+                    const el = this.$refs[inputRef];
+                    if (!el) return;
+                    const autocomplete = new google.maps.places.Autocomplete(el, { fields: ['place_id', 'geometry', 'formatted_address'] });
+                    autocomplete.addListener('place_changed', () => onPlace(autocomplete.getPlace()));
+                };
+
+                bind('pickupInput', (place) => {
                     if (!place.geometry) return;
                     this.pickup = place.formatted_address || this.pickup;
                     this.pickupLat = place.geometry.location.lat();
@@ -416,15 +816,182 @@
                     this.pickupPlaceId = place.place_id || null;
                 });
 
-                const dropoffAutocomplete = new google.maps.places.Autocomplete(this.$refs.dropoffInput, { fields: ['place_id', 'geometry', 'formatted_address'] });
-                dropoffAutocomplete.addListener('place_changed', () => {
-                    const place = dropoffAutocomplete.getPlace();
+                bind('dropoffInput', (place) => {
                     if (!place.geometry) return;
                     this.dropoff = place.formatted_address || this.dropoff;
                     this.dropoffLat = place.geometry.location.lat();
                     this.dropoffLng = place.geometry.location.lng();
                     this.dropoffPlaceId = place.place_id || null;
                 });
+
+                bind('returnPickupInput', (place) => {
+                    if (!place.geometry) return;
+                    this.returnPickup = place.formatted_address || this.returnPickup;
+                    this.returnPickupLat = place.geometry.location.lat();
+                    this.returnPickupLng = place.geometry.location.lng();
+                    this.returnPickupPlaceId = place.place_id || null;
+                });
+
+                bind('returnDropoffInput', (place) => {
+                    if (!place.geometry) return;
+                    this.returnDropoff = place.formatted_address || this.returnDropoff;
+                    this.returnDropoffLat = place.geometry.location.lat();
+                    this.returnDropoffLng = place.geometry.location.lng();
+                    this.returnDropoffPlaceId = place.place_id || null;
+                });
+            },
+
+            // Stop rows are created dynamically (x-for), so each one binds its
+            // own Autocomplete instance here (via x-init) rather than through
+            // the static $refs used for the fixed pickup/dropoff fields above.
+            // Without this, stops were free-typed text with no coordinates —
+            // meaning the distance/quote silently ignored them entirely.
+            initStopAutocomplete(el, index, isReturn) {
+                if (!window.google?.maps?.places) return;
+
+                const autocomplete = new google.maps.places.Autocomplete(el, { fields: ['place_id', 'geometry', 'formatted_address'] });
+                autocomplete.addListener('place_changed', () => {
+                    const place = autocomplete.getPlace();
+                    if (!place.geometry) return;
+
+                    const list = isReturn ? this.returnStops : this.stops;
+                    const stop = list[index];
+                    if (!stop) return;
+
+                    stop.location = place.formatted_address || stop.location;
+                    stop.lat = place.geometry.location.lat();
+                    stop.lng = place.geometry.location.lng();
+                    stop.placeId = place.place_id || null;
+                });
+            },
+
+            typeLabel() {
+                return this.serviceTypes.find((option) => option.value === this.type)?.label || '';
+            },
+
+            // Custom date picker — datePickerField is either 'date' or 'returnDate',
+            // pointing at whichever underlying model the open calendar edits.
+            openDatePicker(field) {
+                this.datePickerField = field;
+                this.calendarViewMonth = (this[field] || this.today).slice(0, 7);
+                this.datePickerOpen = true;
+            },
+
+            calendarMonthLabel() {
+                if (!this.calendarViewMonth) return '';
+                const [y, m] = this.calendarViewMonth.split('-').map(Number);
+
+                return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+            },
+
+            weekdayLabels() {
+                const labels = [];
+                const base = new Date(2023, 0, 1); // a Sunday
+
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(base);
+                    d.setDate(base.getDate() + i);
+                    labels.push(d.toLocaleDateString(undefined, { weekday: 'narrow' }));
+                }
+
+                return labels;
+            },
+
+            calendarPrevMonth() {
+                let [y, m] = this.calendarViewMonth.split('-').map(Number);
+                m--;
+                if (m < 1) { m = 12; y--; }
+                this.calendarViewMonth = y + '-' + String(m).padStart(2, '0');
+            },
+
+            calendarNextMonth() {
+                let [y, m] = this.calendarViewMonth.split('-').map(Number);
+                m++;
+                if (m > 12) { m = 1; y++; }
+                this.calendarViewMonth = y + '-' + String(m).padStart(2, '0');
+            },
+
+            calendarDays() {
+                if (!this.calendarViewMonth) return [];
+                const [y, m] = this.calendarViewMonth.split('-').map(Number);
+                const firstWeekday = new Date(y, m - 1, 1).getDay();
+                const daysInMonth = new Date(y, m, 0).getDate();
+                const cells = [];
+
+                for (let i = 0; i < firstWeekday; i++) cells.push(null);
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                    cells.push({
+                        day: d,
+                        dateStr,
+                        disabled: this.isDateDisabled(dateStr),
+                        selected: this[this.datePickerField] === dateStr,
+                        today: dateStr === this.today,
+                    });
+                }
+
+                return cells;
+            },
+
+            isDateDisabled(dateStr) {
+                const min = this.datePickerField === 'returnDate' ? (this.date || this.today) : this.today;
+
+                return dateStr < min;
+            },
+
+            selectDate(dateStr) {
+                if (this.isDateDisabled(dateStr)) return;
+                this[this.datePickerField] = dateStr;
+                this.datePickerOpen = false;
+            },
+
+            formatDateDisplay(field) {
+                const val = this[field];
+                if (!val) return '';
+                const [y, m, d] = val.split('-').map(Number);
+
+                return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            },
+
+            // Custom time picker — same open/select pattern as the date picker above.
+            openTimePicker(field) {
+                this.timePickerField = field;
+                this.timePickerOpen = true;
+            },
+
+            selectTime(slot) {
+                this[this.timePickerField] = slot;
+                this.timePickerOpen = false;
+            },
+
+            isTimeSelected(slot) {
+                return this[this.timePickerField] === slot;
+            },
+
+            formatTimeLabel(slot) {
+                const [h, m] = slot.split(':').map(Number);
+
+                return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+            },
+
+            formatTimeDisplay(field) {
+                return this[field] ? this.formatTimeLabel(this[field]) : '';
+            },
+
+            currentCategory() {
+                return this.categories.find((category) => category.id == this.vehicleCategory) || null;
+            },
+
+            dialCountry() {
+                return this.dialCodes.find((country) => country.dial === this.dialCode) || this.dialCodes[0];
+            },
+
+            filteredDialCodes() {
+                const search = this.dialSearch.trim().toLowerCase();
+                if (!search) return this.dialCodes;
+
+                return this.dialCodes.filter((country) => country.name.toLowerCase().includes(search) || country.dial.includes(search));
             },
 
             incrementPassengers(delta) {
@@ -440,7 +1007,8 @@
 
             hasRequiredFields() {
                 const hasDestination = this.type === 'hourly' || this.dropoff;
-                const hasReturnDetails = this.type !== 'round_trip' || (this.returnDate && this.returnTime);
+                const isRoundTrip = this.type === 'round_trip';
+                const hasReturnDetails = !isRoundTrip || (this.returnDate && this.returnTime && this.returnPickup && this.returnDropoff);
 
                 return this.pickup && hasDestination && this.date && this.time && hasReturnDetails;
             },
@@ -453,7 +1021,10 @@
                 if (!this.hasRequiredFields()) {
                     event.preventDefault();
                     this.notify('error', @json(__('Please fill in pickup, drop-off, date and time.')));
+                    return;
                 }
+
+                this.submitting = true;
             },
 
             canQuote() {
@@ -465,6 +1036,24 @@
 
             money(value) {
                 return '$' + Number(value).toFixed(2);
+            },
+
+            totalDistanceLabel() {
+                if (!this.distanceKm) return '—';
+                const total = this.type === 'round_trip'
+                    ? (this.distanceKm + (this.returnDistanceKm ?? this.distanceKm))
+                    : this.distanceKm;
+
+                return Number(total.toFixed(2)) + ' km';
+            },
+
+            totalDurationLabel() {
+                if (!this.durationMinutes) return '—';
+                const total = this.type === 'round_trip'
+                    ? (this.durationMinutes + (this.returnDurationMinutes ?? this.durationMinutes))
+                    : this.durationMinutes;
+
+                return total + ' min';
             },
 
             extraCharges() {
@@ -500,6 +1089,16 @@
                     dropoff_lat: this.dropoffLat,
                     dropoff_lng: this.dropoffLng,
                     dropoff_place_id: this.dropoffPlaceId,
+                    stops: this.stops.filter((stop) => stop.lat && stop.lng).map((stop) => ({ location: stop.location, lat: stop.lat, lng: stop.lng })),
+                    return_pickup_location: this.type === 'round_trip' ? this.returnPickup : null,
+                    return_pickup_lat: this.type === 'round_trip' ? this.returnPickupLat : null,
+                    return_pickup_lng: this.type === 'round_trip' ? this.returnPickupLng : null,
+                    return_dropoff_location: this.type === 'round_trip' ? this.returnDropoff : null,
+                    return_dropoff_lat: this.type === 'round_trip' ? this.returnDropoffLat : null,
+                    return_dropoff_lng: this.type === 'round_trip' ? this.returnDropoffLng : null,
+                    return_stops: this.type === 'round_trip'
+                        ? this.returnStops.filter((stop) => stop.lat && stop.lng).map((stop) => ({ location: stop.location, lat: stop.lat, lng: stop.lng }))
+                        : [],
                     hours: this.type === 'hourly' ? this.hours : null,
                     passengers: this.passengers,
                     pickup_date: this.date,
@@ -537,6 +1136,8 @@
 
                         this.distanceKm = json.distance_km;
                         this.durationMinutes = json.duration_minutes;
+                        this.returnDistanceKm = json.return_distance_km;
+                        this.returnDurationMinutes = json.return_duration_minutes;
                         this.vehicleName = json.vehicle_name;
                         this.quote = json.breakdown;
                         this.quoteError = null;

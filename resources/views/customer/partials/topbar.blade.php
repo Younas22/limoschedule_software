@@ -3,7 +3,7 @@
     $currentCurrency = active_currency();
 @endphp
 
-<header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-4 border-b border-luxury-border bg-luxury-black/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+<header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-4 border-b border-luxury-border bg-luxury-charcoal/90 px-4 backdrop-blur sm:px-6 lg:px-8">
     <button @click="sidebarOpen = true" class="tap-scale text-luxury-muted hover:text-luxury-white lg:hidden" aria-label="{{ __('Menu') }}">
         <x-icon name="menu" class="h-6 w-6" />
     </button>

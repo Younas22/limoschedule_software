@@ -15,7 +15,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="flex min-h-screen items-center justify-center bg-luxury-black px-4 font-sans text-luxury-white antialiased">
+<body class="flex min-h-screen items-center justify-center bg-luxury-charcoal px-4 font-sans text-luxury-white antialiased">
     @include('components.page-progress')
     @include('components.notifications')
 

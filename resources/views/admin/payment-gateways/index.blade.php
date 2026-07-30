@@ -1,7 +1,7 @@
-<x-admin.layouts.app :title="'Payment Gateways'">
+<x-admin.layouts.app :title="__('Payment Gateways')">
     <div class="mb-6">
-        <h2 class="text-2xl font-semibold text-luxury-white">Payment Gateways</h2>
-        <p class="mt-1 text-sm text-luxury-muted">Manage Stripe and PayPal credentials, sandbox/live mode, and availability.</p>
+        <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Payment Gateways') }}</h2>
+        <p class="mt-1 text-sm text-luxury-muted">{{ __('Manage Stripe and PayPal credentials, sandbox/live mode, and availability.') }}</p>
     </div>
 
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -18,10 +18,10 @@
                             <p class="font-semibold text-luxury-white">{{ $gateway->name }}</p>
                             <div class="mt-1 flex flex-wrap items-center gap-1.5">
                                 <span class="rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide {{ $gateway->is_enabled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-luxury-slate text-luxury-muted' }}">
-                                    {{ $gateway->is_enabled ? 'Enabled' : 'Disabled' }}
+                                    {{ $gateway->is_enabled ? __('Enabled') : __('Disabled') }}
                                 </span>
                                 <span class="rounded-full px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide {{ $gateway->isLive() ? 'bg-red-500/10 text-red-400' : 'bg-luxury-secondary/10 text-luxury-secondary' }}">
-                                    {{ $gateway->isLive() ? 'Live Mode' : 'Sandbox Mode' }}
+                                    {{ $gateway->isLive() ? __('Live Mode') : __('Sandbox Mode') }}
                                 </span>
                             </div>
                         </div>
@@ -30,21 +30,21 @@
 
                 <p class="text-xs text-luxury-muted">
                     @if ($gateway->hasActiveKeys())
-                        {{ $gateway->config()['key_1_label'] ?? 'Key' }} and {{ $gateway->config()['key_2_label'] ?? 'Secret' }} configured for {{ $gateway->mode }} mode.
+                        {{ __(':key1 and :key2 configured for :mode mode.', ['key1' => $gateway->config()['key_1_label'] ?? __('Key'), 'key2' => $gateway->config()['key_2_label'] ?? __('Secret'), 'mode' => $gateway->mode]) }}
                     @else
-                        No {{ $gateway->mode }} credentials configured yet.
+                        {{ __('No :mode credentials configured yet.', ['mode' => $gateway->mode]) }}
                     @endif
                 </p>
 
                 <div class="flex flex-wrap items-center gap-2">
                     @permission('payments.edit')
                         <a href="{{ route('admin.payment-gateways.edit', $gateway) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                            Configure
+                            {{ __('Configure') }}
                         </a>
                         <form method="POST" action="{{ route('admin.payment-gateways.toggle', $gateway) }}">
                             @csrf
                             <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                {{ $gateway->is_enabled ? 'Disable' : 'Enable' }}
+                                {{ $gateway->is_enabled ? __('Disable') : __('Enable') }}
                             </button>
                         </form>
                     @endpermission

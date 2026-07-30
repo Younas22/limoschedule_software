@@ -1,16 +1,16 @@
-<x-admin.layouts.app :title="'System Tools'">
+<x-admin.layouts.app :title="__('System Tools')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">System Tools</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Maintenance, caching, backups, and diagnostics for this installation.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('System Tools') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Maintenance, caching, backups, and diagnostics for this installation.') }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
             @permission('system.view')
                 <a href="{{ route('admin.system-tools.activity-logs') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                    Activity Logs
+                    {{ __('Activity Logs') }}
                 </a>
                 <a href="{{ route('admin.system-tools.error-logs') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                    Error Logs
+                    {{ __('Error Logs') }}
                 </a>
             @endpermission
         </div>
@@ -18,23 +18,23 @@
 
     @if (session('command_output'))
         <div class="mb-6 rounded-xl border border-luxury-border bg-luxury-charcoal p-5">
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-luxury-muted">Command Output</p>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-luxury-muted">{{ __('Command Output') }}</p>
             <pre class="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-luxury-black/60 p-4 text-xs text-luxury-muted">{{ session('command_output') }}</pre>
         </div>
     @endif
 
     @if ($isDownForMaintenance)
         <div class="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4">
-            <p class="text-sm font-semibold text-red-400">Maintenance mode is currently ON — the public site is unavailable to visitors.</p>
+            <p class="text-sm font-semibold text-red-400">{{ __('Maintenance mode is currently ON — the public site is unavailable to visitors.') }}</p>
             @if ($maintenanceSecret)
-                <p class="mt-1 text-xs text-red-300">Bypass link: <code class="rounded bg-black/30 px-1.5 py-0.5">{{ url('/') }}/{{ $maintenanceSecret }}</code></p>
+                <p class="mt-1 text-xs text-red-300">{{ __('Bypass link:') }} <code class="rounded bg-luxury-charcoal px-1.5 py-0.5">{{ url('/') }}/{{ $maintenanceSecret }}</code></p>
             @endif
         </div>
     @endif
 
     {{-- System Health --}}
     <div class="mb-6 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-        <h3 class="mb-4 text-sm font-semibold text-luxury-white">System Health</h3>
+        <h3 class="mb-4 text-sm font-semibold text-luxury-white">{{ __('System Health') }}</h3>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($checks as $check)
                 <div class="flex items-start gap-3 rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-4">
@@ -72,14 +72,14 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {{-- Maintenance Mode --}}
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-            <h3 class="text-sm font-semibold text-luxury-white">Maintenance Mode</h3>
-            <p class="mt-1 text-xs text-luxury-muted">Take the public site offline while you make changes. The admin panel stays accessible.</p>
+            <h3 class="text-sm font-semibold text-luxury-white">{{ __('Maintenance Mode') }}</h3>
+            <p class="mt-1 text-xs text-luxury-muted">{{ __('Take the public site offline while you make changes. The admin panel stays accessible.') }}</p>
 
             <form method="POST" action="{{ route('admin.system-tools.maintenance.toggle') }}" class="mt-4">
                 @csrf
                 @permission('system.edit')
                     <x-admin.button type="submit" :variant="$isDownForMaintenance ? 'primary' : 'danger'">
-                        {{ $isDownForMaintenance ? 'Disable Maintenance Mode' : 'Enable Maintenance Mode' }}
+                        {{ $isDownForMaintenance ? __('Disable Maintenance Mode') : __('Enable Maintenance Mode') }}
                     </x-admin.button>
                 @endpermission
             </form>
@@ -87,12 +87,12 @@
 
         {{-- Cache --}}
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-            <h3 class="text-sm font-semibold text-luxury-white">Cache</h3>
-            <p class="mt-1 text-xs text-luxury-muted">Clear cached config, routes, views, or application data.</p>
+            <h3 class="text-sm font-semibold text-luxury-white">{{ __('Cache') }}</h3>
+            <p class="mt-1 text-xs text-luxury-muted">{{ __('Clear cached config, routes, views, or application data.') }}</p>
 
             @permission('system.edit')
                 <div class="mt-4 flex flex-wrap gap-2">
-                    @foreach (['all' => 'Clear All', 'config' => 'Config', 'route' => 'Routes', 'view' => 'Views', 'application' => 'App Cache'] as $target => $label)
+                    @foreach (['all' => __('Clear All'), 'config' => __('Config'), 'route' => __('Routes'), 'view' => __('Views'), 'application' => __('App Cache')] as $target => $label)
                         <form method="POST" action="{{ route('admin.system-tools.cache.clear') }}">
                             @csrf
                             <input type="hidden" name="target" value="{{ $target }}">
@@ -107,29 +107,29 @@
 
         {{-- Queue Status --}}
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-            <h3 class="text-sm font-semibold text-luxury-white">Queue Status</h3>
-            <p class="mt-1 text-xs text-luxury-muted">Driver: <span class="font-medium text-luxury-white">{{ ucfirst($queue['driver']) }}</span></p>
+            <h3 class="text-sm font-semibold text-luxury-white">{{ __('Queue Status') }}</h3>
+            <p class="mt-1 text-xs text-luxury-muted">{{ __('Driver:') }} <span class="font-medium text-luxury-white">{{ ucfirst($queue['driver']) }}</span></p>
 
             @if ($queue['pending'] === null)
-                <p class="mt-4 text-sm text-luxury-muted">This driver processes jobs immediately — there is no queue to monitor.</p>
+                <p class="mt-4 text-sm text-luxury-muted">{{ __('This driver processes jobs immediately — there is no queue to monitor.') }}</p>
             @else
                 <div class="mt-4 grid grid-cols-2 gap-3">
                     <div class="rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-4 text-center">
                         <p class="text-2xl font-semibold text-luxury-white">{{ number_format($queue['pending']) }}</p>
-                        <p class="text-xs text-luxury-muted">Pending Jobs</p>
+                        <p class="text-xs text-luxury-muted">{{ __('Pending Jobs') }}</p>
                     </div>
                     <div class="rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-4 text-center">
                         <p class="text-2xl font-semibold {{ $queue['failed'] > 0 ? 'text-red-400' : 'text-luxury-white' }}">{{ number_format($queue['failed']) }}</p>
-                        <p class="text-xs text-luxury-muted">Failed Jobs</p>
+                        <p class="text-xs text-luxury-muted">{{ __('Failed Jobs') }}</p>
                     </div>
                 </div>
 
                 @if ($queue['failed'] > 0)
                     @permission('system.edit')
-                        <form method="POST" action="{{ route('admin.system-tools.queue.failed.clear') }}" class="mt-3" onsubmit="return confirm('Clear all failed jobs?');">
+                        <form method="POST" action="{{ route('admin.system-tools.queue.failed.clear') }}" class="mt-3" onsubmit="return confirm('{{ __('Clear all failed jobs?') }}');">
                             @csrf
                             <button type="submit" class="w-full rounded-lg border border-red-500/30 px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                Clear Failed Jobs
+                                {{ __('Clear Failed Jobs') }}
                             </button>
                         </form>
                     @endpermission
@@ -140,14 +140,14 @@
         {{-- Backups --}}
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6 lg:col-span-2">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h3 class="text-sm font-semibold text-luxury-white">Database Backups</h3>
+                <h3 class="text-sm font-semibold text-luxury-white">{{ __('Database Backups') }}</h3>
                 @permission('system.edit')
                     <div class="flex flex-wrap items-center gap-2">
                         <form method="POST" action="{{ route('admin.system-tools.backups.upload') }}" enctype="multipart/form-data"
                             x-data="{ filename: '' }">
                             @csrf
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                <span x-text="filename || 'Upload .sql File'"></span>
+                                <span x-text="filename || '{{ __('Upload .sql File') }}'"></span>
                                 <input type="file" name="file" accept=".sql" class="hidden" required
                                     @change="filename = $event.target.files[0]?.name; $el.closest('form').submit()">
                             </label>
@@ -155,7 +155,7 @@
                         <form method="POST" action="{{ route('admin.system-tools.backups.create') }}">
                             @csrf
                             <button type="submit" class="rounded-lg bg-luxury-gold px-3 py-1.5 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                                + New Backup
+                                + {{ __('New Backup') }}
                             </button>
                         </form>
                     </div>
@@ -173,64 +173,61 @@
                         <div class="flex shrink-0 items-center gap-1">
                             @permission('system.export')
                                 <a href="{{ route('admin.system-tools.backups.download', $backup['name']) }}" class="rounded-lg border border-luxury-border px-2.5 py-1.5 text-[11px] font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                    Download
+                                    {{ __('Download') }}
                                 </a>
                             @endpermission
                             @permission('system.delete')
                                 <div x-data="{ open: false, confirm: '' }" class="relative inline-block">
                                     <button type="button" @click="open = true" class="rounded-lg border border-luxury-gold/40 px-2.5 py-1.5 text-[11px] font-medium text-luxury-gold transition hover:bg-luxury-gold/10">
-                                        Update DB
+                                        {{ __('Update DB') }}
                                     </button>
                                     <div x-show="open" x-cloak @click.outside="open = false"
                                         class="absolute end-0 z-40 mt-2 w-72 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 text-start shadow-xl">
-                                        <p class="text-xs font-semibold text-red-400">This overwrites the current database with this backup's tables.</p>
+                                        <p class="text-xs font-semibold text-red-400">{{ __("This overwrites the current database with this backup's tables.") }}</p>
                                         <form method="POST" action="{{ route('admin.system-tools.backups.restore', $backup['name']) }}" class="mt-3">
                                             @csrf
-                                            <label class="mb-1 block text-[11px] text-luxury-muted">Type <span class="font-mono text-luxury-white">RESTORE</span> to confirm</label>
+                                            <label class="mb-1 block text-[11px] text-luxury-muted">{{ __('Type') }} <span class="font-mono text-luxury-white">RESTORE</span> {{ __('to confirm') }}</label>
                                             <input type="text" name="confirm" x-model="confirm" autocomplete="off"
-                                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                                                class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
                                             <button type="submit" :disabled="confirm !== 'RESTORE'"
                                                 class="mt-2 w-full rounded-lg bg-red-500/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-30">
-                                                Update DB Now
+                                                {{ __('Update DB Now') }}
                                             </button>
                                         </form>
                                     </div>
                                 </div>
-                                <form method="POST" action="{{ route('admin.system-tools.backups.destroy', $backup['name']) }}" onsubmit="return confirm('Delete this backup?');">
+                                <form method="POST" action="{{ route('admin.system-tools.backups.destroy', $backup['name']) }}" onsubmit="return confirm('{{ __('Delete this backup?') }}');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="rounded-lg border border-red-500/30 px-2.5 py-1.5 text-[11px] font-medium text-red-400 transition hover:bg-red-500/10">
-                                        Delete
+                                        {{ __('Delete') }}
                                     </button>
                                 </form>
                             @endpermission
                         </div>
                     </div>
                 @empty
-                    <p class="py-6 text-center text-sm text-luxury-muted">No backups yet.</p>
+                    <p class="py-6 text-center text-sm text-luxury-muted">{{ __('No backups yet.') }}</p>
                 @endforelse
             </div>
 
             @permission('system.delete')
                 <div class="mt-5 rounded-xl border border-red-500/30 bg-red-500/5 p-4" x-data="{ open: false, confirm: '' }">
-                    <p class="text-xs font-semibold text-red-400">Danger Zone</p>
+                    <p class="text-xs font-semibold text-red-400">{{ __('Danger Zone') }}</p>
                     <p class="mt-1 text-xs text-luxury-muted">
-                        You do not need this to restore a backup — "Update DB" above already replaces tables safely on its own.
-                        This button deletes every table, including sessions and admin accounts, which logs everyone out immediately
-                        and breaks every page on the site (login included) with no way to fix it from the browser — you'd need
-                        server/terminal access to recover. Only use this for a full wipe-and-rebuild via CLI.
+                        {{ __('You do not need this to restore a backup — "Update DB" above already replaces tables safely on its own. This button deletes every table, including sessions and admin accounts, which logs everyone out immediately and breaks every page on the site (login included) with no way to fix it from the browser — you\'d need server/terminal access to recover. Only use this for a full wipe-and-rebuild via CLI.') }}
                     </p>
                     <button type="button" @click="open = ! open" class="mt-3 rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                        Delete All Tables
+                        {{ __('Delete All Tables') }}
                     </button>
                     <form method="POST" action="{{ route('admin.system-tools.database.drop-tables') }}" x-show="open" x-cloak class="mt-3">
                         @csrf
-                        <label class="mb-1 block text-[11px] text-luxury-muted">Type <span class="font-mono text-luxury-white">DELETE ALL TABLES</span> to confirm</label>
+                        <label class="mb-1 block text-[11px] text-luxury-muted">{{ __('Type') }} <span class="font-mono text-luxury-white">DELETE ALL TABLES</span> {{ __('to confirm') }}</label>
                         <input type="text" name="confirm" x-model="confirm" autocomplete="off"
-                            class="w-full max-w-xs rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                            class="w-full max-w-xs rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
                         <button type="submit" :disabled="confirm !== 'DELETE ALL TABLES'"
                             class="mt-2 block rounded-lg bg-red-500/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-30">
-                            Delete All Tables Now
+                            {{ __('Delete All Tables Now') }}
                         </button>
                     </form>
                 </div>
@@ -239,23 +236,23 @@
 
         {{-- Deployment --}}
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-            <h3 class="text-sm font-semibold text-luxury-white">Deployment</h3>
-            <p class="mt-1 text-xs text-luxury-muted">Run pending migrations or pull the latest Composer dependencies.</p>
+            <h3 class="text-sm font-semibold text-luxury-white">{{ __('Deployment') }}</h3>
+            <p class="mt-1 text-xs text-luxury-muted">{{ __('Run pending migrations or pull the latest Composer dependencies.') }}</p>
 
             @permission('system.edit')
                 <form method="POST" action="{{ route('admin.system-tools.database.migrate') }}" class="mt-4">
                     @csrf
-                    <x-admin.button type="submit" variant="secondary">Run Migrations</x-admin.button>
+                    <x-admin.button type="submit" variant="secondary">{{ __('Run Migrations') }}</x-admin.button>
                 </form>
             @endpermission
 
             @permission('system.delete')
                 <form method="POST" action="{{ route('admin.system-tools.composer.update') }}" class="mt-3"
-                    onsubmit="return confirm('This can take several minutes and may break the site if a dependency update is incompatible. Continue?');">
+                    onsubmit="return confirm('{{ __('This can take several minutes and may break the site if a dependency update is incompatible. Continue?') }}');">
                     @csrf
-                    <x-admin.button type="submit" variant="danger">Run Composer Update</x-admin.button>
+                    <x-admin.button type="submit" variant="danger">{{ __('Run Composer Update') }}</x-admin.button>
                 </form>
-                <p class="mt-2 text-[11px] text-luxury-muted">Runs <code class="rounded bg-luxury-black/40 px-1 py-0.5">composer update</code> on the server. This can take a few minutes — don't close this tab.</p>
+                <p class="mt-2 text-[11px] text-luxury-muted">{{ __('Runs') }} <code class="rounded bg-luxury-charcoal px-1 py-0.5">composer update</code> {{ __("on the server. This can take a few minutes — don't close this tab.") }}</p>
             @endpermission
         </div>
     </div>

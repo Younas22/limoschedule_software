@@ -1,8 +1,8 @@
-<x-admin.layouts.app :title="'Roles & Permissions'">
+<x-admin.layouts.app :title="__('Roles & Permissions')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Roles &amp; Permissions</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Manage enterprise roles and their module-level permissions.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Roles & Permissions') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Manage enterprise roles and their module-level permissions.') }}</p>
         </div>
 
         @permission('roles.create')
@@ -11,7 +11,7 @@
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
-                    New Role
+                    {{ __('New Role') }}
                 </x-admin.button>
             </a>
         @endpermission
@@ -22,11 +22,11 @@
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">Role</th>
-                        <th class="px-6 py-3 font-medium">Description</th>
-                        <th class="px-6 py-3 font-medium">Permissions</th>
-                        <th class="px-6 py-3 font-medium">Admins</th>
-                        <th class="px-6 py-3 text-end font-medium">Actions</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Role') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Description') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Permissions') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Admins') }}</th>
+                        <th class="px-6 py-3 text-end font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-luxury-border/60">
@@ -36,7 +36,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="font-medium text-luxury-white">{{ $role->name }}</span>
                                     @if ($role->is_system)
-                                        <span class="rounded-full bg-luxury-secondary/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-luxury-secondary">System</span>
+                                        <span class="rounded-full bg-luxury-secondary/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-luxury-secondary">{{ __('System') }}</span>
                                     @endif
                                 </div>
                             </td>
@@ -47,17 +47,17 @@
                                 <div class="flex items-center justify-end gap-2">
                                     @permission('roles.edit')
                                         <a href="{{ route('admin.roles.edit', $role) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </a>
                                     @endpermission
 
                                     @permission('roles.delete')
                                         @unless ($role->is_system)
-                                            <form method="POST" action="{{ route('admin.roles.destroy', $role) }}" onsubmit="return confirm('Delete this role? Admins assigned to it will lose these permissions.');">
+                                            <form method="POST" action="{{ route('admin.roles.destroy', $role) }}" onsubmit="return confirm('{{ __('Delete this role? Admins assigned to it will lose these permissions.') }}');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                                    Delete
+                                                    {{ __('Delete') }}
                                                 </button>
                                             </form>
                                         @endunless
@@ -67,7 +67,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-luxury-muted">No roles created yet.</td>
+                            <td colspan="5" class="px-6 py-10 text-center text-luxury-muted">{{ __('No roles created yet.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

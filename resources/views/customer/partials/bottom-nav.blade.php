@@ -10,7 +10,7 @@
     ];
 @endphp
 
-<nav class="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-luxury-border bg-luxury-black/95 backdrop-blur lg:hidden">
+<nav class="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-luxury-border bg-luxury-charcoal/95 backdrop-blur lg:hidden">
     <div class="grid grid-cols-5">
         @foreach ($tabs as $tab)
             @php $isActive = request()->routeIs($tab['match']); @endphp

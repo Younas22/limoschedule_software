@@ -10,15 +10,15 @@
         <button type="button" @mousedown.prevent="exec('formatBlock', 'h3')" class="rounded px-2 py-1 text-xs font-semibold text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">H3</button>
         <button type="button" @mousedown.prevent="exec('formatBlock', 'p')" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">P</button>
         <span class="mx-1 h-4 w-px bg-luxury-border"></span>
-        <button type="button" @mousedown.prevent="exec('insertUnorderedList')" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">&bull; List</button>
-        <button type="button" @mousedown.prevent="exec('insertOrderedList')" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">1. List</button>
+        <button type="button" @mousedown.prevent="exec('insertUnorderedList')" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">&bull; {{ __('List') }}</button>
+        <button type="button" @mousedown.prevent="exec('insertOrderedList')" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">1. {{ __('List') }}</button>
         <span class="mx-1 h-4 w-px bg-luxury-border"></span>
-        <button type="button" @mousedown.prevent="addLink()" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">Link</button>
+        <button type="button" @mousedown.prevent="addLink()" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">{{ __('Link') }}</button>
         <button type="button" @mousedown.prevent="triggerImagePick()" :disabled="uploading" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white disabled:opacity-50">
-            <span x-show="!uploading">Image</span>
-            <span x-show="uploading" x-cloak>Uploading…</span>
+            <span x-show="!uploading">{{ __('Image') }}</span>
+            <span x-show="uploading" x-cloak>{{ __('Uploading…') }}</span>
         </button>
-        <button type="button" @mousedown.prevent="exec('removeFormat')" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">Clear</button>
+        <button type="button" @mousedown.prevent="exec('removeFormat')" class="rounded px-2 py-1 text-xs text-luxury-muted hover:bg-luxury-slate hover:text-luxury-white">{{ __('Clear') }}</button>
         <input type="file" x-ref="imageInput" accept="image/*" class="hidden" @change="uploadImage($event)">
     </div>
 
@@ -61,7 +61,7 @@
                 this.$refs.editor.focus();
             },
             addLink() {
-                const url = window.prompt('Enter a URL');
+                const url = window.prompt({{ \Illuminate\Support\Js::from(__('Enter a URL')) }});
                 if (url) {
                     this.exec('createLink', url);
                 }
@@ -229,7 +229,7 @@
                     })
                     .catch(() => {
                         window.dispatchEvent(new CustomEvent('notify', {
-                            detail: { type: 'error', message: 'Image upload failed — please try again.' },
+                            detail: { type: 'error', message: {{ \Illuminate\Support\Js::from(__('Image upload failed — please try again.')) }} },
                         }));
                     })
                     .finally(() => {

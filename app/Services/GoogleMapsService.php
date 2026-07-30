@@ -69,4 +69,46 @@ class GoogleMapsService
             }
         });
     }
+
+    /**
+     * Sums consecutive-leg distances across an ordered list of waypoints
+     * (e.g. pickup → stop 1 → stop 2 → drop-off) so stops actually count
+     * toward the quoted distance instead of being ignored in favour of a
+     * single origin→destination line. Distance Matrix has no native
+     * multi-stop route mode, so this chains individual calls (each already
+     * cached by distance()) and adds them up.
+     *
+     * @param  array<int, array{lat: float, lng: float}>  $points
+     * @return array{distance_km: float, duration_minutes: int}|null
+     */
+    public function routeDistance(array $points): ?array
+    {
+        if (count($points) < 2) {
+            return null;
+        }
+
+        $totalKm = 0.0;
+        $totalMinutes = 0;
+
+        for ($i = 0; $i < count($points) - 1; $i++) {
+            $leg = $this->distance(
+                (float) $points[$i]['lat'],
+                (float) $points[$i]['lng'],
+                (float) $points[$i + 1]['lat'],
+                (float) $points[$i + 1]['lng']
+            );
+
+            if (! $leg) {
+                return null;
+            }
+
+            $totalKm += $leg['distance_km'];
+            $totalMinutes += $leg['duration_minutes'];
+        }
+
+        return [
+            'distance_km' => round($totalKm, 2),
+            'duration_minutes' => $totalMinutes,
+        ];
+    }
 }

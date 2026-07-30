@@ -1,16 +1,16 @@
-<x-admin.layouts.app :title="'Blog Posts'">
+<x-admin.layouts.app :title="__('Blog Posts')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Blog Posts</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Write, publish, and manage your blog.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Blog Posts') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Write, publish, and manage your blog.') }}</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('admin.blog.tags.index') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                Tags
+                {{ __('Tags') }}
             </a>
             <a href="{{ route('admin.blog.categories.index') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                Categories
+                {{ __('Categories') }}
             </a>
             @permission('blog.create')
                 <a href="{{ route('admin.blog.create') }}">
@@ -18,7 +18,7 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
-                        New Post
+                        {{ __('New Post') }}
                     </x-admin.button>
                 </a>
             @endpermission
@@ -27,12 +27,12 @@
 
     {{-- Filters --}}
     <form method="GET" class="mb-6 flex flex-wrap items-center gap-3">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search title..."
+        <input type="text" name="search" value="{{ request('search') }}" placeholder="{{ __('Search title...') }}"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
 
         <select name="status" onchange="this.form.submit()"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-            <option value="">All Statuses</option>
+            <option value="">{{ __('All Statuses') }}</option>
             @foreach (\App\Models\BlogPost::STATUSES as $value => $label)
                 <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
             @endforeach
@@ -40,16 +40,16 @@
 
         <select name="category" onchange="this.form.submit()"
             class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-            <option value="">All Categories</option>
+            <option value="">{{ __('All Categories') }}</option>
             @foreach ($categories as $category)
                 <option value="{{ $category->id }}" @selected((string) request('category') === (string) $category->id)>{{ $category->name }}</option>
             @endforeach
         </select>
 
-        <button type="submit" class="rounded-lg border border-luxury-border px-3 py-2 text-sm text-luxury-muted hover:border-luxury-gold/40 hover:text-luxury-gold">Filter</button>
+        <button type="submit" class="rounded-lg border border-luxury-border px-3 py-2 text-sm text-luxury-muted hover:border-luxury-gold/40 hover:text-luxury-gold">{{ __('Filter') }}</button>
 
         @if (request()->filled('status') || request()->filled('category') || request()->filled('search'))
-            <a href="{{ route('admin.blog.index') }}" class="text-xs text-luxury-muted hover:text-luxury-gold">Clear filters</a>
+            <a href="{{ route('admin.blog.index') }}" class="text-xs text-luxury-muted hover:text-luxury-gold">{{ __('Clear filters') }}</a>
         @endif
     </form>
 
@@ -58,13 +58,13 @@
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">Post</th>
-                        <th class="px-6 py-3 font-medium">Category</th>
-                        <th class="px-6 py-3 font-medium">Author</th>
-                        <th class="px-6 py-3 font-medium">Status</th>
-                        <th class="px-6 py-3 font-medium">Views</th>
-                        <th class="px-6 py-3 font-medium">Featured</th>
-                        <th class="px-6 py-3 text-end font-medium">Actions</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Post') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Category') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Author') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Status') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Views') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Featured') }}</th>
+                        <th class="px-6 py-3 text-end font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-luxury-border/60">
@@ -76,7 +76,7 @@
                                         @if ($post->featured_image_url)
                                             <img src="{{ $post->featured_image_url }}" alt="" class="h-full w-full object-cover">
                                         @else
-                                            <span class="text-[9px] text-luxury-muted">No image</span>
+                                            <span class="text-[9px] text-luxury-muted">{{ __('No image') }}</span>
                                         @endif
                                     </div>
                                     <div class="min-w-0">
@@ -97,7 +97,7 @@
                                 @permission('blog.edit')
                                     <form method="POST" action="{{ route('admin.blog.toggle-featured', $post) }}">
                                         @csrf
-                                        <button type="submit" class="rounded-full p-1.5 transition {{ $post->is_featured ? 'text-luxury-gold' : 'text-luxury-muted hover:text-luxury-gold' }}" title="Toggle featured">
+                                        <button type="submit" class="rounded-full p-1.5 transition {{ $post->is_featured ? 'text-luxury-gold' : 'text-luxury-muted hover:text-luxury-gold' }}" title="{{ __('Toggle featured') }}">
                                             <svg class="h-5 w-5" fill="{{ $post->is_featured ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.98 21.539a.562.562 0 01-.84-.61l1.285-5.385a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                                             </svg>
@@ -105,7 +105,7 @@
                                     </form>
                                 @else
                                     @if ($post->is_featured)
-                                        <span class="text-luxury-gold">Featured</span>
+                                        <span class="text-luxury-gold">{{ __('Featured') }}</span>
                                     @endif
                                 @endpermission
                             </td>
@@ -113,15 +113,15 @@
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     @permission('blog.edit')
                                         <a href="{{ route('admin.blog.edit', $post) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </a>
                                     @endpermission
                                     @permission('blog.delete')
-                                        <form method="POST" action="{{ route('admin.blog.destroy', $post) }}" onsubmit="return confirm('Delete this post?');">
+                                        <form method="POST" action="{{ route('admin.blog.destroy', $post) }}" onsubmit="return confirm('{{ __('Delete this post?') }}');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                                Delete
+                                                {{ __('Delete') }}
                                             </button>
                                         </form>
                                     @endpermission
@@ -130,7 +130,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-10 text-center text-luxury-muted">No blog posts found.</td>
+                            <td colspan="7" class="px-6 py-10 text-center text-luxury-muted">{{ __('No blog posts found.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -142,17 +142,17 @@
         <div class="mt-6 flex items-center justify-between text-sm text-luxury-muted">
             <div>
                 @if ($posts->onFirstPage())
-                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">Previous</span>
+                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">{{ __('Previous') }}</span>
                 @else
-                    <a href="{{ $posts->previousPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">Previous</a>
+                    <a href="{{ $posts->previousPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">{{ __('Previous') }}</a>
                 @endif
             </div>
-            <p>Page {{ $posts->currentPage() }} of {{ $posts->lastPage() }}</p>
+            <p>{{ __('Page :current of :last', ['current' => $posts->currentPage(), 'last' => $posts->lastPage()]) }}</p>
             <div>
                 @if ($posts->hasMorePages())
-                    <a href="{{ $posts->nextPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">Next</a>
+                    <a href="{{ $posts->nextPageUrl() }}" class="rounded-lg border border-luxury-border px-3 py-1.5 hover:border-luxury-gold/40 hover:text-luxury-gold">{{ __('Next') }}</a>
                 @else
-                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">Next</span>
+                    <span class="cursor-not-allowed rounded-lg border border-luxury-border px-3 py-1.5 opacity-40">{{ __('Next') }}</span>
                 @endif
             </div>
         </div>

@@ -13,5 +13,5 @@
         </button>
     @endfor
     <input type="hidden" name="{{ $name }}" x-model="rating">
-    <span class="ms-2 text-sm text-luxury-muted" x-text="rating + ' / 5'"></span>
+    <span class="ms-2 text-sm text-luxury-muted" x-text="rating + '{{ __(' / 5') }}'"></span>
 </div>

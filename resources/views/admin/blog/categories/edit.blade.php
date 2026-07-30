@@ -1,6 +1,6 @@
-<x-admin.layouts.app :title="'Edit Blog Category'">
+<x-admin.layouts.app :title="__('Edit Blog Category')">
     <div class="mb-6">
-        <h2 class="text-2xl font-semibold text-luxury-white">Edit Blog Category</h2>
+        <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Edit Blog Category') }}</h2>
         <p class="mt-1 text-sm text-luxury-muted">{{ $category->name }}</p>
     </div>
 
@@ -10,8 +10,8 @@
         @include('admin.blog.categories._form')
 
         <div class="flex items-center gap-3">
-            <x-admin.button type="submit" variant="primary">Update Category</x-admin.button>
-            <a href="{{ route('admin.blog.categories.index') }}" class="text-sm text-luxury-muted hover:text-luxury-white">Cancel</a>
+            <x-admin.button type="submit" variant="primary">{{ __('Update Category') }}</x-admin.button>
+            <a href="{{ route('admin.blog.categories.index') }}" class="text-sm text-luxury-muted hover:text-luxury-white">{{ __('Cancel') }}</a>
         </div>
     </form>
 </x-admin.layouts.app>

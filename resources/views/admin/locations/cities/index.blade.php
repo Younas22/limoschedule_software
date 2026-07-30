@@ -1,10 +1,10 @@
-<x-admin.layouts.app :title="'Cities'">
+<x-admin.layouts.app :title="__('Cities')">
     @include('admin.locations._tabs')
 
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">Cities</h2>
-            <p class="mt-1 text-sm text-luxury-muted">Manage the cities available for pickups and drop-offs.</p>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Cities') }}</h2>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __('Manage the cities available for pickups and drop-offs.') }}</p>
         </div>
 
         @permission('locations.create')
@@ -13,7 +13,7 @@
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
-                    Add City
+                    {{ __('Add City') }}
                 </x-admin.button>
             </a>
         @endpermission
@@ -24,11 +24,11 @@
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">City</th>
-                        <th class="px-6 py-3 font-medium">State</th>
-                        <th class="px-6 py-3 font-medium">Country</th>
-                        <th class="px-6 py-3 font-medium">Status</th>
-                        <th class="px-6 py-3 text-end font-medium">Actions</th>
+                        <th class="px-6 py-3 font-medium">{{ __('City') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('State') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Country') }}</th>
+                        <th class="px-6 py-3 font-medium">{{ __('Status') }}</th>
+                        <th class="px-6 py-3 text-end font-medium">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-luxury-border/60">
@@ -42,22 +42,22 @@
                                 <div class="flex flex-wrap items-center justify-end gap-2">
                                     @permission('locations.edit')
                                         <a href="{{ route('admin.locations.cities.edit', $city) }}" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                            Edit
+                                            {{ __('Edit') }}
                                         </a>
                                         <form method="POST" action="{{ route('admin.locations.cities.toggle', $city) }}">
                                             @csrf
                                             <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                                {{ $city->is_active ? 'Disable' : 'Enable' }}
+                                                {{ $city->is_active ? __('Disable') : __('Enable') }}
                                             </button>
                                         </form>
                                     @endpermission
 
                                     @permission('locations.delete')
-                                        <form method="POST" action="{{ route('admin.locations.cities.destroy', $city) }}" onsubmit="return confirm('Delete this city?');">
+                                        <form method="POST" action="{{ route('admin.locations.cities.destroy', $city) }}" onsubmit="return confirm('{{ __('Delete this city?') }}');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
-                                                Delete
+                                                {{ __('Delete') }}
                                             </button>
                                         </form>
                                     @endpermission
@@ -66,7 +66,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-luxury-muted">No cities added yet.</td>
+                            <td colspan="5" class="px-6 py-10 text-center text-luxury-muted">{{ __('No cities added yet.') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

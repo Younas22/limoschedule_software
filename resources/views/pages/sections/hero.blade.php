@@ -1,8 +1,10 @@
 @props(['section'])
 
-<section class="relative flex min-h-[100svh] flex-col justify-center overflow-hidden border-b border-luxury-border">
-    {{-- Background media --}}
-    <div class="absolute inset-0">
+<section class="relative flex min-h-[100svh] flex-col justify-center border-b border-luxury-border">
+    {{-- Background media — overflow-hidden lives here (not on the section) so the
+         Ken Burns zoom stays contained without clipping the booking widget's
+         dropdowns, which need to be able to render outside the hero's bounds. --}}
+    <div class="absolute inset-0 overflow-hidden">
         @if ($section->video_url)
             <video class="h-full w-full object-cover animate-ken-burns" autoplay muted loop playsinline
                 @if ($section->image_url) poster="{{ $section->image_url }}" @endif>

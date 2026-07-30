@@ -21,7 +21,7 @@
         </span>
         <span class="min-w-0 flex-1">
             <span class="flex items-center gap-2">
-                <span class="truncate text-sm font-medium {{ $isUnread ? 'text-luxury-white' : 'text-luxury-muted' }}">{{ $notification->data['title'] ?? 'Notification' }}</span>
+                <span class="truncate text-sm font-medium {{ $isUnread ? 'text-luxury-white' : 'text-luxury-muted' }}">{{ $notification->data['title'] ?? __('Notification') }}</span>
                 @if ($isUnread)
                     <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-luxury-gold"></span>
                 @endif

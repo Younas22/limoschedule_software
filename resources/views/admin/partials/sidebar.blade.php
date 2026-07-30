@@ -11,8 +11,8 @@
             'permission' => 'bookings.view',
             'icon' => 'calendar',
             'children' => [
-                ['label' => 'All Bookings', 'route' => 'admin.bookings.index', 'permission' => 'bookings.view'],
-                ['label' => 'Booking Settings', 'route' => 'admin.booking-settings.edit', 'permission' => 'bookings.edit'],
+                ['label' => __('All Bookings'), 'route' => 'admin.bookings.index', 'permission' => 'bookings.view'],
+                ['label' => __('Booking Settings'), 'route' => 'admin.booking-settings.edit', 'permission' => 'bookings.edit'],
             ],
         ],
         [
@@ -21,8 +21,8 @@
             'permission' => 'vehicles.view',
             'icon' => 'car',
             'children' => [
-                ['label' => 'All Vehicles', 'route' => 'admin.vehicles.index'],
-                ['label' => 'Categories', 'route' => 'admin.vehicles.categories.index'],
+                ['label' => __('All Vehicles'), 'route' => 'admin.vehicles.index'],
+                ['label' => __('Categories'), 'route' => 'admin.vehicles.categories.index'],
             ],
         ],
         ['label' => __('Drivers'), 'route' => 'admin.drivers.index', 'permission' => 'drivers.view', 'icon' => 'id'],
@@ -32,8 +32,8 @@
             'permission' => 'customers.view',
             'icon' => 'users',
             'children' => [
-                ['label' => 'All Customers', 'route' => 'admin.customers.index', 'permission' => 'customers.view'],
-                ['label' => 'Reviews', 'route' => 'admin.reviews.index', 'permission' => 'reviews.view'],
+                ['label' => __('All Customers'), 'route' => 'admin.customers.index', 'permission' => 'customers.view'],
+                ['label' => __('Reviews'), 'route' => 'admin.reviews.index', 'permission' => 'reviews.view'],
             ],
         ],
 
@@ -51,9 +51,9 @@
             'permission' => 'blog.view',
             'icon' => 'pencil',
             'children' => [
-                ['label' => 'All Posts', 'route' => 'admin.blog.index', 'permission' => 'blog.view'],
-                ['label' => 'Categories', 'route' => 'admin.blog.categories.index', 'permission' => 'blog.view'],
-                ['label' => 'Tags', 'route' => 'admin.blog.tags.index', 'permission' => 'blog.view'],
+                ['label' => __('All Posts'), 'route' => 'admin.blog.index', 'permission' => 'blog.view'],
+                ['label' => __('Categories'), 'route' => 'admin.blog.categories.index', 'permission' => 'blog.view'],
+                ['label' => __('Tags'), 'route' => 'admin.blog.tags.index', 'permission' => 'blog.view'],
             ],
         ],
         [
@@ -62,8 +62,8 @@
             'permission' => 'routes.view',
             'icon' => 'route',
             'children' => [
-                ['label' => 'All Routes', 'route' => 'admin.popular-routes.index'],
-                ['label' => 'Route Types', 'route' => 'admin.popular-routes.route-types.index'],
+                ['label' => __('All Routes'), 'route' => 'admin.popular-routes.index'],
+                ['label' => __('Route Types'), 'route' => 'admin.popular-routes.route-types.index'],
             ],
         ],
         [
@@ -72,12 +72,12 @@
             'permission' => 'locations.view',
             'icon' => 'map',
             'children' => [
-                ['label' => 'Countries', 'route' => 'admin.locations.countries.index'],
-                ['label' => 'States', 'route' => 'admin.locations.states.index'],
-                ['label' => 'Cities', 'route' => 'admin.locations.cities.index'],
-                ['label' => 'Airports', 'route' => 'admin.locations.airports.index'],
-                ['label' => 'Train Stations', 'route' => 'admin.locations.train-stations.index'],
-                ['label' => 'Pickup Points', 'route' => 'admin.locations.pickup-points.index'],
+                ['label' => __('Countries'), 'route' => 'admin.locations.countries.index'],
+                ['label' => __('States'), 'route' => 'admin.locations.states.index'],
+                ['label' => __('Cities'), 'route' => 'admin.locations.cities.index'],
+                ['label' => __('Airports'), 'route' => 'admin.locations.airports.index'],
+                ['label' => __('Train Stations'), 'route' => 'admin.locations.train-stations.index'],
+                ['label' => __('Pickup Points'), 'route' => 'admin.locations.pickup-points.index'],
             ],
         ],
 
@@ -96,9 +96,9 @@
             'permission' => 'settings.view',
             'icon' => 'settings',
             'children' => [
-                ['label' => 'General', 'route' => 'admin.settings.edit', 'permission' => 'settings.view'],
-                ['label' => 'Email', 'route' => 'admin.email-settings.edit', 'permission' => 'settings.view'],
-                ['label' => 'Notifications', 'route' => 'admin.notification-settings.edit', 'permission' => 'settings.view'],
+                ['label' => __('General'), 'route' => 'admin.settings.edit', 'permission' => 'settings.view'],
+                ['label' => __('Email'), 'route' => 'admin.email-settings.edit', 'permission' => 'settings.view'],
+                ['label' => __('Notifications'), 'route' => 'admin.notification-settings.edit', 'permission' => 'settings.view'],
             ],
         ],
         ['label' => __('System Tools'), 'route' => 'admin.system-tools.index', 'permission' => 'system.view', 'icon' => 'wrench'],

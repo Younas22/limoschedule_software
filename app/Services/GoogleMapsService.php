@@ -19,6 +19,44 @@ use Illuminate\Support\Facades\Log;
 class GoogleMapsService
 {
     /**
+     * Verifies a *candidate* key actually works, for the admin "Test
+     * Connection" action — unlike every other method here, this surfaces
+     * the real failure reason instead of swallowing it, since the whole
+     * point is telling the admin why a key doesn't work.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function testKey(string $key): array
+    {
+        if (trim($key) === '') {
+            return ['ok' => false, 'message' => 'Enter an API key first.'];
+        }
+
+        try {
+            $response = Http::timeout(8)->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => 'New York',
+                'key' => $key,
+            ]);
+
+            if (! $response->successful()) {
+                return ['ok' => false, 'message' => "Request failed (HTTP {$response->status()})."];
+            }
+
+            $status = $response->json('status');
+            $errorMessage = $response->json('error_message');
+
+            return match ($status) {
+                'OK' => ['ok' => true, 'message' => 'API key is valid and working.'],
+                'REQUEST_DENIED' => ['ok' => false, 'message' => 'Request denied — '.($errorMessage ?? 'the key may be invalid, restricted, or the Geocoding API is not enabled for it.')],
+                'OVER_QUERY_LIMIT' => ['ok' => false, 'message' => 'Over query limit — check that billing is enabled for this key.'],
+                default => ['ok' => false, 'message' => 'Unexpected response: '.$status.($errorMessage ? " — {$errorMessage}" : '.')],
+            };
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => 'Request failed: '.$e->getMessage()];
+        }
+    }
+
+    /**
      * @return array{distance_km: float, duration_minutes: int}|null
      */
     public function distance(float $originLat, float $originLng, float $destLat, float $destLng): ?array

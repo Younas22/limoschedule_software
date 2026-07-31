@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\FleetController;
 use App\Http\Controllers\Admin\EmailSettingController;
+use App\Http\Controllers\Admin\IntegrationController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\LocaleController;
 use App\Http\Controllers\Admin\Location\AirportController;
@@ -195,6 +196,12 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::get('/', [EmailSettingController::class, 'edit'])->name('edit')->middleware('permission:settings.view');
         Route::put('/', [EmailSettingController::class, 'update'])->name('update')->middleware('permission:settings.edit');
         Route::post('test', [EmailSettingController::class, 'sendTest'])->name('test')->middleware('permission:settings.edit');
+    });
+
+    Route::prefix('integrations')->name('integrations.')->group(function () {
+        Route::get('/', [IntegrationController::class, 'edit'])->name('edit')->middleware('permission:system.edit');
+        Route::post('google-maps/test', [IntegrationController::class, 'testGoogleMaps'])->name('google-maps.test')->middleware('permission:system.edit');
+        Route::put('google-maps', [IntegrationController::class, 'updateGoogleMaps'])->name('google-maps.update')->middleware('permission:system.delete');
     });
 
     Route::prefix('notification-settings')->name('notification-settings.')->group(function () {

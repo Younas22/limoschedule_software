@@ -100,6 +100,7 @@
                 ['label' => __('General'), 'route' => 'admin.settings.edit', 'permission' => 'settings.view'],
                 ['label' => __('Email'), 'route' => 'admin.email-settings.edit', 'permission' => 'settings.view'],
                 ['label' => __('Notifications'), 'route' => 'admin.notification-settings.edit', 'permission' => 'settings.view'],
+                ['label' => __('Integrations'), 'route' => 'admin.integrations.edit', 'permission' => 'system.edit'],
             ],
         ],
         ['label' => __('System Tools'), 'route' => 'admin.system-tools.index', 'permission' => 'system.view', 'icon' => 'wrench'],

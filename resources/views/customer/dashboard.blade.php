@@ -106,12 +106,12 @@
             <x-icon name="cash" class="h-5 w-5" />
         </x-admin.stat-card>
 
-        <x-admin.stat-card :label="__('Loyalty Points')" :value="number_format($stats['loyaltyPoints'])">
-            <x-icon name="star" class="h-5 w-5" />
+        <x-admin.stat-card :label="__('Completed Trips')" :value="$stats['completed']">
+            <x-icon name="check-circle" class="h-5 w-5" />
         </x-admin.stat-card>
 
-        <x-admin.stat-card :label="__('Wallet Balance')" :value="currency($stats['wallet'])">
-            <x-icon name="wallet" class="h-5 w-5" />
+        <x-admin.stat-card :label="__('Upcoming Trips')" :value="$stats['upcoming']">
+            <x-icon name="clock" class="h-5 w-5" />
         </x-admin.stat-card>
 
         <x-admin.stat-card :label="__('Total Bookings')" :value="$stats['total']">
@@ -119,61 +119,25 @@
         </x-admin.stat-card>
     </div>
 
-    {{-- Promotions --}}
-    @if ($promotions->isNotEmpty())
-        <div class="mt-8">
-            <h3 class="mb-4 text-sm font-semibold text-luxury-white">{{ __('Promotions') }}</h3>
-            <div class="scrollbar-luxury -mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
-                @foreach ($promotions as $promotion)
-                    <a href="{{ $promotion->link_url ?? '#' }}"
-                        class="group relative flex h-40 w-72 shrink-0 flex-col justify-end overflow-hidden rounded-2xl border border-luxury-border bg-gradient-to-br from-luxury-gold/20 via-luxury-charcoal to-luxury-graphite p-5 transition hover:border-luxury-gold/40">
-                        @if ($promotion->image_url)
-                            <img src="{{ $promotion->image_url }}" alt="{{ $promotion->title }}" class="absolute inset-0 h-full w-full object-cover opacity-40 transition group-hover:opacity-50">
-                        @endif
-                        <div class="relative">
-                            @if ($promotion->badge_text)
-                                <span class="mb-2 inline-block rounded-full bg-luxury-gold px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-luxury-black">
-                                    {{ $promotion->badge_text }}
-                                </span>
-                            @endif
-                            <p class="font-semibold text-luxury-white">{{ $promotion->title }}</p>
-                            @if ($promotion->subtitle)
-                                <p class="mt-1 text-xs text-luxury-muted">{{ \Illuminate\Support\Str::limit($promotion->subtitle, 70) }}</p>
-                            @endif
-                        </div>
-                    </a>
-                @endforeach
-            </div>
-        </div>
-    @endif
+    {{--
+        Explore Our Fleet + Favorite Vehicles — temporarily hidden from the
+        dashboard. $recommendedVehicles/$favoriteVehicles are still passed
+        in from DashboardController if this needs restoring later.
 
-    {{-- Coupons --}}
-    @if ($coupons->isNotEmpty())
-        <div class="mt-8">
-            <h3 class="mb-4 text-sm font-semibold text-luxury-white">{{ __('Available Coupons') }}</h3>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                @foreach ($coupons as $coupon)
-                    <div x-data="{ copied: false }" class="flex flex-col justify-between rounded-2xl border border-dashed border-luxury-gold/40 bg-luxury-charcoal p-4">
-                        <div>
-                            <p class="text-xs font-medium uppercase tracking-wide text-luxury-gold">{{ $coupon->discount_label }}</p>
-                            <p class="mt-1 text-xs text-luxury-muted">{{ $coupon->description }}</p>
-                            @if ($coupon->expires_at)
-                                <p class="mt-2 text-[11px] text-luxury-muted">{{ __('Expires :date', ['date' => $coupon->expires_at->format('M d, Y')]) }}</p>
-                            @endif
-                        </div>
-                        <button type="button"
-                            @click="navigator.clipboard.writeText('{{ $coupon->code }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                            class="tap-scale mt-3 flex items-center justify-between rounded-lg border border-luxury-border bg-luxury-graphite px-3 py-2 text-sm font-semibold text-luxury-white transition hover:border-luxury-gold/40">
-                            <span>{{ $coupon->code }}</span>
-                            <span class="text-xs font-medium text-luxury-gold" x-text="copied ? '{{ __('Copied!') }}' : '{{ __('Copy') }}'"></span>
-                        </button>
-                    </div>
-                @endforeach
-            </div>
+    <div class="mt-8">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-luxury-white">{{ __('Explore Our Fleet') }}</h3>
+            <a href="{{ route('pages.show', 'services') }}" class="text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">{{ __('View All') }}</a>
         </div>
-    @endif
+        <div class="scrollbar-luxury -mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
+            @foreach ($recommendedVehicles as $vehicle)
+                <div class="w-64 shrink-0">
+                    <x-vehicle-card :vehicle="$vehicle" />
+                </div>
+            @endforeach
+        </div>
+    </div>
 
-    {{-- Favorite Vehicles --}}
     <div class="mt-8">
         <div class="mb-4 flex items-center justify-between">
             <h3 class="text-sm font-semibold text-luxury-white">{{ __('Favorite Vehicles') }}</h3>
@@ -199,6 +163,7 @@
             </div>
         @endif
     </div>
+    --}}
 
     {{-- Recent Bookings --}}
     <div class="mt-8 rounded-2xl border border-luxury-border bg-luxury-charcoal">

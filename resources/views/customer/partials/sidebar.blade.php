@@ -9,11 +9,13 @@
         ['label' => __('Cancelled Trips'), 'route' => 'customer.bookings.cancelled', 'icon' => 'close'],
         ['label' => __('Favorites'), 'route' => 'customer.favorites.index', 'icon' => 'heart'],
         ['label' => __('Saved Addresses'), 'route' => 'customer.addresses.index', 'icon' => 'map-pin'],
-        ['label' => __('Wallet'), 'route' => 'customer.wallet.index', 'icon' => 'cash'],
-        ['label' => __('Payment Methods'), 'route' => 'customer.payment-methods.index', 'icon' => 'credit-card'],
+        // Temporarily hidden from navigation (not ready to launch yet) —
+        // routes/controllers/views are untouched, just unlinked from here.
+        // ['label' => __('Wallet'), 'route' => 'customer.wallet.index', 'icon' => 'cash'],
+        // ['label' => __('Payment Methods'), 'route' => 'customer.payment-methods.index', 'icon' => 'credit-card'],
         ['label' => __('Invoices'), 'route' => 'customer.invoices.index', 'icon' => 'download'],
-        ['label' => __('Notifications'), 'route' => 'customer.notifications.index', 'icon' => 'bell'],
-        ['label' => __('Reviews'), 'route' => 'customer.reviews.index', 'icon' => 'star'],
+        // ['label' => __('Notifications'), 'route' => 'customer.notifications.index', 'icon' => 'bell'],
+        // ['label' => __('Reviews'), 'route' => 'customer.reviews.index', 'icon' => 'star'],
         ['label' => __('Profile Settings'), 'route' => 'customer.profile.edit', 'icon' => 'user'],
         ['label' => __('Preferences'), 'route' => 'customer.settings.edit', 'icon' => 'settings'],
         ['label' => __('Security'), 'route' => 'customer.security.edit', 'icon' => 'lock'],

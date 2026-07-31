@@ -12,6 +12,11 @@ class CustomerAddress extends Model
         'city_id',
         'label',
         'address_line',
+        'lat',
+        'lng',
+        'place_id',
+        'country',
+        'city_name',
         'is_default',
     ];
 
@@ -19,6 +24,8 @@ class CustomerAddress extends Model
     {
         return [
             'is_default' => 'boolean',
+            'lat' => 'decimal:7',
+            'lng' => 'decimal:7',
         ];
     }
 

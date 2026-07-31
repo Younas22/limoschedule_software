@@ -1,4 +1,30 @@
+@php
+    $googleMapsKey = config('services.google_maps.key');
+@endphp
+
 <x-customer.layouts.app :title="__('Saved Addresses')">
+    @once
+        @if ($googleMapsKey)
+            <script async src="https://maps.googleapis.com/maps/api/js?key={{ $googleMapsKey }}&libraries=places&callback=__initAddressMaps"></script>
+            <script>
+                window.__initAddressMaps = function () {
+                    const attach = () => {
+                        document.querySelectorAll('[data-address-form]').forEach((el) => {
+                            Alpine.$data(el).initAutocomplete();
+                        });
+                    };
+
+                    if (window.Alpine) {
+                        attach();
+                    } else {
+                        document.addEventListener('alpine:initialized', attach);
+                    }
+                };
+            </script>
+        @endif
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+    @endonce
+
     <div x-data="{ showForm: false }">
         <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -11,37 +37,83 @@
             </button>
         </div>
 
-        <div x-show="showForm" x-cloak x-transition class="mb-6 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-        <form method="POST" action="{{ route('customer.addresses.store') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            @csrf
-            <div>
-                <x-admin.input-label for="label" value="Label" />
-                <x-admin.text-input id="label" name="label" type="text" placeholder="e.g. Home, Office" value="{{ old('label') }}" required />
-                <x-admin.input-error :messages="$errors->get('label')" />
-            </div>
-            <div>
-                <x-admin.input-label for="city_id" value="City" />
-                <select id="city_id" name="city_id" class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
-                    <option value="">{{ __('Select city') }}</option>
-                    @foreach ($cities as $city)
-                        <option value="{{ $city->id }}">{{ $city->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="sm:col-span-2">
-                <x-admin.input-label for="address_line" value="Address" />
-                <textarea id="address_line" name="address_line" rows="2" required
-                    class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('address_line') }}</textarea>
-                <x-admin.input-error :messages="$errors->get('address_line')" />
-            </div>
-            <label class="flex items-center gap-2 text-sm text-luxury-muted">
-                <input type="checkbox" name="is_default" value="1" class="rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-luxury-gold">
-                {{ __('Set as default') }}
-            </label>
-            <div class="sm:col-span-2">
-                <x-admin.button type="submit" variant="primary">{{ __('Save Address') }}</x-admin.button>
-            </div>
-        </form>
+        <div x-show="showForm" x-cloak x-transition class="mb-6 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6"
+            x-data="addressForm(@js($countries))" data-address-form x-init="if (window.google?.maps?.places) { initAutocomplete(); }">
+            <form method="POST" action="{{ route('customer.addresses.store') }}" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                @csrf
+
+                {{-- Address (Google Places Autocomplete) + Current Location — its own full row --}}
+                <div class="sm:col-span-2">
+                    <div class="mb-1 flex items-center justify-between">
+                        <x-admin.input-label for="address_line" value="Address" />
+                        <button type="button" @click="useCurrentLocation()" :disabled="locating"
+                            class="tap-scale flex items-center gap-1.5 text-xs font-medium text-luxury-gold hover:text-luxury-gold-light disabled:cursor-not-allowed disabled:opacity-50">
+                            <svg x-show="locating" x-cloak class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <x-icon name="map-pin" class="h-3.5 w-3.5" x-show="!locating" />
+                            <span x-text="locating ? '{{ __('Locating…') }}' : '{{ __('Use Current Location') }}'"></span>
+                        </button>
+                    </div>
+                    <textarea id="address_line" name="address_line" rows="2" required x-ref="addressInput" x-model="addressLine"
+                        @input="lat = null; lng = null; placeId = null; cityName = null"
+                        class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('address_line') }}</textarea>
+                    <x-admin.input-error :messages="$errors->get('address_line')" />
+                    <p x-show="locateError" x-cloak x-text="locateError" class="mt-1 text-xs text-red-400"></p>
+                    <p x-show="cityName" x-cloak class="mt-1 text-xs text-luxury-muted">
+                        {{ __('City detected') }}: <span class="text-luxury-gold" x-text="cityName"></span>
+                    </p>
+                    <input type="hidden" name="lat" :value="lat ?? ''">
+                    <input type="hidden" name="lng" :value="lng ?? ''">
+                    <input type="hidden" name="place_id" :value="placeId ?? ''">
+                    <input type="hidden" name="city_name" :value="cityName ?? ''">
+                </div>
+
+                {{-- Country — auto-filled from the address above, still searchable if it needs a manual pick --}}
+                <div class="min-w-0" x-data="{ open: false, search: '' }" @click.outside="open = false; search = ''">
+                    <x-admin.input-label value="{{ __('Country') }}" />
+                    <div class="relative min-w-0">
+                        <button type="button" @click="open = !open; search = ''; $nextTick(() => $refs.countrySearchInput?.focus())"
+                            aria-haspopup="listbox" :aria-expanded="open"
+                            class="flex w-full min-w-0 items-center gap-2 rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-start text-sm text-luxury-white transition hover:border-luxury-gold/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                            <template x-if="selectedCountry()">
+                                <span class="fi shrink-0" :class="'fi-' + selectedCountry().iso2"></span>
+                            </template>
+                            <span class="min-w-0 flex-1 truncate" x-text="selectedCountry() ? selectedCountry().name : '{{ __('Select country') }}'"></span>
+                            <x-icon name="chevron-down" class="h-3.5 w-3.5 shrink-0 text-luxury-muted transition-transform" x-bind:class="{ 'rotate-180': open }" />
+                        </button>
+
+                        <div x-show="open" x-cloak x-transition
+                            class="absolute start-0 end-0 top-full z-30 mt-2 w-full min-w-0 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal shadow-2xl">
+                            <div class="border-b border-luxury-border/60 p-2">
+                                <input type="text" x-ref="countrySearchInput" x-model="search" placeholder="{{ __('Search country') }}"
+                                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-1.5 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                            </div>
+                            <div class="max-h-40 overflow-y-auto p-1.5">
+                                <template x-for="item in filteredCountries(search)" :key="item.iso2">
+                                    <button type="button" role="option" @click="country = item.name; open = false; search = ''"
+                                        class="flex w-full min-w-0 items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-sm transition hover:bg-luxury-graphite"
+                                        :class="country === item.name ? 'text-luxury-gold' : 'text-luxury-muted'">
+                                        <span class="fi shrink-0" :class="'fi-' + item.iso2"></span>
+                                        <span class="min-w-0 flex-1 truncate" x-text="item.name"></span>
+                                    </button>
+                                </template>
+                                <p x-show="filteredCountries(search).length === 0" class="px-3 py-4 text-center text-xs text-luxury-muted">{{ __('No countries found.') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="country" :value="country ?? ''">
+                </div>
+
+                <label class="flex items-center gap-2 text-sm text-luxury-muted">
+                    <input type="checkbox" name="is_default" value="1" class="rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-luxury-gold">
+                    {{ __('Set as default') }}
+                </label>
+                <div class="sm:col-span-2">
+                    <x-admin.button type="submit" variant="primary">{{ __('Save Address') }}</x-admin.button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -62,8 +134,9 @@
                     </div>
                 </div>
                 <p class="mt-3 text-sm text-luxury-muted">{{ $address->address_line }}</p>
-                @if ($address->city)
-                    <p class="mt-1 text-xs text-luxury-muted">{{ $address->city->name }}</p>
+                @php $cityLabel = $address->city_name ?: $address->city?->name; @endphp
+                @if ($cityLabel || $address->country)
+                    <p class="mt-1 text-xs text-luxury-muted">{{ collect([$cityLabel, $address->country])->filter()->implode(', ') }}</p>
                 @endif
 
                 <div class="mt-4 flex items-center gap-2 border-t border-luxury-border pt-4">
@@ -88,4 +161,116 @@
             </div>
         @endforelse
     </div>
+
+    @push('scripts')
+        <script>
+            function addressForm(countries) {
+                return {
+                    countries,
+                    addressLine: @js(old('address_line', '')),
+                    lat: null,
+                    lng: null,
+                    placeId: null,
+                    country: @js(old('country', '')),
+                    cityName: @js(old('city_name', '')),
+                    autocompleteReady: false,
+                    locating: false,
+                    locateError: null,
+
+                    selectedCountry() {
+                        return this.countries.find((item) => item.name === this.country) || null;
+                    },
+
+                    filteredCountries(search) {
+                        const term = (search || '').trim().toLowerCase();
+                        if (! term) return this.countries;
+                        return this.countries.filter((item) => item.name.toLowerCase().includes(term));
+                    },
+
+                    // Takes Google's returned locality/postal_town directly as
+                    // the city name — no dropdown, no matching against any
+                    // limited admin-curated list, just whatever the address
+                    // actually says.
+                    applyLocationComponents(components) {
+                        const countryComponent = (components || []).find((c) => c.types.includes('country'));
+                        if (countryComponent) {
+                            const match = this.countries.find((item) => item.name.toLowerCase() === countryComponent.long_name.toLowerCase());
+                            this.country = match ? match.name : countryComponent.long_name;
+                        }
+
+                        const cityComponent = (components || []).find((c) => c.types.includes('locality'))
+                            || (components || []).find((c) => c.types.includes('postal_town'));
+                        this.cityName = cityComponent ? cityComponent.long_name : null;
+                    },
+
+                    initAutocomplete() {
+                        if (! window.google?.maps?.places || this.autocompleteReady) return;
+                        this.autocompleteReady = true;
+
+                        const el = this.$refs.addressInput;
+                        if (! el) return;
+
+                        const autocomplete = new google.maps.places.Autocomplete(el, { fields: ['place_id', 'geometry', 'formatted_address', 'address_components'] });
+                        autocomplete.addListener('place_changed', () => {
+                            const place = autocomplete.getPlace();
+                            if (! place.geometry) return;
+
+                            this.addressLine = place.formatted_address || this.addressLine;
+                            this.lat = place.geometry.location.lat();
+                            this.lng = place.geometry.location.lng();
+                            this.placeId = place.place_id || null;
+
+                            this.applyLocationComponents(place.address_components);
+                        });
+                    },
+
+                    useCurrentLocation() {
+                        this.locateError = null;
+
+                        if (! navigator.geolocation) {
+                            this.locateError = @js(__('Geolocation is not supported by your browser.'));
+                            return;
+                        }
+
+                        this.locating = true;
+
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                const { latitude, longitude } = position.coords;
+                                this.lat = latitude;
+                                this.lng = longitude;
+
+                                if (! window.google?.maps) {
+                                    this.locating = false;
+                                    return;
+                                }
+
+                                new google.maps.Geocoder().geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+                                    this.locating = false;
+
+                                    if (status !== 'OK' || ! results?.length) {
+                                        this.locateError = @js(__('Could not determine your address from this location.'));
+                                        return;
+                                    }
+
+                                    const result = results[0];
+                                    this.addressLine = result.formatted_address || this.addressLine;
+                                    this.placeId = result.place_id || null;
+
+                                    this.applyLocationComponents(result.address_components);
+                                });
+                            },
+                            (error) => {
+                                this.locating = false;
+                                this.locateError = error.code === error.PERMISSION_DENIED
+                                    ? @js(__('Location access was denied. Please allow location access and try again.'))
+                                    : @js(__('Could not get your current location. Please try again.'));
+                            },
+                            { enableHighAccuracy: true, timeout: 10000 }
+                        );
+                    },
+                };
+            }
+        </script>
+    @endpush
 </x-customer.layouts.app>

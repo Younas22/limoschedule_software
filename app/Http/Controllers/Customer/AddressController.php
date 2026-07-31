@@ -3,26 +3,34 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\City;
 use App\Models\CustomerAddress;
+use App\Models\DialCode;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AddressController extends Controller
 {
     public function index(): View
     {
-        $addresses = Auth::guard('customer')->user()->addresses()->with('city')->get();
-        $cities = City::where('is_active', true)->orderBy('name')->get();
+        $addresses = Auth::guard('customer')->user()->addresses()->get();
 
-        return view('customer.addresses.index', compact('addresses', 'cities'));
+        $countries = DialCode::query()
+            ->whereNotNull('iso2')
+            ->orderBy('name')
+            ->get(['name', 'iso2'])
+            ->map(fn ($country) => ['name' => $country->name, 'iso2' => strtolower($country->iso2)])
+            ->values();
+
+        return view('customer.addresses.index', compact('addresses', 'countries'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateAddress($request);
+        $data['label'] = $this->generateLabel($data);
 
         $customer = Auth::guard('customer')->user();
 
@@ -40,6 +48,7 @@ class AddressController extends Controller
         $this->authorizeAddress($address);
 
         $data = $this->validateAddress($request);
+        $data['label'] = $this->generateLabel($data);
 
         if ($request->boolean('is_default')) {
             $address->customer->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
@@ -77,9 +86,31 @@ class AddressController extends Controller
     private function validateAddress(Request $request): array
     {
         return $request->validate([
-            'label' => ['required', 'string', 'max:100'],
             'address_line' => ['required', 'string', 'max:500'],
-            'city_id' => ['nullable', 'exists:cities,id'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'place_id' => ['nullable', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'city_name' => ['nullable', 'string', 'max:100'],
         ]);
+    }
+
+    /**
+     * The address form no longer asks for a manual label — a sensible one
+     * is derived instead (the auto-detected city, falling back to the start
+     * of the address line) so `customer_addresses.label` still always has a
+     * value.
+     */
+    private function generateLabel(array $data): string
+    {
+        if (! empty($data['city_name'])) {
+            return $data['city_name'];
+        }
+
+        if (! empty($data['address_line'])) {
+            return Str::limit($data['address_line'], 40);
+        }
+
+        return 'Address';
     }
 }

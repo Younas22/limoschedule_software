@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Coupon;
-use App\Models\Promotion;
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -17,9 +16,11 @@ class DashboardController extends Controller
         $stats = [
             'total' => $customer->bookings()->count(),
             'completed' => $customer->bookings()->where('status', 'completed')->count(),
-            'wallet' => $customer->wallet_balance,
+            'upcoming' => $customer->bookings()
+                ->whereIn('status', ['pending', 'confirmed', 'assigned'])
+                ->where('pickup_datetime', '>=', now())
+                ->count(),
             'totalSpent' => $customer->bookings()->where('status', 'completed')->sum('fare_amount'),
-            'loyaltyPoints' => $customer->loyalty_points,
         ];
 
         $nextRide = $customer->bookings()
@@ -41,16 +42,16 @@ class DashboardController extends Controller
             ->limit(4)
             ->get();
 
-        $promotions = Promotion::active()->limit(5)->get();
-        $coupons = Coupon::active()->latest()->limit(4)->get();
+        // Promotions/coupons temporarily hidden from the dashboard — shown
+        // in their place instead, matching the sidebar's Wallet/Reviews hide.
+        $recommendedVehicles = Vehicle::active()->with('category')->inRandomOrder()->limit(6)->get();
 
         return view('customer.dashboard', compact(
             'stats',
             'nextRide',
             'recentBookings',
             'favoriteVehicles',
-            'promotions',
-            'coupons'
+            'recommendedVehicles'
         ));
     }
 }

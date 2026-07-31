@@ -5,6 +5,8 @@ use App\Http\Middleware\Admin\EnsurePermission;
 use App\Http\Middleware\Admin\RedirectIfAuthenticated as AdminRedirectIfAuthenticated;
 use App\Http\Middleware\Customer\Authenticate as CustomerAuthenticate;
 use App\Http\Middleware\Customer\RedirectIfAuthenticated as CustomerRedirectIfAuthenticated;
+use App\Http\Middleware\Driver\Authenticate as DriverAuthenticate;
+use App\Http\Middleware\Driver\RedirectIfAuthenticated as DriverRedirectIfAuthenticated;
 use App\Http\Middleware\SetCurrency;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -25,6 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->prefix('account')
                 ->name('customer.')
                 ->group(__DIR__.'/../routes/customer.php');
+
+            Illuminate\Support\Facades\Route::middleware(['web'])
+                ->prefix('driver')
+                ->name('driver.')
+                ->group(__DIR__.'/../routes/driver.php');
         },
         health: '/up',
     )
@@ -35,6 +42,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsurePermission::class,
             'customer.auth' => CustomerAuthenticate::class,
             'customer.guest' => CustomerRedirectIfAuthenticated::class,
+            'driver.auth' => DriverAuthenticate::class,
+            'driver.guest' => DriverRedirectIfAuthenticated::class,
         ]);
 
         // Locale/currency must be resolved for every request — both the

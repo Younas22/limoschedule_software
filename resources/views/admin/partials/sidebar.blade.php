@@ -26,6 +26,7 @@
             ],
         ],
         ['label' => __('Drivers'), 'route' => 'admin.drivers.index', 'permission' => 'drivers.view', 'icon' => 'id'],
+        ['label' => __('Live Fleet'), 'route' => 'admin.fleet.index', 'permission' => 'drivers.view', 'icon' => 'map'],
         [
             'type' => 'group',
             'label' => __('Customers'),

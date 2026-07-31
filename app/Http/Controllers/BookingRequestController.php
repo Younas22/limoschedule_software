@@ -34,9 +34,11 @@ class BookingRequestController extends Controller
             return back()->withInput()->with('error', 'Website booking is currently unavailable. Please contact us via WhatsApp instead.');
         }
 
+        $loggedInCustomer = auth()->guard('customer')->user();
+
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
+            'name' => [Rule::requiredIf(! $loggedInCustomer), 'nullable', 'string', 'max:255'],
+            'email' => [Rule::requiredIf(! $loggedInCustomer), 'nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'vehicle_category_id' => ['required', 'exists:vehicle_categories,id'],
             'type' => ['nullable', Rule::in(array_keys(Booking::TYPES))],
@@ -86,7 +88,7 @@ class BookingRequestController extends Controller
             return back()->withInput()->with('error', 'That vehicle category is not currently available. Please choose another, or contact us via WhatsApp.');
         }
 
-        $customer = Customer::firstOrCreate(
+        $customer = $loggedInCustomer ?? Customer::firstOrCreate(
             ['email' => $data['email']],
             ['name' => $data['name'], 'phone' => $data['phone'] ?? null, 'status' => true]
         );

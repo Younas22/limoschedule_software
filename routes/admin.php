@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\CustomerLoyaltyController;
 use App\Http\Controllers\Admin\CustomerWalletController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DriverController;
+use App\Http\Controllers\Admin\FleetController;
 use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\LocaleController;
@@ -152,6 +153,7 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::post('{booking}/status', [BookingController::class, 'updateStatus'])->name('status')->middleware('permission:bookings.edit');
         Route::post('{booking}/mark-paid', [BookingController::class, 'markAsPaid'])->name('mark-paid')->middleware('permission:bookings.edit');
         Route::post('{booking}/process-refund', [BookingController::class, 'processRefund'])->name('process-refund')->middleware('permission:bookings.edit');
+        Route::post('{booking}/suggest-driver', [BookingController::class, 'suggestDriver'])->name('suggest-driver')->middleware('permission:bookings.edit');
     });
 
     Route::prefix('booking-settings')->name('booking-settings.')->group(function () {
@@ -308,6 +310,11 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::post('{driver}/toggle', [DriverController::class, 'toggleStatus'])->name('toggle')->middleware('permission:drivers.edit');
         Route::post('{driver}/toggle-online', [DriverController::class, 'toggleOnline'])->name('toggle-online')->middleware('permission:drivers.edit');
         Route::post('{driver}/toggle-available', [DriverController::class, 'toggleAvailable'])->name('toggle-available')->middleware('permission:drivers.edit');
+    });
+
+    Route::prefix('fleet')->name('fleet.')->group(function () {
+        Route::get('/', [FleetController::class, 'index'])->name('index')->middleware('permission:drivers.view');
+        Route::get('data', [FleetController::class, 'data'])->name('data')->middleware('permission:drivers.view');
     });
 
     Route::prefix('customers')->name('customers.')->group(function () {

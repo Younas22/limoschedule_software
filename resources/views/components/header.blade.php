@@ -11,6 +11,34 @@
     $currentLanguage = $activeLanguages->firstWhere('code', app()->getLocale()) ?? $activeLanguages->first();
     $activeCurrencies = \App\Models\Currency::active();
     $currentCurrency = active_currency();
+
+    // Whichever guard is logged in (customer, admin, or driver — a visitor
+    // can only be authenticated on one at a time) drives the navbar's
+    // account state, so it's always obvious someone is logged in no matter
+    // which panel their account belongs to.
+    $publicNavAccount = null;
+    if (auth()->guard('customer')->check()) {
+        $navUser = auth()->guard('customer')->user();
+        $publicNavAccount = [
+            'name' => $navUser->name, 'email' => $navUser->email, 'avatar' => $navUser->avatar_url,
+            'dashboard' => route('customer.dashboard'), 'dashboard_label' => __('My Account'),
+            'bookings' => route('customer.bookings.index'), 'logout' => route('customer.logout'),
+        ];
+    } elseif (auth()->guard('admin')->check()) {
+        $navUser = auth()->guard('admin')->user();
+        $publicNavAccount = [
+            'name' => $navUser->name, 'email' => $navUser->email, 'avatar' => $navUser->avatar_url,
+            'dashboard' => route('admin.dashboard'), 'dashboard_label' => __('Admin Panel'),
+            'bookings' => null, 'logout' => route('admin.logout'),
+        ];
+    } elseif (auth()->guard('driver')->check()) {
+        $navUser = auth()->guard('driver')->user();
+        $publicNavAccount = [
+            'name' => $navUser->name, 'email' => $navUser->email, 'avatar' => $navUser->photo_url,
+            'dashboard' => route('driver.dashboard'), 'dashboard_label' => __('Driver Panel'),
+            'bookings' => null, 'logout' => route('driver.logout'),
+        ];
+    }
 @endphp
 
 <header class="sticky top-0 z-30 border-b border-luxury-border bg-luxury-black/90 backdrop-blur">
@@ -119,24 +147,64 @@
 
             {{-- Auth --}}
             <div class="hidden items-center gap-2 sm:flex">
-                @if (\Illuminate\Support\Facades\Route::has('login'))
-                    <a href="{{ route('login') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium text-luxury-muted transition hover:text-luxury-white">
-                        {{ __('Login') }}
-                    </a>
-                @else
-                    <span class="cursor-not-allowed rounded-lg px-3.5 py-2 text-sm font-medium text-luxury-muted/40" title="{{ __('Coming soon') }}">
-                        {{ __('Login') }}
-                    </span>
-                @endif
+                @if ($publicNavAccount)
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" @click.outside="open = false"
+                            class="tap-scale flex items-center gap-2 rounded-lg border border-luxury-border py-1.5 ps-1.5 pe-3 transition hover:border-luxury-gold/40">
+                            <img src="{{ $publicNavAccount['avatar'] }}" alt="{{ $publicNavAccount['name'] }}"
+                                class="h-7 w-7 rounded-md object-cover" onerror="this.src='https://ui-avatars.com/api/?background=c9a24b&color=0a0a0a&name={{ urlencode($publicNavAccount['name']) }}'">
+                            <span class="text-sm font-medium text-luxury-white">{{ $publicNavAccount['name'] }}</span>
+                            <x-icon name="chevron-down" class="h-4 w-4 text-luxury-muted" />
+                        </button>
 
-                @if (\Illuminate\Support\Facades\Route::has('register'))
-                    <a href="{{ route('register') }}" class="rounded-lg bg-luxury-gold px-4 py-2 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                        {{ __('Register') }}
-                    </a>
+                        <div x-show="open" x-cloak x-transition
+                            class="absolute end-0 z-40 mt-2 w-56 overflow-hidden rounded-xl border border-luxury-border bg-luxury-charcoal shadow-xl">
+                            <div class="border-b border-luxury-border px-4 py-3">
+                                <p class="text-sm font-semibold text-luxury-white">{{ $publicNavAccount['name'] }}</p>
+                                <p class="mt-0.5 truncate text-xs text-luxury-muted">{{ $publicNavAccount['email'] }}</p>
+                            </div>
+
+                            <div class="py-1">
+                                <a href="{{ $publicNavAccount['dashboard'] }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white">
+                                    <x-icon name="home" class="h-4 w-4" />
+                                    {{ $publicNavAccount['dashboard_label'] }}
+                                </a>
+                                @if ($publicNavAccount['bookings'])
+                                    <a href="{{ $publicNavAccount['bookings'] }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white">
+                                        <x-icon name="car" class="h-4 w-4" />
+                                        {{ __('My Bookings') }}
+                                    </a>
+                                @endif
+                            </div>
+
+                            <form method="POST" action="{{ $publicNavAccount['logout'] }}" class="border-t border-luxury-border">
+                                @csrf
+                                <button type="submit" class="flex w-full items-center gap-2 px-4 py-2.5 text-start text-sm text-red-400 hover:bg-luxury-graphite">
+                                    {{ __('Sign Out') }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 @else
-                    <span class="cursor-not-allowed rounded-lg bg-luxury-gold/40 px-4 py-2 text-sm font-semibold text-luxury-black/60" title="{{ __('Coming soon') }}">
-                        {{ __('Register') }}
-                    </span>
+                    @if (\Illuminate\Support\Facades\Route::has('login'))
+                        <a href="{{ route('login') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium text-luxury-muted transition hover:text-luxury-white">
+                            {{ __('Login') }}
+                        </a>
+                    @else
+                        <span class="cursor-not-allowed rounded-lg px-3.5 py-2 text-sm font-medium text-luxury-muted/40" title="{{ __('Coming soon') }}">
+                            {{ __('Login') }}
+                        </span>
+                    @endif
+
+                    @if (\Illuminate\Support\Facades\Route::has('register'))
+                        <a href="{{ route('register') }}" class="rounded-lg bg-luxury-gold px-4 py-2 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
+                            {{ __('Register') }}
+                        </a>
+                    @else
+                        <span class="cursor-not-allowed rounded-lg bg-luxury-gold/40 px-4 py-2 text-sm font-semibold text-luxury-black/60" title="{{ __('Coming soon') }}">
+                            {{ __('Register') }}
+                        </span>
+                    @endif
                 @endif
             </div>
 

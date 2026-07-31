@@ -45,15 +45,26 @@
                 </div>
             </div>
 
-            @if ($booking->driver)
+            @if ($booking->driver && $booking->status === 'in_progress')
                 <div class="border-t border-luxury-border pt-4">
-                    <p class="text-xs uppercase tracking-wide text-luxury-muted">{{ __('Driver') }}</p>
-                    <p class="mt-1 text-sm font-medium text-luxury-white">{{ $booking->driver->name }}</p>
+                    <p class="text-xs uppercase tracking-wide text-luxury-muted">{{ __('Your Ride') }}</p>
+                    <p class="mt-1 text-sm font-medium text-luxury-white">
+                        {{ __('Your ride is in progress with :name.', ['name' => $booking->driver->name]) }}
+                    </p>
+                    @if ($booking->estimated_arrival_at)
+                        <p class="mt-1 text-xs text-luxury-muted">
+                            {{ __('Estimated arrival') }}: {{ $booking->estimated_arrival_at->format('h:i A') }}
+                        </p>
+                    @endif
                 </div>
             @endif
         </div>
 
         <div class="space-y-4">
+            @if ($dispatch)
+                <x-dispatch-card :booking="$booking" :dispatch="$dispatch" :poll-url="route('customer.bookings.dispatch', $booking)" />
+            @endif
+
             <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
                 <p class="text-xs uppercase tracking-wide text-luxury-muted">{{ __('Payment Status') }}</p>
                 <div class="mt-2"><x-customer.payment-badge :status="$booking->payment_status" /></div>

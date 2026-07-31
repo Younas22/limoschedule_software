@@ -71,6 +71,54 @@ class GoogleMapsService
     }
 
     /**
+     * Resolves a free-text address into coordinates via the Geocoding API.
+     * Cached indefinitely (a street address doesn't move) since this is
+     * only ever called once per address by OfficeLocationService, which
+     * persists the result — this cache is just a safety net against
+     * concurrent first-calls.
+     *
+     * @return array{lat: float, lng: float}|null
+     */
+    public function geocode(string $address): ?array
+    {
+        $key = config('services.google_maps.key');
+
+        if (! $key || trim($address) === '') {
+            return null;
+        }
+
+        $cacheKey = 'gmaps.geocode.'.md5(strtolower(trim($address)));
+
+        return Cache::remember($cacheKey, now()->addDay(), function () use ($address, $key) {
+            try {
+                $response = Http::timeout(8)->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                    'address' => $address,
+                    'key' => $key,
+                ]);
+
+                if (! $response->successful()) {
+                    return null;
+                }
+
+                $location = $response->json('results.0.geometry.location');
+
+                if (! $location) {
+                    return null;
+                }
+
+                return [
+                    'lat' => (float) $location['lat'],
+                    'lng' => (float) $location['lng'],
+                ];
+            } catch (\Throwable $e) {
+                Log::warning('Google Geocoding request failed: '.$e->getMessage());
+
+                return null;
+            }
+        });
+    }
+
+    /**
      * Sums consecutive-leg distances across an ordered list of waypoints
      * (e.g. pickup → stop 1 → stop 2 → drop-off) so stops actually count
      * toward the quoted distance instead of being ignored in favour of a

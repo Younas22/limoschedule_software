@@ -37,6 +37,18 @@
     </div>
 
     <div class="mt-8 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+        <div class="flex items-center justify-between border-b border-luxury-border px-6 py-4">
+            <div>
+                <h3 class="text-sm font-semibold text-luxury-white">{{ __('Live Fleet') }}</h3>
+                <p class="mt-0.5 text-xs text-luxury-muted">
+                    {{ __(':online drivers online, :busy currently on a trip.', ['online' => $fleetSummary['online'], 'busy' => $fleetSummary['busy']]) }}
+                </p>
+            </div>
+            <a href="{{ route('admin.fleet.index') }}" class="text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">{{ __('View Live Fleet') }}</a>
+        </div>
+    </div>
+
+    <div class="mt-8 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
         <div class="border-b border-luxury-border px-6 py-4">
             <h3 class="text-sm font-semibold text-luxury-white">{{ __('Recent Bookings') }}</h3>
         </div>

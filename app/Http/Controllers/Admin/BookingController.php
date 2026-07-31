@@ -19,7 +19,9 @@ use App\Notifications\Customer\DriverAssignedNotification as CustomerDriverAssig
 use App\Notifications\Customer\PaymentCompletedNotification as CustomerPaymentCompletedNotification;
 use App\Notifications\PaymentSuccessfulNotification;
 use App\Services\BookingCreationService;
+use App\Services\DriverDispatchService;
 use App\Services\WhatsAppBookingLinkGenerator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -128,6 +130,23 @@ class BookingController extends Controller
         $this->notifyStatusTransition($booking, $previousStatus, $booking->status);
 
         return back()->with('status', "Booking \"{$booking->booking_number}\" marked as {$booking->status_label}.");
+    }
+
+    public function suggestDriver(Booking $booking, DriverDispatchService $dispatchService): JsonResponse
+    {
+        $suggestion = $dispatchService->selectBestDriver($booking);
+
+        if (! $suggestion) {
+            return response()->json(['found' => false]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'driver_id' => $suggestion['driver']->id,
+            'driver_name' => $suggestion['driver']->name,
+            'distance_km' => $suggestion['distance_km'],
+            'duration_minutes' => $suggestion['duration_minutes'],
+        ]);
     }
 
     public function markAsPaid(Request $request, Booking $booking): RedirectResponse

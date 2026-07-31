@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Services\DriverDispatchService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -108,13 +109,17 @@ class BookingController extends Controller
         ]);
     }
 
-    public function show(Booking $booking): View
+    public function show(Booking $booking, DriverDispatchService $dispatchService): View
     {
         abort_unless($booking->customer_id === Auth::guard('customer')->id(), 404);
 
         $booking->load(['vehicle.category', 'driver', 'review']);
 
-        return view('customer.bookings.show', compact('booking'));
+        $dispatch = in_array($booking->status, ['confirmed', 'assigned'], true)
+            ? $dispatchService->dispatchInfoFor($booking)
+            : null;
+
+        return view('customer.bookings.show', compact('booking', 'dispatch'));
     }
 
     public function cancel(Request $request, Booking $booking): RedirectResponse

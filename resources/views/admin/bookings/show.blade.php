@@ -33,6 +33,7 @@
                             'completed' => 'bg-emerald-500/10 text-emerald-400',
                             'cancelled' => 'bg-red-500/10 text-red-400',
                             'assigned' => 'bg-luxury-gold/10 text-luxury-gold',
+                            'in_progress' => 'bg-blue-500/10 text-blue-400',
                             'confirmed' => 'bg-luxury-secondary/10 text-luxury-secondary',
                             default => 'bg-luxury-slate text-luxury-muted',
                         } }}">

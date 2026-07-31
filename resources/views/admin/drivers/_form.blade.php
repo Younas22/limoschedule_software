@@ -106,4 +106,27 @@
             </div>
         </div>
     </div>
+
+    {{-- Login Access --}}
+    <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+        <h3 class="text-sm font-semibold text-luxury-white">{{ __('Login Access') }}</h3>
+        <p class="text-xs text-luxury-muted">
+            {{ $driver?->password
+                ? __('Leave blank to keep the current password.')
+                : __('Set a password to give this driver access to the Driver Panel. Leave blank for no login access yet.') }}
+        </p>
+
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+                <x-admin.input-label for="password" value="{{ __('Password') }}" />
+                <x-admin.text-input id="password" name="password" type="password" autocomplete="new-password" />
+                <x-admin.input-error :messages="$errors->get('password')" />
+            </div>
+
+            <div>
+                <x-admin.input-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
+                <x-admin.text-input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" />
+            </div>
+        </div>
+    </div>
 </div>

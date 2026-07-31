@@ -51,8 +51,36 @@
                 <x-admin.input-error :messages="$errors->get('vehicle_id')" />
             </div>
 
-            <div>
-                <x-admin.input-label for="driver_id" value="{{ __('Driver (optional)') }}" />
+            <div @if (isset($booking)) x-data="{ suggesting: false, suggestion: null }" @endif>
+                <div class="flex items-center justify-between">
+                    <x-admin.input-label for="driver_id" value="{{ __('Driver (optional)') }}" />
+                    @if (isset($booking))
+                        <button type="button" :disabled="suggesting"
+                            @click="
+                                suggesting = true;
+                                suggestion = null;
+                                fetch('{{ route('admin.bookings.suggest-driver', $booking) }}', {
+                                    method: 'POST',
+                                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json' },
+                                })
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        suggesting = false;
+                                        if (data.found) {
+                                            document.getElementById('driver_id').value = data.driver_id;
+                                            suggestion = data;
+                                        } else {
+                                            suggestion = { found: false };
+                                        }
+                                    })
+                                    .catch(() => { suggesting = false; });
+                            "
+                            class="tap-scale text-xs font-medium text-luxury-gold hover:text-luxury-gold-light disabled:opacity-50">
+                            <span x-show="!suggesting">{{ __('Suggest Best Driver') }}</span>
+                            <span x-show="suggesting" x-cloak>{{ __('Finding best driver…') }}</span>
+                        </button>
+                    @endif
+                </div>
                 <select id="driver_id" name="driver_id"
                     class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
                     <option value="">{{ __('Unassigned') }}</option>
@@ -60,6 +88,14 @@
                         <option value="{{ $d->id }}" @selected(old('driver_id', $booking?->driver_id) == $d->id)>{{ $d->name }} {{ $d->is_online ? __('(online)') : '' }}</option>
                     @endforeach
                 </select>
+                @if (isset($booking))
+                    <template x-if="suggestion && suggestion.found">
+                        <p class="mt-1.5 text-xs text-emerald-400" x-text="'{{ __('Suggested') }}: ' + suggestion.driver_name + ' — ' + suggestion.distance_km + ' km, ' + suggestion.duration_minutes + ' {{ __('min ETA') }}'"></p>
+                    </template>
+                    <template x-if="suggestion && suggestion.found === false">
+                        <p class="mt-1.5 text-xs text-luxury-muted">{{ __('No available or busy driver found.') }}</p>
+                    </template>
+                @endif
                 <x-admin.input-error :messages="$errors->get('driver_id')" />
             </div>
 

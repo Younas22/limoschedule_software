@@ -11,16 +11,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
- * Single front-door login for both audiences of this app (customers and
- * admins), which otherwise authenticate against entirely separate guards
- * and tables. Rather than asking the visitor which one they are, one form
- * tries the customer guard first (the far more common visitor), then the
- * admin guard, and routes to whichever dashboard matches.
+ * Single front-door login for every audience of this app (customers,
+ * admins, and drivers), which otherwise authenticate against entirely
+ * separate guards and tables. Rather than asking the visitor which one
+ * they are, one form tries the customer guard first (the far more common
+ * visitor), then the admin guard, then the driver guard, and routes to
+ * whichever dashboard matches.
  *
- * The guard-specific /account/login and /admin/login routes still exist
- * (internal redirects, password-reset flows, etc. all reference them by
- * name) but now simply forward here — this is the only login screen a
- * person actually sees.
+ * The guard-specific /account/login, /admin/login, and /driver/login
+ * routes still exist (internal redirects, password-reset flows, etc. all
+ * reference them by name) but now simply forward here — this is the only
+ * login screen a person actually sees.
  */
 class LoginController extends Controller
 {
@@ -32,6 +33,10 @@ class LoginController extends Controller
 
         if (Auth::guard('admin')->check()) {
             return redirect()->route('admin.dashboard');
+        }
+
+        if (Auth::guard('driver')->check()) {
+            return redirect()->route('driver.dashboard');
         }
 
         return view('auth.login');
@@ -79,6 +84,23 @@ class LoginController extends Controller
             ActivityLog::record('login', $admin->name.' logged in.', $request);
 
             return redirect()->intended(route('admin.dashboard'));
+        }
+
+        if (Auth::guard('driver')->attempt($credentials, $remember)) {
+            $driver = Auth::guard('driver')->user();
+
+            if (! $driver->status) {
+                Auth::guard('driver')->logout();
+
+                return back()
+                    ->withInput($request->only('email'))
+                    ->withErrors(['email' => 'Your account has been deactivated. Please contact support.']);
+            }
+
+            $request->session()->regenerate();
+            $driver->applyPreferencesToSession();
+
+            return redirect()->intended(route('driver.dashboard'));
         }
 
         return back()

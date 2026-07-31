@@ -7,6 +7,7 @@ use App\Models\Driver;
 use App\Models\Vehicle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -35,6 +36,8 @@ class DriverController extends Controller
             $data['photo'] = $this->storeUpload($request->file('photo'));
         }
 
+        $data['password'] = filled($data['password'] ?? null) ? Hash::make($data['password']) : null;
+
         $driver = Driver::create($data + ['status' => true]);
 
         return redirect()
@@ -56,6 +59,12 @@ class DriverController extends Controller
 
         if ($request->hasFile('photo')) {
             $data['photo'] = $this->storeUpload($request->file('photo'), $driver->photo);
+        }
+
+        if (filled($data['password'] ?? null)) {
+            $data['password'] = Hash::make($data['password']);
+        } else {
+            unset($data['password']);
         }
 
         $driver->update($data);
@@ -107,6 +116,7 @@ class DriverController extends Controller
             'national_id' => ['nullable', 'string', 'max:50'],
             'photo' => ['nullable', 'image', 'max:2048'],
             'commission_rate' => ['required', 'numeric', 'min:0', 'max:100'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
     }
 

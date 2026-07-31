@@ -26,6 +26,13 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        return view('admin.dashboard', compact('stats', 'recentBookings'));
+        $onlineDrivers = Driver::where('is_online', true)->get();
+
+        $fleetSummary = [
+            'online' => $onlineDrivers->count(),
+            'busy' => $onlineDrivers->filter(fn (Driver $d) => (bool) $d->activeBooking())->count(),
+        ];
+
+        return view('admin.dashboard', compact('stats', 'recentBookings', 'fleetSummary'));
     }
 }

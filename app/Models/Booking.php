@@ -24,6 +24,7 @@ class Booking extends Model
         'pending' => 'Pending',
         'confirmed' => 'Confirmed',
         'assigned' => 'Assigned',
+        'in_progress' => 'In Progress',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
     ];
@@ -106,6 +107,13 @@ class Booking extends Model
         'payment_gateway',
         'transaction_id',
         'refund_status',
+        'ride_started_at',
+        'estimated_arrival_at',
+        'dispatch_distance_km',
+        'dispatch_duration_minutes',
+        'dispatch_lat',
+        'dispatch_lng',
+        'dispatch_calculated_at',
     ];
 
     protected function casts(): array
@@ -129,6 +137,12 @@ class Booking extends Model
             'has_toll' => 'boolean',
             'fare_breakdown' => 'array',
             'paid_at' => 'datetime',
+            'ride_started_at' => 'datetime',
+            'estimated_arrival_at' => 'datetime',
+            'dispatch_distance_km' => 'decimal:2',
+            'dispatch_lat' => 'decimal:7',
+            'dispatch_lng' => 'decimal:7',
+            'dispatch_calculated_at' => 'datetime',
         ];
     }
 
@@ -177,6 +191,22 @@ class Booking extends Model
     public function getRefundStatusLabelAttribute(): ?string
     {
         return $this->refund_status ? (self::REFUND_STATUSES[$this->refund_status] ?? ucfirst($this->refund_status)) : null;
+    }
+
+    /**
+     * Minutes from now until this ride's estimated end, floored at 0 once
+     * passed. Null when the ride hasn't been started yet (no estimate).
+     * Computed via raw timestamp subtraction rather than Carbon's
+     * diffInMinutes($absolute) flag, whose sign convention is easy to get
+     * backwards.
+     */
+    public function getRideEndsInMinutesAttribute(): ?int
+    {
+        if (! $this->estimated_arrival_at) {
+            return null;
+        }
+
+        return max(0, (int) ceil(($this->estimated_arrival_at->getTimestamp() - now()->getTimestamp()) / 60));
     }
 
     public function getPaymentGatewayLabelAttribute(): ?string

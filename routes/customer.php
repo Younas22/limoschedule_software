@@ -8,6 +8,7 @@ use App\Http\Controllers\Customer\Auth\ResetPasswordController;
 use App\Http\Controllers\Customer\Auth\VerificationController;
 use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Customer\DashboardController;
+use App\Http\Controllers\Customer\DispatchController;
 use App\Http\Controllers\Customer\FavoriteController;
 use App\Http\Controllers\Customer\InvoiceController;
 use App\Http\Controllers\Customer\NotificationController;
@@ -50,6 +51,7 @@ Route::middleware('customer.auth:customer')->group(function () {
         Route::get('cancelled', [BookingController::class, 'cancelled'])->name('cancelled');
         Route::get('{booking}', [BookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [BookingController::class, 'cancel'])->name('cancel');
+        Route::get('{booking}/dispatch', [DispatchController::class, 'show'])->name('dispatch');
     });
 
     Route::prefix('favorites')->name('favorites.')->group(function () {

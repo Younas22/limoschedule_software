@@ -11,6 +11,33 @@
     $currentLanguage = $activeLanguages->firstWhere('code', app()->getLocale()) ?? $activeLanguages->first();
     $activeCurrencies = \App\Models\Currency::active();
     $currentCurrency = active_currency();
+
+    // Mirrors header.blade.php's account resolution — whichever guard is
+    // logged in (customer, admin, or driver) drives the mobile menu's
+    // account state too.
+    $publicNavAccount = null;
+    if (auth()->guard('customer')->check()) {
+        $navUser = auth()->guard('customer')->user();
+        $publicNavAccount = [
+            'name' => $navUser->name, 'email' => $navUser->email, 'avatar' => $navUser->avatar_url,
+            'dashboard' => route('customer.dashboard'), 'dashboard_label' => __('My Account'),
+            'logout' => route('customer.logout'),
+        ];
+    } elseif (auth()->guard('admin')->check()) {
+        $navUser = auth()->guard('admin')->user();
+        $publicNavAccount = [
+            'name' => $navUser->name, 'email' => $navUser->email, 'avatar' => $navUser->avatar_url,
+            'dashboard' => route('admin.dashboard'), 'dashboard_label' => __('Admin Panel'),
+            'logout' => route('admin.logout'),
+        ];
+    } elseif (auth()->guard('driver')->check()) {
+        $navUser = auth()->guard('driver')->user();
+        $publicNavAccount = [
+            'name' => $navUser->name, 'email' => $navUser->email, 'avatar' => $navUser->photo_url,
+            'dashboard' => route('driver.dashboard'), 'dashboard_label' => __('Driver Panel'),
+            'logout' => route('driver.logout'),
+        ];
+    }
 @endphp
 
 {{-- Overlay --}}
@@ -128,26 +155,48 @@
         </div>
 
         {{-- Auth --}}
-        <div class="flex items-center gap-2">
-            @if (\Illuminate\Support\Facades\Route::has('login'))
-                <a href="{{ route('login') }}" class="flex-1 rounded-lg border border-luxury-border px-4 py-2.5 text-center text-sm font-medium text-luxury-white">
-                    {{ __('Login') }}
+        @if ($publicNavAccount)
+            <div class="space-y-2 border-t border-luxury-border pt-4">
+                <div class="flex items-center gap-2 px-1">
+                    <img src="{{ $publicNavAccount['avatar'] }}" alt="{{ $publicNavAccount['name'] }}"
+                        class="h-8 w-8 rounded-md object-cover" onerror="this.src='https://ui-avatars.com/api/?background=c9a24b&color=0a0a0a&name={{ urlencode($publicNavAccount['name']) }}'">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $publicNavAccount['name'] }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ $publicNavAccount['email'] }}</p>
+                    </div>
+                </div>
+                <a href="{{ $publicNavAccount['dashboard'] }}" class="block rounded-lg border border-luxury-border px-4 py-2.5 text-center text-sm font-medium text-luxury-white">
+                    {{ $publicNavAccount['dashboard_label'] }}
                 </a>
-            @else
-                <span class="flex-1 cursor-not-allowed rounded-lg border border-luxury-border px-4 py-2.5 text-center text-sm font-medium text-luxury-muted/40">
-                    {{ __('Login') }}
-                </span>
-            @endif
+                <form method="POST" action="{{ $publicNavAccount['logout'] }}">
+                    @csrf
+                    <button type="submit" class="w-full rounded-lg px-4 py-2.5 text-center text-sm font-medium text-red-400">
+                        {{ __('Sign Out') }}
+                    </button>
+                </form>
+            </div>
+        @else
+            <div class="flex items-center gap-2">
+                @if (\Illuminate\Support\Facades\Route::has('login'))
+                    <a href="{{ route('login') }}" class="flex-1 rounded-lg border border-luxury-border px-4 py-2.5 text-center text-sm font-medium text-luxury-white">
+                        {{ __('Login') }}
+                    </a>
+                @else
+                    <span class="flex-1 cursor-not-allowed rounded-lg border border-luxury-border px-4 py-2.5 text-center text-sm font-medium text-luxury-muted/40">
+                        {{ __('Login') }}
+                    </span>
+                @endif
 
-            @if (\Illuminate\Support\Facades\Route::has('register'))
-                <a href="{{ route('register') }}" class="flex-1 rounded-lg bg-luxury-gold px-4 py-2.5 text-center text-sm font-semibold text-luxury-black">
-                    {{ __('Register') }}
-                </a>
-            @else
-                <span class="flex-1 cursor-not-allowed rounded-lg bg-luxury-gold/40 px-4 py-2.5 text-center text-sm font-semibold text-luxury-black/60">
-                    {{ __('Register') }}
-                </span>
-            @endif
-        </div>
+                @if (\Illuminate\Support\Facades\Route::has('register'))
+                    <a href="{{ route('register') }}" class="flex-1 rounded-lg bg-luxury-gold px-4 py-2.5 text-center text-sm font-semibold text-luxury-black">
+                        {{ __('Register') }}
+                    </a>
+                @else
+                    <span class="flex-1 cursor-not-allowed rounded-lg bg-luxury-gold/40 px-4 py-2.5 text-center text-sm font-semibold text-luxury-black/60">
+                        {{ __('Register') }}
+                    </span>
+                @endif
+            </div>
+        @endif
     </div>
 </aside>

@@ -501,69 +501,83 @@
                 <p class="mt-1 text-xs text-red-400">{{ $errors->first('vehicle_category_id') }}</p>
             </div>
 
-            {{-- Full Name --}}
-            <div>
-                <label for="name" class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
-                    <x-icon name="user" class="h-3 w-3" />
-                    {{ __('Full Name') }}
-                </label>
-                <input type="text" id="name" name="name" x-model="name" required placeholder="{{ __('Full Name') }}"
-                    class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('name') }}</p>
-            </div>
+            @auth('customer')
+                {{-- Logged-in customers book under their own account — no need to retype contact details. --}}
+                @php $widgetCustomer = auth()->guard('customer')->user(); @endphp
+                <div class="flex items-center gap-3 rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 sm:col-span-2 lg:col-span-3">
+                    <img src="{{ $widgetCustomer->avatar_url }}" alt="{{ $widgetCustomer->name }}"
+                        class="h-9 w-9 shrink-0 rounded-lg object-cover" onerror="this.src='https://ui-avatars.com/api/?background=c9a24b&color=0a0a0a&name={{ urlencode($widgetCustomer->name) }}'">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ __('Booking as :name', ['name' => $widgetCustomer->name]) }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ $widgetCustomer->email }}{{ $widgetCustomer->phone ? ' · '.$widgetCustomer->phone : '' }}</p>
+                    </div>
+                    <x-icon name="check-circle" class="h-4 w-4 shrink-0 text-luxury-gold" />
+                </div>
+            @else
+                {{-- Full Name --}}
+                <div>
+                    <label for="name" class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                        <x-icon name="user" class="h-3 w-3" />
+                        {{ __('Full Name') }}
+                    </label>
+                    <input type="text" id="name" name="name" x-model="name" required placeholder="{{ __('Full Name') }}"
+                        class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('name') }}</p>
+                </div>
 
-            {{-- Email --}}
-            <div>
-                <label for="email" class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
-                    <x-icon name="mail" class="h-3 w-3" />
-                    {{ __('Email') }}
-                </label>
-                <input type="email" id="email" name="email" x-model="email" required placeholder="{{ __('Email') }}"
-                    class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                <p class="mt-1 text-xs text-red-400">{{ $errors->first('email') }}</p>
-            </div>
+                {{-- Email --}}
+                <div>
+                    <label for="email" class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                        <x-icon name="mail" class="h-3 w-3" />
+                        {{ __('Email') }}
+                    </label>
+                    <input type="email" id="email" name="email" x-model="email" required placeholder="{{ __('Email') }}"
+                        class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                    <p class="mt-1 text-xs text-red-400">{{ $errors->first('email') }}</p>
+                </div>
 
-            {{-- Phone: country code + number, one unified box --}}
-            <div>
-                <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
-                    <x-icon name="phone" class="h-3 w-3" />
-                    {{ __('Phone') }}
-                </label>
-                <div class="relative isolate flex items-stretch rounded-xl border border-luxury-border bg-luxury-black/40 transition focus-within:border-luxury-gold focus-within:ring-1 focus-within:ring-luxury-gold" :class="phoneCodeOpen ? 'z-30' : 'z-20'" @click.outside="phoneCodeOpen = false; dialSearch = ''">
-                    <button type="button" @click="phoneCodeOpen = !phoneCodeOpen; dialSearch = ''; $nextTick(() => $refs.dialSearchInput?.focus())" aria-haspopup="listbox" :aria-expanded="phoneCodeOpen"
-                        class="flex shrink-0 items-center gap-1.5 rounded-s-xl border-e border-luxury-border/60 px-2 py-2.5 text-sm text-luxury-white transition hover:bg-luxury-graphite/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
-                        <span class="fi" :class="'fi-' + dialCountry().iso2"></span>
-                        <span x-text="dialCode"></span>
-                        <x-icon name="chevron-down" class="h-3 w-3 text-luxury-muted transition-transform" x-bind:class="{ 'rotate-180': phoneCodeOpen }" />
-                    </button>
-                    <input type="tel" id="phone_number" x-model="phoneNumber" placeholder="{{ __('Phone Number') }}"
-                        class="min-w-0 flex-1 rounded-e-xl bg-transparent px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted focus:outline-none">
+                {{-- Phone: country code + number, one unified box --}}
+                <div>
+                    <label class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
+                        <x-icon name="phone" class="h-3 w-3" />
+                        {{ __('Phone') }}
+                    </label>
+                    <div class="relative isolate flex items-stretch rounded-xl border border-luxury-border bg-luxury-black/40 transition focus-within:border-luxury-gold focus-within:ring-1 focus-within:ring-luxury-gold" :class="phoneCodeOpen ? 'z-30' : 'z-20'" @click.outside="phoneCodeOpen = false; dialSearch = ''">
+                        <button type="button" @click="phoneCodeOpen = !phoneCodeOpen; dialSearch = ''; $nextTick(() => $refs.dialSearchInput?.focus())" aria-haspopup="listbox" :aria-expanded="phoneCodeOpen"
+                            class="flex shrink-0 items-center gap-1.5 rounded-s-xl border-e border-luxury-border/60 px-2 py-2.5 text-sm text-luxury-white transition hover:bg-luxury-graphite/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-luxury-gold/50">
+                            <span class="fi" :class="'fi-' + dialCountry().iso2"></span>
+                            <span x-text="dialCode"></span>
+                            <x-icon name="chevron-down" class="h-3 w-3 text-luxury-muted transition-transform" x-bind:class="{ 'rotate-180': phoneCodeOpen }" />
+                        </button>
+                        <input type="tel" id="phone_number" x-model="phoneNumber" placeholder="{{ __('Phone Number') }}"
+                            class="min-w-0 flex-1 rounded-e-xl bg-transparent px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted focus:outline-none">
 
-                    {{-- Panel anchors to the whole merged box (not just the code button) so it
-                         can never be wider than its own field column — no more page overflow. --}}
-                    <div x-show="phoneCodeOpen" x-cloak
-                        x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                        role="listbox" class="absolute start-0 end-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal shadow-2xl shadow-black/50">
-                        <div class="border-b border-luxury-border/60 p-2">
-                            <input type="text" x-ref="dialSearchInput" x-model="dialSearch" placeholder="{{ __('Search country or code') }}"
-                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-1.5 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                        </div>
-                        <div class="max-h-56 overflow-y-auto p-1.5">
-                            <template x-for="country in filteredDialCodes()" :key="country.iso2 + country.dial">
-                                <button type="button" role="option" @click="dialCode = country.dial; phoneCodeOpen = false; dialSearch = ''"
-                                    class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-sm transition hover:bg-luxury-graphite"
-                                    :class="dialCode === country.dial ? 'text-luxury-gold' : 'text-luxury-muted'">
-                                    <span class="fi" :class="'fi-' + country.iso2"></span>
-                                    <span class="min-w-0 flex-1 truncate" x-text="country.name"></span>
-                                    <span x-text="country.dial"></span>
-                                </button>
-                            </template>
-                            <p x-show="filteredDialCodes().length === 0" class="px-3 py-4 text-center text-xs text-luxury-muted">{{ __('No countries found.') }}</p>
+                        {{-- Panel anchors to the whole merged box (not just the code button) so it
+                             can never be wider than its own field column — no more page overflow. --}}
+                        <div x-show="phoneCodeOpen" x-cloak
+                            x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                            role="listbox" class="absolute start-0 end-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal shadow-2xl shadow-black/50">
+                            <div class="border-b border-luxury-border/60 p-2">
+                                <input type="text" x-ref="dialSearchInput" x-model="dialSearch" placeholder="{{ __('Search country or code') }}"
+                                    class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-1.5 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                            </div>
+                            <div class="max-h-56 overflow-y-auto p-1.5">
+                                <template x-for="country in filteredDialCodes()" :key="country.iso2 + country.dial">
+                                    <button type="button" role="option" @click="dialCode = country.dial; phoneCodeOpen = false; dialSearch = ''"
+                                        class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-start text-sm transition hover:bg-luxury-graphite"
+                                        :class="dialCode === country.dial ? 'text-luxury-gold' : 'text-luxury-muted'">
+                                        <span class="fi" :class="'fi-' + country.iso2"></span>
+                                        <span class="min-w-0 flex-1 truncate" x-text="country.name"></span>
+                                        <span x-text="country.dial"></span>
+                                    </button>
+                                </template>
+                                <p x-show="filteredDialCodes().length === 0" class="px-3 py-4 text-center text-xs text-luxury-muted">{{ __('No countries found.') }}</p>
+                            </div>
                         </div>
                     </div>
+                    <input type="hidden" name="phone" :value="phoneNumber ? (dialCode + ' ' + phoneNumber) : ''">
                 </div>
-                <input type="hidden" name="phone" :value="phoneNumber ? (dialCode + ' ' + phoneNumber) : ''">
-            </div>
+            @endauth
         </div>
 
         {{-- Hidden fields populated by Google Places / the live quote --}}

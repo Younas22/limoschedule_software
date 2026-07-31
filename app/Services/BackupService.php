@@ -110,11 +110,34 @@ class BackupService
      */
     public function restore(string $filename): void
     {
+        // A real dump can easily take longer than the web server's default
+        // execution-time cap (confirmed 120s in this environment) — without
+        // this, PHP kills the request with an uncatchable fatal error mid
+        // restore, which the controller's try/catch can never see, so the
+        // admin gets a blank/500 page instead of a real error message.
+        set_time_limit(0);
+
         $path = $this->resolvePath($filename);
 
         abort_unless($path, 404, 'Backup not found.');
 
-        DB::unprepared((string) file_get_contents($path));
+        // DB::unprepared() runs the whole file as one multi-statement
+        // PDO::exec() call (Laravel enables PDO::MYSQL_ATTR_MULTI_STATEMENTS
+        // for this). If the dump contains any statement that returns a
+        // result set (a stray SELECT, a SHOW, etc. — not something our own
+        // generated backups produce, but nothing stops an uploaded .sql
+        // file from having one), that result set is left dangling on the
+        // connection because exec() never drains it — so the *next* query
+        // on the same connection, even something unrelated later in the
+        // same request like the session write, fails with "Cannot execute
+        // queries while other unbuffered queries are active." Reconnecting
+        // afterwards guarantees a clean connection for the rest of the
+        // request regardless of what the dump contained.
+        try {
+            DB::unprepared((string) file_get_contents($path));
+        } finally {
+            DB::reconnect();
+        }
     }
 
     /**

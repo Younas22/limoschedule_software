@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Services\BackupService;
 use App\Services\SystemHealthService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -103,7 +104,7 @@ class SystemToolController extends Controller
         return back()->with('status', $deleted ? 'Backup deleted.' : 'Backup not found.');
     }
 
-    public function uploadBackup(Request $request): RedirectResponse
+    public function uploadBackup(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'file' => ['required', 'file', 'max:51200', function ($attribute, $value, $fail) {
@@ -117,10 +118,16 @@ class SystemToolController extends Controller
 
         ActivityLog::record('backup.uploaded', "Database backup uploaded: {$filename}", $request);
 
-        return back()->with('status', "Backup \"{$filename}\" uploaded. Click \"Update DB\" on it to restore.");
+        $message = "Backup \"{$filename}\" uploaded. Click \"Update DB\" on it to restore.";
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $message, 'filename' => $filename]);
+        }
+
+        return back()->with('status', $message);
     }
 
-    public function restoreBackup(Request $request, string $filename): RedirectResponse
+    public function restoreBackup(Request $request, string $filename): RedirectResponse|JsonResponse
     {
         $request->validate([
             'confirm' => ['required', 'in:RESTORE'],
@@ -131,12 +138,24 @@ class SystemToolController extends Controller
         try {
             $this->backups->restore($filename);
         } catch (Throwable $e) {
-            return back()->with('error', 'Restore failed: '.$e->getMessage());
+            $message = 'Restore failed: '.$e->getMessage();
+
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $message], 500);
+            }
+
+            return back()->with('error', $message);
         }
 
         ActivityLog::record('backup.restored', "Database restored from backup: {$filename}", $request);
 
-        return back()->with('status', "Database restored from \"{$filename}\".");
+        $message = "Database restored from \"{$filename}\".";
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('status', $message);
     }
 
     public function dropAllTables(Request $request): RedirectResponse

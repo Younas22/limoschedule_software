@@ -142,16 +142,24 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <h3 class="text-sm font-semibold text-luxury-white">{{ __('Database Backups') }}</h3>
                 @permission('system.edit')
-                    <div class="flex flex-wrap items-center gap-2">
-                        <form method="POST" action="{{ route('admin.system-tools.backups.upload') }}" enctype="multipart/form-data"
-                            x-data="{ filename: '' }">
-                            @csrf
-                            <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
-                                <span x-text="filename || '{{ __('Upload .sql File') }}'"></span>
-                                <input type="file" name="file" accept=".sql" class="hidden" required
-                                    @change="filename = $event.target.files[0]?.name; $el.closest('form').submit()">
+                    <div class="flex flex-wrap items-start gap-2">
+                        <div x-data="backupUploader('{{ route('admin.system-tools.backups.upload') }}')">
+                            <label class="flex items-center gap-2 rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold"
+                                :class="uploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'">
+                                <svg x-show="uploading" x-cloak class="h-3.5 w-3.5 animate-spin text-luxury-gold" viewBox="0 0 24 24" fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                <span x-show="!uploading" x-text="filename || '{{ __('Upload .sql File') }}'"></span>
+                                <span x-show="uploading" x-text="'{{ __('Uploading') }}… ' + progress + '%'"></span>
+                                <input type="file" name="file" accept=".sql" class="hidden" :disabled="uploading"
+                                    @change="upload($event.target.files[0]); $event.target.value = ''">
                             </label>
-                        </form>
+                            <div x-show="uploading" x-cloak class="mt-1.5 h-1 w-40 overflow-hidden rounded-full bg-luxury-graphite">
+                                <div class="h-full bg-luxury-gold transition-all" :style="`width: ${progress}%`"></div>
+                            </div>
+                            <p x-show="error" x-cloak x-text="error" class="mt-1.5 max-w-xs text-[11px] text-red-400"></p>
+                        </div>
                         <form method="POST" action="{{ route('admin.system-tools.backups.create') }}">
                             @csrf
                             <button type="submit" class="rounded-lg bg-luxury-gold px-3 py-1.5 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
@@ -177,23 +185,27 @@
                                 </a>
                             @endpermission
                             @permission('system.delete')
-                                <div x-data="{ open: false, confirm: '' }" class="relative inline-block">
+                                <div x-data="backupRestorer()" class="relative inline-block">
                                     <button type="button" @click="open = true" class="rounded-lg border border-luxury-gold/40 px-2.5 py-1.5 text-[11px] font-medium text-luxury-gold transition hover:bg-luxury-gold/10">
                                         {{ __('Update DB') }}
                                     </button>
                                     <div x-show="open" x-cloak @click.outside="open = false"
                                         class="absolute end-0 z-40 mt-2 w-72 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 text-start shadow-xl">
                                         <p class="text-xs font-semibold text-red-400">{{ __("This overwrites the current database with this backup's tables.") }}</p>
-                                        <form method="POST" action="{{ route('admin.system-tools.backups.restore', $backup['name']) }}" class="mt-3">
-                                            @csrf
+                                        <form @submit.prevent="restore('{{ route('admin.system-tools.backups.restore', $backup['name']) }}')" class="mt-3">
                                             <label class="mb-1 block text-[11px] text-luxury-muted">{{ __('Type') }} <span class="font-mono text-luxury-white">RESTORE</span> {{ __('to confirm') }}</label>
-                                            <input type="text" name="confirm" x-model="confirm" autocomplete="off"
-                                                class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
-                                            <button type="submit" :disabled="confirm !== 'RESTORE'"
-                                                class="mt-2 w-full rounded-lg bg-red-500/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-30">
-                                                {{ __('Update DB Now') }}
+                                            <input type="text" x-model="confirm" autocomplete="off" :disabled="restoring"
+                                                class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-xs text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold disabled:opacity-60">
+                                            <button type="submit" :disabled="confirm !== 'RESTORE' || restoring"
+                                                class="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-500/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-30">
+                                                <svg x-show="restoring" x-cloak class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                </svg>
+                                                <span x-text="restoring ? '{{ __('Restoring…') }}' : '{{ __('Update DB Now') }}'"></span>
                                             </button>
                                         </form>
+                                        <p x-show="error" x-cloak x-text="error" class="mt-2 text-[11px] text-red-400"></p>
                                     </div>
                                 </div>
                                 <form method="POST" action="{{ route('admin.system-tools.backups.destroy', $backup['name']) }}" onsubmit="return confirm('{{ __('Delete this backup?') }}');">
@@ -256,4 +268,110 @@
             @endpermission
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            function backupUploader(url) {
+                return {
+                    filename: '',
+                    uploading: false,
+                    progress: 0,
+                    error: null,
+
+                    upload(file) {
+                        if (! file) return;
+
+                        this.filename = file.name;
+                        this.uploading = true;
+                        this.progress = 0;
+                        this.error = null;
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', url);
+                        xhr.setRequestHeader('Accept', 'application/json');
+                        xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]').content);
+
+                        xhr.upload.addEventListener('progress', (event) => {
+                            if (event.lengthComputable) {
+                                this.progress = Math.round((event.loaded / event.total) * 100);
+                            }
+                        });
+
+                        xhr.addEventListener('load', () => {
+                            this.uploading = false;
+
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                window.location.reload();
+                                return;
+                            }
+
+                            this.error = this.parseError(xhr.responseText, @js(__('Upload failed.')));
+                        });
+
+                        xhr.addEventListener('error', () => {
+                            this.uploading = false;
+                            this.error = @js(__('Upload failed. Please check your connection and try again.'));
+                        });
+
+                        xhr.send(formData);
+                    },
+
+                    parseError(responseText, fallback) {
+                        try {
+                            const data = JSON.parse(responseText);
+                            if (data.message) return data.message;
+                            if (data.errors) return Object.values(data.errors).flat().join(' ');
+                        } catch (e) {
+                            //
+                        }
+
+                        return fallback;
+                    },
+                };
+            }
+
+            function backupRestorer() {
+                return {
+                    open: false,
+                    confirm: '',
+                    restoring: false,
+                    error: null,
+
+                    async restore(url) {
+                        this.restoring = true;
+                        this.error = null;
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                },
+                                body: JSON.stringify({ confirm: this.confirm }),
+                            });
+
+                            const data = await response.json().catch(() => ({}));
+
+                            if (response.ok) {
+                                window.location.reload();
+                                return;
+                            }
+
+                            this.error = data.message
+                                || (data.errors ? Object.values(data.errors).flat().join(' ') : @js(__('Restore failed.')));
+                        } catch (e) {
+                            this.error = @js(__('Restore failed. Please check your connection and try again.'));
+                        } finally {
+                            this.restoring = false;
+                        }
+                    },
+                };
+            }
+        </script>
+    @endpush
 </x-admin.layouts.app>

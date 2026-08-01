@@ -286,10 +286,24 @@ class BookingRequestController extends Controller
             Log::warning('Failed to log quote request: '.$e->getMessage());
         }
 
+        // A driver who is online but mid-ride ($is_available = false) still
+        // counts as available for THIS booking as long as their current ride
+        // is expected to finish before the requested pickup time — otherwise
+        // a driver who is simply busy right now (but free well before a
+        // booking scheduled for tomorrow) would wrongly show as "no drivers".
         $availableDriversCount = Driver::active()
             ->where('is_online', true)
-            ->where('is_available', true)
             ->whereHas('vehicle', fn ($q) => $q->where('vehicle_category_id', $data['vehicle_category_id']))
+            ->get()
+            ->filter(function (Driver $driver) use ($pickupDateTime) {
+                if ($driver->is_available) {
+                    return true;
+                }
+
+                $activeRide = $driver->activeBooking();
+
+                return $activeRide?->estimated_arrival_at?->lt($pickupDateTime) ?? false;
+            })
             ->count();
 
         return response()->json([

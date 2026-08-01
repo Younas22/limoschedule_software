@@ -612,9 +612,9 @@
         <div x-show="quote && !calculating" x-cloak x-transition class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-black/40 p-4">
             <div class="flex items-center justify-between gap-3">
                 <p class="text-xs font-semibold uppercase tracking-wide text-luxury-muted">{{ __('Estimated Fare') }}</p>
-                <p x-show="availableDriversCount !== null" class="flex items-center gap-1.5 text-xs" :class="availableDriversCount > 0 ? 'text-emerald-400' : 'text-luxury-muted'">
-                    <span class="h-1.5 w-1.5 rounded-full" :class="availableDriversCount > 0 ? 'bg-emerald-400' : 'bg-luxury-muted'"></span>
-                    <span x-text="availableDriversCount > 0 ? (availableDriversCount + ' {{ __('driver(s) available now') }}') : '{{ __('No drivers online right now') }}'"></span>
+                <p x-show="availableDriversCount > 0" x-cloak class="flex items-center gap-1.5 text-xs text-emerald-400">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                    <span x-text="availableDriversCount + ' {{ __('driver(s) available for your booking') }}'"></span>
                 </p>
             </div>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\BookingSetting;
 use App\Models\Customer;
+use App\Models\Driver;
 use App\Models\QuoteRequest;
 use App\Models\Vehicle;
 use App\Services\BookingCreationService;
@@ -285,12 +286,19 @@ class BookingRequestController extends Controller
             Log::warning('Failed to log quote request: '.$e->getMessage());
         }
 
+        $availableDriversCount = Driver::active()
+            ->where('is_online', true)
+            ->where('is_available', true)
+            ->whereHas('vehicle', fn ($q) => $q->where('vehicle_category_id', $data['vehicle_category_id']))
+            ->count();
+
         return response()->json([
             'distance_km' => $distanceKm,
             'duration_minutes' => $durationMinutes,
             'return_distance_km' => $returnDistanceKm,
             'return_duration_minutes' => $returnDurationMinutes,
             'vehicle_name' => $vehicle->category?->name ?? $vehicle->name,
+            'available_drivers_count' => $availableDriversCount,
             'breakdown' => $breakdown,
         ]);
     }

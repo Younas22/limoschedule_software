@@ -46,6 +46,8 @@ class LoginController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
+        Auth::guard('driver')->user()?->update(['is_online' => false]);
+
         Auth::guard('driver')->logout();
 
         $request->session()->invalidate();

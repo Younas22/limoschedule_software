@@ -610,7 +610,13 @@
         <div x-show="quoteError" x-cloak x-transition class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm text-red-400" x-text="quoteError"></div>
 
         <div x-show="quote && !calculating" x-cloak x-transition class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-black/40 p-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-luxury-muted">{{ __('Estimated Fare') }}</p>
+            <div class="flex items-center justify-between gap-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-luxury-muted">{{ __('Estimated Fare') }}</p>
+                <p x-show="availableDriversCount !== null" class="flex items-center gap-1.5 text-xs" :class="availableDriversCount > 0 ? 'text-emerald-400' : 'text-luxury-muted'">
+                    <span class="h-1.5 w-1.5 rounded-full" :class="availableDriversCount > 0 ? 'bg-emerald-400' : 'bg-luxury-muted'"></span>
+                    <span x-text="availableDriversCount > 0 ? (availableDriversCount + ' {{ __('driver(s) available now') }}') : '{{ __('No drivers online right now') }}'"></span>
+                </p>
+            </div>
 
             <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-3">
                 <div>
@@ -637,10 +643,12 @@
                     <dt class="text-xs text-luxury-muted">{{ __('Hourly Cost') }}</dt>
                     <dd class="text-luxury-white" x-text="quote ? money(quote.hour_fare) : ''"></dd>
                 </div>
-                <div x-show="quote && extraCharges() > 0">
-                    <dt class="text-xs text-luxury-muted">{{ __('Extra Charges') }}</dt>
-                    <dd class="text-luxury-white" x-text="quote ? money(extraCharges()) : ''"></dd>
-                </div>
+                <template x-for="item in extraChargeItems()" :key="item.label">
+                    <div>
+                        <dt class="text-xs text-luxury-muted" x-text="item.label"></dt>
+                        <dd class="text-luxury-white" x-text="money(item.value)"></dd>
+                    </div>
+                </template>
             </dl>
 
             <div class="border-t border-luxury-border/60 pt-3 text-center">
@@ -775,6 +783,7 @@
             returnDistanceKm: null,
             returnDurationMinutes: null,
             vehicleName: null,
+            availableDriversCount: null,
             quote: null,
             calculating: false,
             quoteError: null,
@@ -1070,12 +1079,22 @@
                 return total + ' min';
             },
 
-            extraCharges() {
-                if (!this.quote) return 0;
+            extraChargeItems() {
+                if (!this.quote) return [];
 
-                return (this.quote.waiting_charge || 0) + (this.quote.night_charge || 0) + (this.quote.weekend_charge || 0)
-                    + (this.quote.toll_charge || 0) + (this.quote.airport_surcharge || 0) + (this.quote.service_fee || 0)
-                    + (this.quote.extra_passenger_charge || 0);
+                const labels = {
+                    waiting_charge: @json(__('Waiting Charge')),
+                    night_charge: @json(__('Night Surcharge')),
+                    weekend_charge: @json(__('Weekend Surcharge')),
+                    toll_charge: @json(__('Toll Charge')),
+                    airport_surcharge: @json(__('Airport Surcharge')),
+                    service_fee: @json(__('Service Fee')),
+                    extra_passenger_charge: @json(__('Extra Passenger Charge')),
+                };
+
+                return Object.keys(labels)
+                    .filter((key) => (this.quote[key] || 0) > 0)
+                    .map((key) => ({ label: labels[key], value: this.quote[key] }));
             },
 
             scheduleQuote() {
@@ -1153,6 +1172,7 @@
                         this.returnDistanceKm = json.return_distance_km;
                         this.returnDurationMinutes = json.return_duration_minutes;
                         this.vehicleName = json.vehicle_name;
+                        this.availableDriversCount = json.available_drivers_count;
                         this.quote = json.breakdown;
                         this.quoteError = null;
                     })

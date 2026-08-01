@@ -43,10 +43,35 @@ class FleetController extends Controller
         $office = $this->officeLocation->coordinates();
 
         return Driver::active()
-            ->where('is_online', true)
             ->with(['vehicle.category'])
+            ->orderByDesc('is_online')
+            ->orderBy('name')
             ->get()
             ->map(function (Driver $driver) use ($office) {
+                $vehicleCategory = $driver->vehicle?->category?->name;
+
+                // Skip Google/dispatch lookups entirely for offline drivers —
+                // there's nothing dispatchable to compute and it would just
+                // burn API calls on every poll for drivers who aren't working.
+                if (! $driver->is_online) {
+                    return [
+                        'id' => $driver->id,
+                        'name' => $driver->name,
+                        'vehicle_category' => $vehicleCategory,
+                        'online' => false,
+                        'status' => 'offline',
+                        'location' => __('Offline'),
+                        'lat' => null,
+                        'lng' => null,
+                        'current_ride' => null,
+                        'ride_ends_in_minutes' => null,
+                        'distance_from_office_km' => null,
+                        'next_pickup' => null,
+                        'distance_to_pickup_km' => null,
+                        'eta_minutes' => null,
+                    ];
+                }
+
                 $activeRide = $driver->activeBooking();
                 $hasFreshLocation = $driver->hasFreshLocation();
 
@@ -65,6 +90,8 @@ class FleetController extends Controller
                 return [
                     'id' => $driver->id,
                     'name' => $driver->name,
+                    'vehicle_category' => $vehicleCategory,
+                    'online' => true,
                     'status' => $activeRide ? 'busy' : 'available',
                     'location' => $hasFreshLocation
                         ? round((float) $driver->current_lat, 4).', '.round((float) $driver->current_lng, 4)

@@ -48,6 +48,23 @@
 }
 
 @layer base {
+    /* Safety net against horizontal scroll on mobile — a single element
+       overflowing anywhere on the page (long text, an off-canvas sidebar,
+       a wide table) would otherwise widen the whole document instead of
+       just that element. */
+    html,
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Alpine hides [x-cloak] elements once it hydrates, but without this
+       rule they render fully visible for a moment on page load (mobile
+       nav overlay, dropdowns) before Alpine's script (loaded from a CDN
+       with `defer`) finishes initializing. */
+    [x-cloak] {
+        display: none !important;
+    }
+
     ::selection {
         background-color: var(--color-luxury-gold);
         color: var(--color-luxury-black);

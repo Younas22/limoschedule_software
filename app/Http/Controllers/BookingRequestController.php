@@ -298,34 +298,45 @@ class BookingRequestController extends Controller
             ->map(function (Driver $driver) use ($maps, $office, $data, $hasPickupCoords, $pickupDateTime) {
                 $activeRide = $driver->activeBooking();
 
+                // Busy drivers are still physically somewhere — if we have a
+                // live GPS ping for them, show how far they are right now
+                // just like an available driver. Busy drivers don't fall
+                // back to the office (they're out on a ride, not parked
+                // there), so no location simply means no distance shown.
+                $origin = $driver->hasFreshLocation()
+                    ? ['lat' => (float) $driver->current_lat, 'lng' => (float) $driver->current_lng]
+                    : ($activeRide ? null : $office);
+
+                $distance = ($hasPickupCoords && $origin)
+                    ? $maps->distance($origin['lat'], $origin['lng'], (float) $data['pickup_lat'], (float) $data['pickup_lng'])
+                    : null;
+
                 if ($activeRide) {
+                    // ride_ends_in_minutes floors at 0 and stays there once
+                    // the estimate has elapsed but the driver hasn't pressed
+                    // "Complete Ride" — surface that distinction so the UI
+                    // doesn't misleadingly say "free in 0 min" forever.
                     $freeInMinutes = $activeRide->ride_ends_in_minutes;
 
                     return [
                         'name' => Str::before($driver->name, ' '),
                         'status' => 'busy',
                         'free_in_minutes' => $freeInMinutes,
+                        'overdue' => $freeInMinutes === 0 && $activeRide->estimated_arrival_at?->isPast(),
                         // Free before the requested pickup time, so this
                         // driver can still take the booking on time — just
                         // not dispatchable from where they are RIGHT now.
                         'free_before_pickup' => $activeRide->estimated_arrival_at?->lt($pickupDateTime) ?? false,
-                        'distance_km' => null,
-                        'duration_minutes' => null,
+                        'distance_km' => $distance['distance_km'] ?? null,
+                        'duration_minutes' => $distance['duration_minutes'] ?? null,
                     ];
                 }
-
-                $origin = $driver->hasFreshLocation()
-                    ? ['lat' => (float) $driver->current_lat, 'lng' => (float) $driver->current_lng]
-                    : $office;
-
-                $distance = ($hasPickupCoords && $origin)
-                    ? $maps->distance($origin['lat'], $origin['lng'], (float) $data['pickup_lat'], (float) $data['pickup_lng'])
-                    : null;
 
                 return [
                     'name' => Str::before($driver->name, ' '),
                     'status' => 'available',
                     'free_in_minutes' => null,
+                    'overdue' => false,
                     'free_before_pickup' => true,
                     'distance_km' => $distance['distance_km'] ?? null,
                     'duration_minutes' => $distance['duration_minutes'] ?? null,

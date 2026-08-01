@@ -673,17 +673,7 @@
                                 }"></span>
                             <span x-text="driver.name"></span>
                         </span>
-                        <span class="text-luxury-muted">
-                            <template x-if="driver.status === 'available'">
-                                <span x-text="driver.distance_km !== null ? (driver.distance_km + ' km · ~' + driver.duration_minutes + ' {{ __('min away') }}') : '{{ __('Available') }}'"></span>
-                            </template>
-                            <template x-if="driver.status === 'busy'">
-                                <span x-text="driver.free_in_minutes !== null ? ('{{ __('Busy — free in') }} ' + driver.free_in_minutes + ' {{ __('min') }}') : '{{ __('Busy') }}'"></span>
-                            </template>
-                            <template x-if="driver.status === 'offline'">
-                                <span>{{ __('Offline') }}</span>
-                            </template>
-                        </span>
+                        <span class="text-luxury-muted" x-text="driverStatusText(driver)"></span>
                     </div>
                 </template>
             </div>
@@ -1106,6 +1096,26 @@
                     : this.durationMinutes;
 
                 return total + ' min';
+            },
+
+            driverStatusText(driver) {
+                if (driver.status === 'offline') return @json(__('Offline'));
+
+                const distancePart = driver.distance_km !== null
+                    ? (driver.distance_km + ' km · ~' + driver.duration_minutes + ' ' + @json(__('min away')))
+                    : null;
+
+                if (driver.status === 'busy') {
+                    const freePart = driver.overdue
+                        ? @json(__('wrapping up ride'))
+                        : (driver.free_in_minutes !== null
+                            ? (@json(__('free in')) + ' ' + driver.free_in_minutes + ' ' + @json(__('min')))
+                            : @json(__('busy')));
+
+                    return distancePart ? (distancePart + ' · ' + freePart) : freePart;
+                }
+
+                return distancePart || @json(__('Available'));
             },
 
             extraChargeItems() {

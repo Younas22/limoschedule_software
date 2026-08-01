@@ -1,8 +1,17 @@
 @props(['section'])
 
 @php
-    $fields = $section->contact_fields;
-    $whatsappDigits = ! empty($fields['whatsapp']) ? preg_replace('/\D+/', '', $fields['whatsapp']) : null;
+    // Every contact detail — address/phone/email/whatsapp/hours/map embed —
+    // comes from Settings > General, the single source of truth shared with
+    // the footer, WhatsApp button, and invoices. This section is just a
+    // placeholder marking where the block renders on the Contact page.
+    $officePhone = setting('phone');
+    $officeEmail = setting('email');
+    $officeAddress = setting('address');
+    $officeWhatsapp = setting('whatsapp');
+    $officeMapEmbedUrl = setting('google_maps_embed_url');
+    $businessHours = setting('business_hours_list');
+    $whatsappDigits = $officeWhatsapp ? preg_replace('/\D+/', '', $officeWhatsapp) : null;
 @endphp
 
 <section class="border-b border-luxury-border">
@@ -84,38 +93,38 @@
 
             {{-- Contact details + map --}}
             <div class="space-y-4 lg:col-span-2">
-                @if (! empty($fields['address']))
+                @if ($officeAddress)
                     <div class="flex items-start gap-3 rounded-xl border border-luxury-border bg-luxury-charcoal p-4">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-luxury-gold/10 text-luxury-gold">
                             <x-icon name="map-pin" class="h-5 w-5" />
                         </span>
                         <div>
                             <p class="text-sm font-medium text-luxury-white">{{ __('Office Address') }}</p>
-                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $fields['address'] }}</p>
+                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $officeAddress }}</p>
                         </div>
                     </div>
                 @endif
 
-                @if (! empty($fields['phone']))
-                    <a href="tel:{{ $fields['phone'] }}" class="flex items-start gap-3 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                @if ($officePhone)
+                    <a href="tel:{{ $officePhone }}" class="flex items-start gap-3 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-luxury-gold/10 text-luxury-gold">
                             <x-icon name="phone" class="h-5 w-5" />
                         </span>
                         <div>
                             <p class="text-sm font-medium text-luxury-white">{{ __('Phone') }}</p>
-                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $fields['phone'] }}</p>
+                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $officePhone }}</p>
                         </div>
                     </a>
                 @endif
 
-                @if (! empty($fields['email']))
-                    <a href="mailto:{{ $fields['email'] }}" class="flex items-start gap-3 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                @if ($officeEmail)
+                    <a href="mailto:{{ $officeEmail }}" class="flex items-start gap-3 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-luxury-gold/10 text-luxury-gold">
                             <x-icon name="mail" class="h-5 w-5" />
                         </span>
                         <div>
                             <p class="text-sm font-medium text-luxury-white">{{ __('Email') }}</p>
-                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $fields['email'] }}</p>
+                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $officeEmail }}</p>
                         </div>
                     </a>
                 @endif
@@ -127,34 +136,49 @@
                         </span>
                         <div>
                             <p class="text-sm font-medium text-luxury-white">{{ __('WhatsApp') }}</p>
-                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $fields['whatsapp'] }}</p>
+                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $officeWhatsapp }}</p>
                         </div>
                     </a>
                 @endif
 
-                @if (! empty($fields['hours']))
+                @if (setting('business_hours'))
                     <div class="flex items-start gap-3 rounded-xl border border-luxury-border bg-luxury-charcoal p-4">
                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-luxury-gold/10 text-luxury-gold">
                             <x-icon name="clock" class="h-5 w-5" />
                         </span>
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <p class="text-sm font-medium text-luxury-white">{{ __('Working Hours') }}</p>
-                            <p class="mt-0.5 text-sm text-luxury-muted">{{ $fields['hours'] }}</p>
+                            <dl class="mt-1.5 space-y-0.5">
+                                @foreach ($businessHours as $day => $dayHours)
+                                    <div class="flex items-center justify-between gap-3 text-sm text-luxury-muted">
+                                        <dt>{{ __(ucfirst($day)) }}</dt>
+                                        <dd>
+                                            @if ($dayHours['closed'])
+                                                {{ __('Closed') }}
+                                            @else
+                                                {{ \Illuminate\Support\Carbon::parse($dayHours['open'])->format('g:i A') }}
+                                                –
+                                                {{ \Illuminate\Support\Carbon::parse($dayHours['close'])->format('g:i A') }}
+                                            @endif
+                                        </dd>
+                                    </div>
+                                @endforeach
+                            </dl>
                         </div>
                     </div>
                 @endif
 
                 {{-- Google Maps --}}
                 <div class="overflow-hidden rounded-xl border border-luxury-border bg-luxury-charcoal">
-                    @if (! empty($fields['google_maps_embed_url']))
-                        <iframe src="{{ $fields['google_maps_embed_url'] }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                    @if ($officeMapEmbedUrl)
+                        <iframe src="{{ $officeMapEmbedUrl }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
                             class="h-64 w-full border-0" allowfullscreen title="{{ __('Office location map') }}"></iframe>
                     @else
                         <div class="flex h-64 w-full flex-col items-center justify-center gap-2 bg-luxury-graphite px-4 text-center">
                             <x-icon name="map-pin" class="h-8 w-8 text-luxury-muted" />
                             <p class="text-sm font-medium text-luxury-white">{{ __('Map view coming soon') }}</p>
-                            @if (! empty($fields['address']))
-                                <p class="max-w-xs text-xs text-luxury-muted">{{ $fields['address'] }}</p>
+                            @if ($officeAddress)
+                                <p class="max-w-xs text-xs text-luxury-muted">{{ $officeAddress }}</p>
                             @endif
                         </div>
                     @endif

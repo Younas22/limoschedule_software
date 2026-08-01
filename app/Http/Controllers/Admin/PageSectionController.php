@@ -142,15 +142,6 @@ class PageSectionController extends Controller
     {
         $type = $request->input('type');
 
-        // Admins sometimes paste the whole <iframe> snippet from Google's "Embed a
-        // map" dialog instead of just the src URL — pull the URL back out so it
-        // still validates and saves correctly instead of failing with a confusing error.
-        if ($request->filled('google_maps_embed_url') && str_contains($request->input('google_maps_embed_url'), '<iframe')) {
-            if (preg_match('/src=["\']([^"\']+)["\']/', $request->input('google_maps_embed_url'), $matches)) {
-                $request->merge(['google_maps_embed_url' => html_entity_decode($matches[1])]);
-            }
-        }
-
         $data = $request->validate([
             'type' => ['required', Rule::in(array_keys(PageSection::TYPES))],
             'heading' => ['nullable', 'string', 'max:255'],
@@ -178,12 +169,6 @@ class PageSectionController extends Controller
             'items.*.bio' => ['nullable', 'string', 'max:500'],
             'items.*.photo' => ['nullable', 'image', 'max:2048'],
             'items.*.existing_photo' => ['nullable', 'string'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'hours' => ['nullable', 'string', 'max:255'],
-            'whatsapp' => ['nullable', 'string', 'max:50'],
-            'google_maps_embed_url' => ['nullable', 'url', 'max:2000'],
             'testimonial_limit' => ['nullable', 'integer', 'min:1', 'max:24'],
             'testimonial_min_rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'fleet_limit' => ['nullable', 'integer', 'min:1', 'max:48'],
@@ -221,14 +206,12 @@ class PageSectionController extends Controller
                     'title' => $item['title'],
                     'description' => $item['description'] ?? null,
                 ])->values()->all(),
-            'contact_info' => array_filter([
-                'address' => $data['address'] ?? null,
-                'phone' => $data['phone'] ?? null,
-                'email' => $data['email'] ?? null,
-                'hours' => $data['hours'] ?? null,
-                'whatsapp' => $data['whatsapp'] ?? null,
-                'google_maps_embed_url' => $data['google_maps_embed_url'] ?? null,
-            ]),
+            // All contact details (address/phone/email/whatsapp/hours/map
+            // embed) now live in Settings > General — the single source of
+            // truth shared by the footer, WhatsApp button, invoices, and
+            // this page. This section is just a placeholder marking where
+            // that block renders on the Contact page.
+            'contact_info' => [],
             'testimonials' => [
                 'limit' => (int) ($data['testimonial_limit'] ?? 6),
                 'min_rating' => (int) ($data['testimonial_min_rating'] ?? 4),
@@ -279,8 +262,7 @@ class PageSectionController extends Controller
         };
 
         unset(
-            $data['items'], $data['address'], $data['phone'], $data['email'], $data['hours'],
-            $data['whatsapp'], $data['google_maps_embed_url'],
+            $data['items'],
             $data['testimonial_limit'], $data['testimonial_min_rating'], $data['fleet_limit'], $data['fleet_category_id'], $data['route_limit'], $data['blog_limit'],
             $data['vision_icon'], $data['vision_title'], $data['vision_body'],
             $data['mission_icon'], $data['mission_title'], $data['mission_body']

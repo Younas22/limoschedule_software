@@ -187,8 +187,8 @@
                     </span>
                 @endif
 
-                @if (\Illuminate\Support\Facades\Route::has('register'))
-                    <a href="{{ route('register') }}" class="flex-1 rounded-lg bg-luxury-gold px-4 py-2.5 text-center text-sm font-semibold text-luxury-black">
+                @if (\Illuminate\Support\Facades\Route::has('customer.register'))
+                    <a href="{{ route('customer.register') }}" class="flex-1 rounded-lg bg-luxury-gold px-4 py-2.5 text-center text-sm font-semibold text-luxury-black">
                         {{ __('Register') }}
                     </a>
                 @else

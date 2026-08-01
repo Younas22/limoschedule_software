@@ -128,35 +128,13 @@
     </div>
 
     {{-- Contact info fields --}}
-    <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'contact_info'" x-cloak>
+    <div class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'contact_info'" x-cloak>
         <h3 class="text-sm font-semibold text-luxury-white">{{ __('Contact Details') }}</h3>
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div>
-                <x-admin.input-label for="address" value="{{ __('Address') }}" />
-                <x-admin.text-input id="address" name="address" type="text" value="{{ old('address', $contact['address'] ?? '') }}" />
-            </div>
-            <div>
-                <x-admin.input-label for="phone" value="{{ __('Phone') }}" />
-                <x-admin.text-input id="phone" name="phone" type="text" value="{{ old('phone', $contact['phone'] ?? '') }}" />
-            </div>
-            <div>
-                <x-admin.input-label for="email" value="{{ __('Email') }}" />
-                <x-admin.text-input id="email" name="email" type="email" value="{{ old('email', $contact['email'] ?? '') }}" />
-            </div>
-            <div>
-                <x-admin.input-label for="hours" value="{{ __('Hours') }}" />
-                <x-admin.text-input id="hours" name="hours" type="text" value="{{ old('hours', $contact['hours'] ?? '') }}" placeholder="{{ __('e.g. Available 24/7') }}" />
-            </div>
-            <div>
-                <x-admin.input-label for="whatsapp" value="{{ __('WhatsApp Number') }}" />
-                <x-admin.text-input id="whatsapp" name="whatsapp" type="text" value="{{ old('whatsapp', $contact['whatsapp'] ?? '') }}" placeholder="{{ __('e.g. +1 555 123 4567') }}" />
-            </div>
-            <div class="sm:col-span-2">
-                <x-admin.input-label for="google_maps_embed_url" value="{{ __('Google Maps Embed URL (optional)') }}" />
-                <x-admin.text-input id="google_maps_embed_url" name="google_maps_embed_url" type="url" value="{{ old('google_maps_embed_url', $contact['google_maps_embed_url'] ?? '') }}" placeholder="https://www.google.com/maps/embed?..." />
-                <p class="mt-1 text-xs text-luxury-muted">{{ __('From Google Maps: Share → Embed a map → copy the "src" URL. Leave blank to show a placeholder.') }}</p>
-            </div>
-        </div>
+        <p class="text-xs text-luxury-muted">
+            {{ __('Address, phone, email, WhatsApp, business hours, and the map embed are all managed in one place —') }}
+            <a href="{{ route('admin.settings.edit') }}" class="text-luxury-gold hover:text-luxury-gold-light">{{ __('Settings → General') }}</a>.
+            {{ __('This section just marks where that block appears on the Contact page — use the Heading/Subheading fields above if you want a title above it.') }}
+        </p>
     </div>
 
     {{-- Vision & Mission fields --}}

@@ -129,6 +129,45 @@
                     class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('address', $settings->address) }}</textarea>
                 <x-admin.input-error :messages="$errors->get('address')" />
             </div>
+
+            <div class="mt-5">
+                <x-admin.input-label for="google_maps_embed_url" value="{{ __('Google Maps Embed URL (optional)') }}" />
+                <x-admin.text-input id="google_maps_embed_url" name="google_maps_embed_url" type="url" value="{{ old('google_maps_embed_url', $settings->google_maps_embed_url) }}" placeholder="https://www.google.com/maps/embed?..." />
+                <p class="mt-1 text-xs text-luxury-muted">{{ __('From Google Maps: Share → Embed a map → copy the "src" URL (or paste the whole embed code). Shown on the Contact page. Leave blank to show a placeholder.') }}</p>
+                <x-admin.input-error :messages="$errors->get('google_maps_embed_url')" />
+            </div>
+        </div>
+
+        {{-- Business Hours --}}
+        <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+            <h3 class="mb-1 text-sm font-semibold text-luxury-white">{{ __('Business Hours') }}</h3>
+            <p class="mb-4 text-xs text-luxury-muted">{{ __('Set your opening hours for each day, shown on the Contact page.') }}</p>
+
+            <div class="space-y-2">
+                @php $businessHours = old('hours', $settings->business_hours_list); @endphp
+                @foreach (\App\Models\Setting::DAYS as $day)
+                    @php $dayHours = $businessHours[$day] ?? ['open' => '09:00', 'close' => '18:00', 'closed' => false]; @endphp
+                    <div class="flex flex-wrap items-center gap-3 rounded-xl border border-luxury-border/60 bg-luxury-graphite/30 px-4 py-3"
+                        x-data="{ closed: {{ \Illuminate\Support\Js::from((bool) ($dayHours['closed'] ?? false)) }} }">
+                        <p class="w-28 shrink-0 text-sm font-medium text-luxury-white">{{ __(ucfirst($day)) }}</p>
+
+                        <label class="flex shrink-0 items-center gap-2 text-xs text-luxury-muted">
+                            <input type="checkbox" name="hours[{{ $day }}][closed]" value="1" x-model="closed"
+                                class="rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-luxury-gold">
+                            {{ __('Closed') }}
+                        </label>
+
+                        <div class="flex flex-1 items-center gap-2" x-show="!closed">
+                            <input type="time" name="hours[{{ $day }}][open]" value="{{ $dayHours['open'] ?? '09:00' }}" :disabled="closed"
+                                class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                            <span class="text-xs text-luxury-muted">{{ __('to') }}</span>
+                            <input type="time" name="hours[{{ $day }}][close]" value="{{ $dayHours['close'] ?? '18:00' }}" :disabled="closed"
+                                class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                        </div>
+                        <p class="flex-1 text-xs text-luxury-muted" x-show="closed" x-cloak>{{ __('Closed all day') }}</p>
+                    </div>
+                @endforeach
+            </div>
         </div>
 
         {{-- Regional --}}

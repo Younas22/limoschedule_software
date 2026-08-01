@@ -31,6 +31,15 @@ class SettingController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        // Admins sometimes paste the whole <iframe> snippet from Google's
+        // "Embed a map" dialog instead of just the src URL — pull the URL
+        // back out so it still validates and saves correctly.
+        if ($request->filled('google_maps_embed_url') && str_contains($request->input('google_maps_embed_url'), '<iframe')) {
+            if (preg_match('/src=["\']([^"\']+)["\']/', $request->input('google_maps_embed_url'), $matches)) {
+                $request->merge(['google_maps_embed_url' => html_entity_decode($matches[1])]);
+            }
+        }
+
         $data = $request->validate([
             'company_name' => ['required', 'string', 'max:255'],
             'tagline' => ['nullable', 'string', 'max:255'],
@@ -41,6 +50,11 @@ class SettingController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'whatsapp' => ['nullable', 'string', 'max:30'],
+            'google_maps_embed_url' => ['nullable', 'url', 'max:2000'],
+            'hours' => ['nullable', 'array'],
+            'hours.*.open' => ['nullable', 'date_format:H:i'],
+            'hours.*.close' => ['nullable', 'date_format:H:i'],
+            'hours.*.closed' => ['nullable', 'boolean'],
             'timezone' => ['required', 'timezone'],
             'date_format' => ['required', 'string', 'max:20'],
             'tax_label' => ['required', 'string', 'max:50'],
@@ -66,7 +80,26 @@ class SettingController extends Controller
 
         $data['invoice_logo_dark'] = $request->boolean('invoice_logo_dark');
 
+        $data['business_hours'] = collect(Setting::DAYS)->mapWithKeys(fn ($day) => [
+            $day => [
+                'open' => $data['hours'][$day]['open'] ?? '09:00',
+                'close' => $data['hours'][$day]['close'] ?? '18:00',
+                'closed' => $request->boolean("hours.{$day}.closed"),
+            ],
+        ])->all();
+        unset($data['hours']);
+
         $settings = Setting::current();
+
+        // The cached office_lat/office_lng (used by the driver dispatch
+        // system) are only valid for the address they were geocoded from —
+        // clear them here so OfficeLocationService re-geocodes against the
+        // new address the next time it's needed, instead of silently
+        // dispatching drivers from the old location.
+        if (($data['address'] ?? null) !== $settings->address) {
+            $data['office_lat'] = null;
+            $data['office_lng'] = null;
+        }
 
         if ($request->hasFile('logo')) {
             $data['logo'] = $this->storeUpload($request->file('logo'), 'logo', $settings->logo);

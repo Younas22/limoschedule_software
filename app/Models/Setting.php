@@ -9,6 +9,8 @@ class Setting extends Model
 {
     public const CACHE_KEY = 'site.settings';
 
+    public const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
     protected $fillable = [
         'company_name',
         'tagline',
@@ -18,9 +20,13 @@ class Setting extends Model
         'invoice_logo_dark',
         'favicon',
         'address',
+        'office_lat',
+        'office_lng',
         'email',
         'phone',
         'whatsapp',
+        'business_hours',
+        'google_maps_embed_url',
         'timezone',
         'date_format',
         'tax_label',
@@ -48,6 +54,9 @@ class Setting extends Model
         return [
             'tax_rate' => 'decimal:2',
             'invoice_logo_dark' => 'boolean',
+            'office_lat' => 'decimal:7',
+            'office_lng' => 'decimal:7',
+            'business_hours' => 'array',
         ];
     }
 
@@ -133,5 +142,26 @@ class Setting extends Model
     public function isDarkMode(): bool
     {
         return $this->theme_mode !== 'light';
+    }
+
+    /**
+     * Normalized per-day hours (Google-Business-Profile style) — fills in a
+     * sensible default for any day not yet saved, so the admin form and the
+     * public Contact page never have to deal with a partially-missing
+     * structure.
+     *
+     * @return array<string, array{open: string, close: string, closed: bool}>
+     */
+    public function getBusinessHoursListAttribute(): array
+    {
+        $stored = $this->business_hours ?? [];
+
+        return collect(self::DAYS)->mapWithKeys(fn ($day) => [
+            $day => [
+                'open' => $stored[$day]['open'] ?? '09:00',
+                'close' => $stored[$day]['close'] ?? '18:00',
+                'closed' => $stored[$day]['closed'] ?? false,
+            ],
+        ])->all();
     }
 }

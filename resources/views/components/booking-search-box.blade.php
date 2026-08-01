@@ -659,6 +659,34 @@
             <p class="text-center text-[11px] leading-snug text-luxury-muted">
                 {{ __('Final fare may vary depending on traffic, waiting time, tolls and additional services.') }}
             </p>
+
+            <div x-show="drivers.length > 0" x-cloak class="space-y-2 border-t border-luxury-border/60 pt-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-luxury-muted">{{ __('Drivers for This Vehicle') }}</p>
+                <template x-for="driver in drivers" :key="driver.name + driver.status">
+                    <div class="flex items-center justify-between gap-3 rounded-lg bg-luxury-black/30 px-3 py-2 text-xs">
+                        <span class="flex items-center gap-2 text-luxury-white">
+                            <span class="h-1.5 w-1.5 shrink-0 rounded-full"
+                                :class="{
+                                    'bg-emerald-400': driver.status === 'available',
+                                    'bg-blue-400': driver.status === 'busy',
+                                    'bg-luxury-muted': driver.status === 'offline',
+                                }"></span>
+                            <span x-text="driver.name"></span>
+                        </span>
+                        <span class="text-luxury-muted">
+                            <template x-if="driver.status === 'available'">
+                                <span x-text="driver.distance_km !== null ? (driver.distance_km + ' km · ~' + driver.duration_minutes + ' {{ __('min away') }}') : '{{ __('Available') }}'"></span>
+                            </template>
+                            <template x-if="driver.status === 'busy'">
+                                <span x-text="driver.free_in_minutes !== null ? ('{{ __('Busy — free in') }} ' + driver.free_in_minutes + ' {{ __('min') }}') : '{{ __('Busy') }}'"></span>
+                            </template>
+                            <template x-if="driver.status === 'offline'">
+                                <span>{{ __('Offline') }}</span>
+                            </template>
+                        </span>
+                    </div>
+                </template>
+            </div>
         </div>
 
         {{-- Passengers / Luggage (left) + Book Now (right) --}}
@@ -784,6 +812,7 @@
             returnDurationMinutes: null,
             vehicleName: null,
             availableDriversCount: null,
+            drivers: [],
             quote: null,
             calculating: false,
             quoteError: null,
@@ -1163,6 +1192,7 @@
 
                         if (!response.ok) {
                             this.quote = null;
+                            this.drivers = [];
                             this.quoteError = json?.message || @json(__('Unable to calculate distance.'));
                             return;
                         }
@@ -1173,6 +1203,7 @@
                         this.returnDurationMinutes = json.return_duration_minutes;
                         this.vehicleName = json.vehicle_name;
                         this.availableDriversCount = json.available_drivers_count;
+                        this.drivers = json.drivers || [];
                         this.quote = json.breakdown;
                         this.quoteError = null;
                     })

@@ -11,12 +11,14 @@ use App\Models\Vehicle;
 use App\Services\BookingCreationService;
 use App\Services\BookingFareCalculator;
 use App\Services\GoogleMapsService;
+use App\Services\OfficeLocationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -150,7 +152,7 @@ class BookingRequestController extends Controller
      * fare engine used for real bookings, so the preview never drifts from
      * what the customer is actually charged.
      */
-    public function quote(Request $request, GoogleMapsService $maps, BookingFareCalculator $calculator): JsonResponse
+    public function quote(Request $request, GoogleMapsService $maps, BookingFareCalculator $calculator, OfficeLocationService $officeLocation): JsonResponse
     {
         $data = $request->validate([
             'vehicle_category_id' => ['required', 'exists:vehicle_categories,id'],
@@ -286,25 +288,54 @@ class BookingRequestController extends Controller
             Log::warning('Failed to log quote request: '.$e->getMessage());
         }
 
-        // A driver who is online but mid-ride ($is_available = false) still
-        // counts as available for THIS booking as long as their current ride
-        // is expected to finish before the requested pickup time — otherwise
-        // a driver who is simply busy right now (but free well before a
-        // booking scheduled for tomorrow) would wrongly show as "no drivers".
-        $availableDriversCount = Driver::active()
+        $office = $officeLocation->coordinates();
+        $hasPickupCoords = isset($data['pickup_lat'], $data['pickup_lng']);
+
+        $driversInfo = Driver::active()
             ->where('is_online', true)
             ->whereHas('vehicle', fn ($q) => $q->where('vehicle_category_id', $data['vehicle_category_id']))
             ->get()
-            ->filter(function (Driver $driver) use ($pickupDateTime) {
-                if ($driver->is_available) {
-                    return true;
-                }
-
+            ->map(function (Driver $driver) use ($maps, $office, $data, $hasPickupCoords, $pickupDateTime) {
                 $activeRide = $driver->activeBooking();
 
-                return $activeRide?->estimated_arrival_at?->lt($pickupDateTime) ?? false;
+                if ($activeRide) {
+                    $freeInMinutes = $activeRide->ride_ends_in_minutes;
+
+                    return [
+                        'name' => Str::before($driver->name, ' '),
+                        'status' => 'busy',
+                        'free_in_minutes' => $freeInMinutes,
+                        // Free before the requested pickup time, so this
+                        // driver can still take the booking on time — just
+                        // not dispatchable from where they are RIGHT now.
+                        'free_before_pickup' => $activeRide->estimated_arrival_at?->lt($pickupDateTime) ?? false,
+                        'distance_km' => null,
+                        'duration_minutes' => null,
+                    ];
+                }
+
+                $origin = $driver->hasFreshLocation()
+                    ? ['lat' => (float) $driver->current_lat, 'lng' => (float) $driver->current_lng]
+                    : $office;
+
+                $distance = ($hasPickupCoords && $origin)
+                    ? $maps->distance($origin['lat'], $origin['lng'], (float) $data['pickup_lat'], (float) $data['pickup_lng'])
+                    : null;
+
+                return [
+                    'name' => Str::before($driver->name, ' '),
+                    'status' => 'available',
+                    'free_in_minutes' => null,
+                    'free_before_pickup' => true,
+                    'distance_km' => $distance['distance_km'] ?? null,
+                    'duration_minutes' => $distance['duration_minutes'] ?? null,
+                ];
             })
-            ->count();
+            ->sortBy(fn (array $d) => $d['status'] === 'available' ? 0 : 1)
+            ->values()
+            ->all();
+
+        $availableDriversCount = collect($driversInfo)->where('free_before_pickup', true)->count();
 
         return response()->json([
             'distance_km' => $distanceKm,
@@ -313,6 +344,7 @@ class BookingRequestController extends Controller
             'return_duration_minutes' => $returnDurationMinutes,
             'vehicle_name' => $vehicle->category?->name ?? $vehicle->name,
             'available_drivers_count' => $availableDriversCount,
+            'drivers' => $driversInfo,
             'breakdown' => $breakdown,
         ]);
     }

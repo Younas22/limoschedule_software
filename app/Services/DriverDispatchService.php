@@ -48,7 +48,11 @@ class DriverDispatchService
 
         $activeRide = $driver->activeBooking();
 
-        if ($activeRide && $activeRide->id !== $booking->id) {
+        if ($activeRide && $activeRide->id === $booking->id) {
+            return $this->inProgressScenario($booking, $driver);
+        }
+
+        if ($activeRide) {
             return $this->busyScenario($booking, $driver, $activeRide);
         }
 
@@ -112,6 +116,7 @@ class DriverDispatchService
             if (! $best || $result['duration_minutes'] < $best['duration_minutes']) {
                 $best = [
                     'driver' => $driver,
+                    'status' => 'available',
                     'distance_km' => $result['distance_km'],
                     'duration_minutes' => $result['duration_minutes'],
                 ];
@@ -157,6 +162,8 @@ class DriverDispatchService
                 $bestRideEndsIn = $rideEndsInMinutes;
                 $best = [
                     'driver' => $driver,
+                    'status' => 'busy',
+                    'ride_ends_in_minutes' => $rideEndsInMinutes,
                     'distance_km' => $postRideEta['distance_km'] ?? 0.0,
                     'duration_minutes' => $rideEndsInMinutes + (int) ($postRideEta['duration_minutes'] ?? 0),
                 ];
@@ -164,6 +171,22 @@ class DriverDispatchService
         }
 
         return $best;
+    }
+
+    /**
+     * The driver is currently driving THIS booking — dispatch-to-pickup
+     * info no longer applies (they've already reached, or are en route to,
+     * the customer), so this is a distinct display from the other three.
+     */
+    private function inProgressScenario(Booking $booking, Driver $driver): array
+    {
+        return [
+            'scenario' => 4,
+            'driver_status' => 'in_progress',
+            'message' => __('Your ride is currently in progress.'),
+            'driver' => $this->driverPayload($driver),
+            'map' => null,
+        ];
     }
 
     private function officeScenario(Booking $booking, Driver $driver): array

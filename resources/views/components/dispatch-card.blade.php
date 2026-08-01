@@ -4,15 +4,38 @@
     <div class="mb-4 flex items-center justify-between">
         <h3 class="text-sm font-semibold text-luxury-white">{{ __('Driver Dispatch') }}</h3>
         <span class="rounded-full px-2.5 py-1 text-xs font-medium"
-            :class="status === 'busy' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'"
-            x-text="status === 'busy' ? '{{ __('On Trip') }}' : '{{ __('Available') }}'"></span>
+            :class="{
+                'bg-blue-500/10 text-blue-400': status === 'busy',
+                'bg-luxury-gold/10 text-luxury-gold': status === 'in_progress',
+                'bg-emerald-500/10 text-emerald-400': status === 'available',
+            }"
+            x-text="status === 'busy' ? '{{ __('On Trip') }}' : (status === 'in_progress' ? '{{ __('In Progress') }}' : '{{ __('Available') }}')"></span>
     </div>
 
     <template x-if="!data">
         <p class="text-sm text-luxury-muted">{{ __('Dispatch information is not available yet.') }}</p>
     </template>
 
-    <template x-if="data && scenario !== 3">
+    <template x-if="data && scenario === 4">
+        <div class="space-y-4">
+            <p class="text-sm text-luxury-muted" x-text="data.message"></p>
+
+            <template x-if="data.driver">
+                <div class="flex items-center gap-3 rounded-xl bg-luxury-graphite/40 p-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-luxury-white" x-text="data.driver.name"></p>
+                        <p class="truncate text-xs text-luxury-muted" x-text="data.driver.vehicle || ''"></p>
+                    </div>
+                    <a :href="'tel:' + data.driver.phone" x-show="data.driver.phone"
+                        class="tap-scale flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-luxury-border text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                        <x-icon name="phone" class="h-3.5 w-3.5" />
+                    </a>
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <template x-if="data && scenario !== 3 && scenario !== 4">
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 <div>
@@ -71,7 +94,7 @@
         </div>
     </template>
 
-    <x-dispatch-map id="dispatch-map-{{ $booking->id }}" class="h-64 sm:h-80" x-show="scenario !== 3" x-cloak />
+    <x-dispatch-map id="dispatch-map-{{ $booking->id }}" class="h-64 sm:h-80" x-show="scenario !== 3 && scenario !== 4" x-cloak />
 </div>
 
 <script>

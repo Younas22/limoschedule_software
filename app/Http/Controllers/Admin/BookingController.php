@@ -43,11 +43,15 @@ class BookingController extends Controller
         return view('admin.bookings.index', compact('bookings', 'whatsapp'));
     }
 
-    public function show(Booking $booking): View
+    public function show(Booking $booking, DriverDispatchService $dispatchService): View
     {
         $booking->load(['customer', 'driver', 'vehicle.category']);
 
-        return view('admin.bookings.show', compact('booking'));
+        $dispatch = ($booking->driver && in_array($booking->status, ['confirmed', 'assigned', 'in_progress'], true))
+            ? $dispatchService->dispatchInfoFor($booking)
+            : null;
+
+        return view('admin.bookings.show', compact('booking', 'dispatch'));
     }
 
     public function create(): View|RedirectResponse
@@ -144,6 +148,8 @@ class BookingController extends Controller
             'found' => true,
             'driver_id' => $suggestion['driver']->id,
             'driver_name' => $suggestion['driver']->name,
+            'status' => $suggestion['status'],
+            'ride_ends_in_minutes' => $suggestion['ride_ends_in_minutes'] ?? null,
             'distance_km' => $suggestion['distance_km'],
             'duration_minutes' => $suggestion['duration_minutes'],
         ]);
@@ -239,11 +245,36 @@ class BookingController extends Controller
         return [
             'customers' => Customer::orderBy('name')->get(['id', 'name', 'email']),
             'vehicles' => Vehicle::with('category')->orderBy('name')->get(),
-            'drivers' => Driver::orderBy('name')->get(['id', 'name', 'is_online', 'is_available']),
+            'drivers' => Driver::orderBy('name')->get(['id', 'name', 'is_online', 'is_available'])
+                ->each(fn (Driver $driver) => $driver->status_label = $this->driverStatusLabel($driver)),
             'types' => Booking::TYPES,
             'statuses' => Booking::STATUSES,
             'pricingRules' => $this->pricingRulesForJs(),
         ];
+    }
+
+    /**
+     * A human-readable, always-accurate status for the driver assignment
+     * dropdown — "online" alone doesn't tell an admin whether the driver is
+     * actually free to take a new booking right now.
+     */
+    private function driverStatusLabel(Driver $driver): string
+    {
+        if (! $driver->is_online) {
+            return __('Offline');
+        }
+
+        $activeRide = $driver->activeBooking();
+
+        if ($activeRide) {
+            $endsIn = $activeRide->ride_ends_in_minutes;
+
+            return $endsIn !== null
+                ? __('Online — busy, free in :minutes min', ['minutes' => $endsIn])
+                : __('Online — busy');
+        }
+
+        return __('Online — available');
     }
 
     private function pricingRulesForJs(): array

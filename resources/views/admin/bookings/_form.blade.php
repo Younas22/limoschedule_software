@@ -51,7 +51,18 @@
                 <x-admin.input-error :messages="$errors->get('vehicle_id')" />
             </div>
 
-            <div @if (isset($booking)) x-data="{ suggesting: false, suggestion: null }" @endif>
+            <div @if (isset($booking)) x-data="{
+                suggesting: false,
+                suggestion: null,
+                suggestionText() {
+                    if (! this.suggestion || ! this.suggestion.found) return '';
+                    const s = this.suggestion;
+                    if (s.status === 'busy') {
+                        return '{{ __('Suggested') }}: ' + s.driver_name + ' — {{ __('busy now, free in') }} ' + s.ride_ends_in_minutes + ' {{ __('min, then') }} ' + s.duration_minutes + ' {{ __('min to pickup') }} (' + s.distance_km + ' km)';
+                    }
+                    return '{{ __('Suggested') }}: ' + s.driver_name + ' — ' + s.distance_km + ' km, ' + s.duration_minutes + ' {{ __('min ETA') }}';
+                },
+            }" @endif>
                 <div class="flex items-center justify-between">
                     <x-admin.input-label for="driver_id" value="{{ __('Driver (optional)') }}" />
                     @if (isset($booking))
@@ -85,12 +96,12 @@
                     class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
                     <option value="">{{ __('Unassigned') }}</option>
                     @foreach ($drivers as $d)
-                        <option value="{{ $d->id }}" @selected(old('driver_id', $booking?->driver_id) == $d->id)>{{ $d->name }} {{ $d->is_online ? __('(online)') : '' }}</option>
+                        <option value="{{ $d->id }}" @selected(old('driver_id', $booking?->driver_id) == $d->id)>{{ $d->name }} ({{ $d->status_label }})</option>
                     @endforeach
                 </select>
                 @if (isset($booking))
                     <template x-if="suggestion && suggestion.found">
-                        <p class="mt-1.5 text-xs text-emerald-400" x-text="'{{ __('Suggested') }}: ' + suggestion.driver_name + ' — ' + suggestion.distance_km + ' km, ' + suggestion.duration_minutes + ' {{ __('min ETA') }}'"></p>
+                        <p class="mt-1.5 text-xs" :class="suggestion.status === 'busy' ? 'text-amber-400' : 'text-emerald-400'" x-text="suggestionText()"></p>
                     </template>
                     <template x-if="suggestion && suggestion.found === false">
                         <p class="mt-1.5 text-xs text-luxury-muted">{{ __('No available or busy driver found.') }}</p>

@@ -155,6 +155,34 @@
                     <div>
                         <p class="text-xs uppercase tracking-wide text-luxury-muted">{{ __('Driver') }}</p>
                         <p class="mt-1 text-sm font-medium text-luxury-white">{{ $booking->driver?->name ?? __('Unassigned') }}</p>
+                        @if ($dispatch)
+                            <p class="mt-1 text-xs font-medium"
+                                @class([
+                                    'text-blue-400' => $dispatch['driver_status'] === 'busy',
+                                    'text-luxury-gold' => $dispatch['driver_status'] === 'in_progress',
+                                    'text-emerald-400' => $dispatch['driver_status'] === 'available',
+                                ])>
+                                @if ($dispatch['driver_status'] === 'busy')
+                                    {{ __('Busy on another ride') }}
+                                    @if (($dispatch['ride_ends_in_minutes'] ?? null) !== null)
+                                        — {{ __('free in :minutes min', ['minutes' => $dispatch['ride_ends_in_minutes']]) }}
+                                    @endif
+                                @elseif ($dispatch['driver_status'] === 'in_progress')
+                                    {{ __('Driving this ride now') }}
+                                @else
+                                    {{ __('Online — available') }}
+                                @endif
+                            </p>
+                            @if (($dispatch['distance_km'] ?? null) !== null)
+                                <p class="text-xs text-luxury-muted">
+                                    {{ __(':distance km away, ~:duration min', ['distance' => $dispatch['distance_km'], 'duration' => $dispatch['duration_minutes']]) }}
+                                </p>
+                            @elseif (($dispatch['current_driver_distance_km'] ?? null) !== null)
+                                <p class="text-xs text-luxury-muted">
+                                    {{ __(':distance km away', ['distance' => $dispatch['current_driver_distance_km']]) }}
+                                </p>
+                            @endif
+                        @endif
                     </div>
                 </div>
             </div>

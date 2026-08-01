@@ -30,7 +30,8 @@
         @endif
     </form>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -79,6 +80,47 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: stacked cards --}}
+    <div class="space-y-4 sm:hidden">
+        @forelse ($bookings as $booking)
+            <a href="{{ route('customer.bookings.show', $booking) }}"
+                class="tap-scale block overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+                <div class="flex items-center justify-between gap-2 border-b border-luxury-border bg-luxury-graphite/40 px-4 py-3">
+                    <span class="text-xs font-medium text-luxury-white">{{ $booking->booking_number }}</span>
+                    <x-customer.status-badge :status="$booking->status" />
+                </div>
+
+                <div class="space-y-3 p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 flex flex-col items-center">
+                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-luxury-gold"></span>
+                            <span class="my-1 h-6 w-px bg-luxury-border"></span>
+                            <x-icon name="map-pin" class="h-3 w-3 shrink-0 text-luxury-gold" />
+                        </div>
+                        <div class="min-w-0 flex-1 space-y-2">
+                            <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->pickup_location }}</p>
+                            <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->dropoff_location }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 border-t border-luxury-border pt-3 text-xs text-luxury-muted">
+                        <span class="truncate">{{ $booking->vehicle?->category?->name ?? $booking->vehicle?->name ?? '—' }}</span>
+                        <span class="shrink-0 truncate">{{ $booking->driver?->name ?? __('No driver yet') }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 border-t border-luxury-border pt-3">
+                        <span class="text-base font-semibold text-luxury-gold">{{ currency($booking->fare_amount) }}</span>
+                        <x-customer.payment-badge :status="$booking->payment_status" />
+                    </div>
+                </div>
+            </a>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ ($search || $statusFilter) ? __('No bookings match your search.') : __('No bookings found.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($bookings->hasPages())

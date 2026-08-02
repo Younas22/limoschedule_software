@@ -97,6 +97,8 @@
         dialCodes: {{ \Illuminate\Support\Js::from($dialCodes) }},
         quoteUrl: {{ \Illuminate\Support\Js::from(route('booking.quote')) }},
         whatsappNumber: {{ \Illuminate\Support\Js::from(setting('whatsapp')) }},
+        currencySymbol: {{ \Illuminate\Support\Js::from(active_currency()?->symbol ?? '$') }},
+        currencyRate: {{ \Illuminate\Support\Js::from((float) (active_currency()?->exchange_rate ?? 1)) }},
         initial: {
             {{-- 'Rebook' links (from a past trip) prefill via query string; normal
                  validation-error redisplay prefills via old() — old() wins if both
@@ -1117,7 +1119,7 @@
             },
 
             money(value) {
-                return '$' + Number(value).toFixed(2);
+                return config.currencySymbol + (Number(value) * config.currencyRate).toFixed(2);
             },
 
             totalDistanceLabel() {

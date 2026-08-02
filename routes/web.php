@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AreaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BookingRequestController;
@@ -32,6 +33,8 @@ Route::prefix('booking')->name('booking.')->group(function () {
     Route::get('invoice/{bookingNumber}', [BookingRequestController::class, 'invoice'])->name('invoice');
     Route::get('invoice/{bookingNumber}/download', [BookingRequestController::class, 'downloadInvoice'])->name('invoice.download');
 });
+
+Route::get('areas/{area:slug}', [AreaController::class, 'show'])->name('areas.show');
 
 Route::prefix('blog')->name('blog.')->group(function () {
     Route::get('/', [BlogController::class, 'index'])->name('index');

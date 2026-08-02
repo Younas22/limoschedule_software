@@ -57,6 +57,14 @@
         overflow-x: hidden;
     }
 
+    /* Smoothly scroll to in-page anchors (e.g. "Book Now" buttons linking
+       to #booking-widget) instead of jumping instantly. */
+    @media (prefers-reduced-motion: no-preference) {
+        html {
+            scroll-behavior: smooth;
+        }
+    }
+
     /* Alpine hides [x-cloak] elements once it hydrates, but without this
        rule they render fully visible for a moment on page load (mobile
        nav overlay, dropdowns) before Alpine's script (loaded from a CDN

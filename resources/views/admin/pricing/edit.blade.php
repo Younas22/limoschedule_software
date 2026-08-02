@@ -42,6 +42,20 @@
                         <x-admin.input-error :messages="$errors->get('hour_fare')" />
                     </div>
                 </div>
+
+                <div class="grid grid-cols-1 gap-5 border-t border-luxury-border pt-5 sm:grid-cols-2">
+                    <div>
+                        <x-admin.input-label for="long_distance_threshold_km" value="{{ __('Long-Distance Threshold (km)') }}" />
+                        <x-admin.text-input id="long_distance_threshold_km" name="long_distance_threshold_km" type="number" step="0.01" min="0" value="{{ old('long_distance_threshold_km', $rule->long_distance_threshold_km) }}" placeholder="{{ __('e.g. 90 — leave blank to disable') }}" />
+                        <p class="mt-1.5 text-xs text-luxury-muted">{{ __('Trips at or beyond this total distance bill at the long-distance rate below instead of the KM Fare above.') }}</p>
+                        <x-admin.input-error :messages="$errors->get('long_distance_threshold_km')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="long_distance_km_fare" value="{{ __('Long-Distance KM Fare') }}" />
+                        <x-admin.text-input id="long_distance_km_fare" name="long_distance_km_fare" type="number" step="0.01" min="0" value="{{ old('long_distance_km_fare', $rule->long_distance_km_fare) }}" placeholder="{{ __('e.g. 2.25') }}" />
+                        <x-admin.input-error :messages="$errors->get('long_distance_km_fare')" />
+                    </div>
+                </div>
             </div>
 
             {{-- Waiting Charges --}}

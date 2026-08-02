@@ -55,15 +55,15 @@
                         <button type="button" @click="toggle({{ $index }})"
                             class="flex w-full items-center justify-between gap-4 px-5 py-4 text-start">
                             <span>
-                                <span class="font-medium text-luxury-white">{{ $item['question'] ?? '' }}</span>
+                                <span class="font-medium text-luxury-white">{{ __($item['question'] ?? '') }}</span>
                                 @if (! empty($item['category']))
-                                    <span class="ms-2 rounded-full bg-luxury-gold/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-luxury-gold">{{ $item['category'] }}</span>
+                                    <span class="ms-2 rounded-full bg-luxury-gold/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-luxury-gold">{{ __($item['category']) }}</span>
                                 @endif
                             </span>
                             <x-icon name="chevron-down" class="h-4 w-4 shrink-0 text-luxury-muted transition-transform" x-bind:class="open === {{ $index }} ? 'rotate-180' : ''" />
                         </button>
                         <div x-show="open === {{ $index }}" x-cloak x-transition class="px-5 pb-4 text-sm text-luxury-muted">
-                            {{ $item['answer'] ?? '' }}
+                            {{ __($item['answer'] ?? '') }}
                         </div>
                     </div>
                 @endforeach

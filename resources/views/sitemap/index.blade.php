@@ -9,6 +9,15 @@
         </url>
     @endforeach
 
+    @foreach ($areas as $area)
+        <url>
+            <loc>{{ route('areas.show', $area->slug) }}</loc>
+            <lastmod>{{ $area->updated_at->toAtomString() }}</lastmod>
+            <changefreq>monthly</changefreq>
+            <priority>0.6</priority>
+        </url>
+    @endforeach
+
     <url>
         <loc>{{ route('blog.index') }}</loc>
         <lastmod>{{ now()->toAtomString() }}</lastmod>

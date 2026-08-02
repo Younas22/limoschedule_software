@@ -127,6 +127,16 @@
         </div>
     </div>
 
+    {{-- Areas note --}}
+    <div class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'areas'" x-cloak>
+        <h3 class="text-sm font-semibold text-luxury-white">{{ __('Service Areas') }}</h3>
+        <p class="text-xs text-luxury-muted">
+            {{ __('The list of towns/cities is managed at') }}
+            <a href="{{ route('admin.areas.index') }}" class="text-luxury-gold hover:text-luxury-gold-light">{{ __('Service Areas') }}</a>.
+            {{ __('This section just marks where that list appears on this page — use the Heading/Subheading fields above if you want a title above it.') }}
+        </p>
+    </div>
+
     {{-- Contact info fields --}}
     <div class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'contact_info'" x-cloak>
         <h3 class="text-sm font-semibold text-luxury-white">{{ __('Contact Details') }}</h3>

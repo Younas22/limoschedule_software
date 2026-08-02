@@ -11,6 +11,7 @@ class Page extends Model
         'home' => 'Home',
         'about' => 'About',
         'services' => 'Services',
+        'areas' => 'Areas',
         'faq' => 'FAQ',
         'contact' => 'Contact',
         'airport-transfer' => 'Airport Transfer',

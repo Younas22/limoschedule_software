@@ -17,6 +17,7 @@ class PageSection extends Model
         'testimonials' => 'Testimonials (Live Reviews)',
         'fleet' => 'Fleet Showcase (Live Vehicles)',
         'routes' => 'Popular Routes (Live Routes)',
+        'areas' => 'Service Areas (Live)',
         'stats' => 'Statistics Counters',
         'blog' => 'Blog Highlights (Live Posts)',
         'vision_mission' => 'Vision & Mission',

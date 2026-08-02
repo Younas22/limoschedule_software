@@ -86,6 +86,12 @@ class PageSeeder extends Seeder
                     'content' => ['limit' => 3],
                 ],
                 [
+                    'type' => 'areas',
+                    'heading' => 'Areas We Serve',
+                    'subheading' => 'Premium chauffeur service available across these towns and cities.',
+                    'content' => [],
+                ],
+                [
                     'type' => 'testimonials',
                     'heading' => 'What Our Clients Say',
                     'subheading' => 'Real feedback from riders who booked with us.',
@@ -204,6 +210,21 @@ class PageSeeder extends Seeder
                 body: '<p>For clients who expect the very best, our VIP transport service pairs our most prestigious vehicles with our most experienced chauffeurs.</p><p>Ideal for red-carpet arrivals, weddings, and milestone celebrations where every detail matters.</p>',
                 categorySlug: 'limousine',
             ),
+            'areas' => [
+                [
+                    'type' => 'areas',
+                    'heading' => 'Areas We Serve',
+                    'subheading' => 'Premium chauffeur service available across these towns and cities.',
+                    'content' => [],
+                ],
+                [
+                    'type' => 'cta',
+                    'heading' => 'Don\'t see your area?',
+                    'subheading' => 'Get in touch — we may still be able to accommodate your booking.',
+                    'button_text' => 'Contact Us',
+                    'button_url' => '/contact',
+                ],
+            ],
             'faq' => [
                 [
                     'type' => 'faq',

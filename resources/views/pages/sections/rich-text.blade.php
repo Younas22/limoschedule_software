@@ -6,7 +6,7 @@
             <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ __($section->heading) }}</h2>
         @endif
         <div class="richtext-content mt-4 text-luxury-muted">
-            {!! $section->body !!}
+            {!! __($section->body) !!}
         </div>
     </div>
 </section>

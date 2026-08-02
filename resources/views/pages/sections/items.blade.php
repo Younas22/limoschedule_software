@@ -24,14 +24,14 @@
                     @if (! empty($item['title']))
                         <p class="mt-4 font-semibold text-luxury-white">
                             @if (! empty($item['link']))
-                                <a href="{{ str_starts_with($item['link'], 'http') ? $item['link'] : url($item['link']) }}" class="hover:text-luxury-gold hover:underline">{{ $item['title'] }}</a>
+                                <a href="{{ str_starts_with($item['link'], 'http') ? $item['link'] : url($item['link']) }}" class="hover:text-luxury-gold hover:underline">{{ __($item['title']) }}</a>
                             @else
-                                {{ $item['title'] }}
+                                {{ __($item['title']) }}
                             @endif
                         </p>
                     @endif
                     @if (! empty($item['description']))
-                        <p class="mt-2 text-sm text-luxury-muted">{{ $item['description'] }}</p>
+                        <p class="mt-2 text-sm text-luxury-muted">{{ __($item['description']) }}</p>
                     @endif
                 </div>
             @endforeach

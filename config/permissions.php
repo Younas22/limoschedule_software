@@ -29,6 +29,7 @@ return [
         'currencies' => 'Currencies',
         'locations' => 'Locations',
         'routes' => 'Popular Routes',
+        'areas' => 'Service Areas',
         'reviews' => 'Reviews',
         'messages' => 'Contact Messages',
         'support' => 'Support Tickets',

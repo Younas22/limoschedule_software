@@ -43,7 +43,7 @@
         @endif
 
         {{-- Raised center CTA --}}
-        <a href="{{ route('pages.show', 'contact') }}" class="relative flex flex-col items-center">
+        <a href="{{ route('pages.home') }}#booking-widget" class="relative flex flex-col items-center">
             <span class="tap-scale absolute -top-6 flex h-14 w-14 items-center justify-center rounded-full bg-luxury-gold text-luxury-black shadow-lg shadow-black/40 ring-4 ring-luxury-charcoal transition hover:bg-luxury-gold-light">
                 <x-icon name="calendar" class="h-6 w-6" />
             </span>

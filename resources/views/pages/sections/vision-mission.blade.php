@@ -22,8 +22,8 @@
                         <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-luxury-gold/10 text-luxury-gold">
                             <x-icon :name="$fields['vision_icon']" class="h-6 w-6" />
                         </span>
-                        <h3 class="mt-5 text-lg font-semibold text-luxury-white">{{ $fields['vision_title'] }}</h3>
-                        <p class="mt-3 text-sm leading-relaxed text-luxury-muted">{{ $fields['vision_body'] }}</p>
+                        <h3 class="mt-5 text-lg font-semibold text-luxury-white">{{ __($fields['vision_title']) }}</h3>
+                        <p class="mt-3 text-sm leading-relaxed text-luxury-muted">{{ __($fields['vision_body']) }}</p>
                     </div>
                 @endif
 
@@ -32,8 +32,8 @@
                         <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-luxury-gold/10 text-luxury-gold">
                             <x-icon :name="$fields['mission_icon']" class="h-6 w-6" />
                         </span>
-                        <h3 class="mt-5 text-lg font-semibold text-luxury-white">{{ $fields['mission_title'] }}</h3>
-                        <p class="mt-3 text-sm leading-relaxed text-luxury-muted">{{ $fields['mission_body'] }}</p>
+                        <h3 class="mt-5 text-lg font-semibold text-luxury-white">{{ __($fields['mission_title']) }}</h3>
+                        <p class="mt-3 text-sm leading-relaxed text-luxury-muted">{{ __($fields['mission_body']) }}</p>
                     </div>
                 @endif
             </div>

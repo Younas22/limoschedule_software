@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AreaController;
 use App\Http\Controllers\Admin\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\ResetPasswordController;
@@ -255,6 +256,18 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
             Route::post('{routeType}/move-up', [RouteTypeController::class, 'moveUp'])->name('move-up')->middleware('permission:routes.edit');
             Route::post('{routeType}/move-down', [RouteTypeController::class, 'moveDown'])->name('move-down')->middleware('permission:routes.edit');
         });
+    });
+
+    Route::prefix('areas')->name('areas.')->group(function () {
+        Route::get('/', [AreaController::class, 'index'])->name('index')->middleware('permission:areas.view');
+        Route::get('create', [AreaController::class, 'create'])->name('create')->middleware('permission:areas.create');
+        Route::post('/', [AreaController::class, 'store'])->name('store')->middleware('permission:areas.create');
+        Route::get('{area}/edit', [AreaController::class, 'edit'])->name('edit')->middleware('permission:areas.edit');
+        Route::put('{area}', [AreaController::class, 'update'])->name('update')->middleware('permission:areas.edit');
+        Route::delete('{area}', [AreaController::class, 'destroy'])->name('destroy')->middleware('permission:areas.delete');
+        Route::post('{area}/toggle', [AreaController::class, 'toggleStatus'])->name('toggle')->middleware('permission:areas.edit');
+        Route::post('{area}/move-up', [AreaController::class, 'moveUp'])->name('move-up')->middleware('permission:areas.edit');
+        Route::post('{area}/move-down', [AreaController::class, 'moveDown'])->name('move-down')->middleware('permission:areas.edit');
     });
 
     Route::prefix('coupons')->name('coupons.')->group(function () {

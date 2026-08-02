@@ -60,7 +60,7 @@ class BookingFareCalculator
         $billableKm = max($totalDistance - (float) $rule->included_km, 0);
         $distanceFare = $type === 'hourly'
             ? 0.0
-            : round((float) $rule->km_fare * $billableKm, 2);
+            : round($rule->effectiveKmFare($totalDistance) * $billableKm, 2);
 
         $billableHours = max(max($hours ?? 1, 1) - (float) $rule->included_hours, 0);
         $hourFare = $type === 'hourly'

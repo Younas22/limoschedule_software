@@ -15,6 +15,8 @@ class PricingRule extends Model
         'label',
         'base_fare',
         'km_fare',
+        'long_distance_threshold_km',
+        'long_distance_km_fare',
         'hour_fare',
         'waiting_charge_per_minute',
         'free_waiting_minutes',
@@ -39,6 +41,8 @@ class PricingRule extends Model
         return [
             'base_fare' => 'decimal:2',
             'km_fare' => 'decimal:2',
+            'long_distance_threshold_km' => 'decimal:2',
+            'long_distance_km_fare' => 'decimal:2',
             'hour_fare' => 'decimal:2',
             'waiting_charge_per_minute' => 'decimal:2',
             'free_waiting_minutes' => 'integer',
@@ -95,6 +99,24 @@ class PricingRule extends Model
             : null;
 
         return $rule ?? static::global();
+    }
+
+    /**
+     * The per-km rate to bill for a trip of this total distance — the whole
+     * trip bills at long_distance_km_fare once the threshold is crossed,
+     * rather than blending both rates across the trip.
+     */
+    public function effectiveKmFare(float $totalDistanceKm): float
+    {
+        if (
+            $this->long_distance_threshold_km !== null
+            && $this->long_distance_km_fare !== null
+            && $totalDistanceKm >= (float) $this->long_distance_threshold_km
+        ) {
+            return (float) $this->long_distance_km_fare;
+        }
+
+        return (float) $this->km_fare;
     }
 
     public function isNight(Carbon $pickupDateTime): bool

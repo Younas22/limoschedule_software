@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Area;
 use App\Models\BlogCategory;
 use App\Models\BlogPost;
 use App\Models\Page;
@@ -13,6 +14,8 @@ class SitemapController extends Controller
     {
         $pages = Page::where('is_active', true)->get();
 
+        $areas = Area::active()->get(['slug', 'updated_at']);
+
         $posts = BlogPost::published()->get(['slug', 'updated_at']);
 
         $categories = BlogCategory::active()
@@ -21,7 +24,7 @@ class SitemapController extends Controller
 
         $tags = \App\Models\Tag::whereHas('posts', fn ($q) => $q->published())->get(['slug', 'updated_at']);
 
-        $xml = view('sitemap.index', compact('pages', 'posts', 'categories', 'tags'))->render();
+        $xml = view('sitemap.index', compact('pages', 'areas', 'posts', 'categories', 'tags'))->render();
 
         return response($xml, 200)->header('Content-Type', 'application/xml');
     }

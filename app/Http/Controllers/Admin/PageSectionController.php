@@ -223,6 +223,9 @@ class PageSectionController extends Controller
             'routes' => [
                 'limit' => (int) ($data['route_limit'] ?? 6),
             ],
+            // The list of towns/cities itself is managed at Admin → Service
+            // Areas, not per-section — this just marks where it renders.
+            'areas' => [],
             'blog' => [
                 'limit' => (int) ($data['blog_limit'] ?? 6),
             ],

@@ -47,8 +47,6 @@ class BookingFareCalculator
         $isRoundTrip = $type === 'round_trip';
         $legMultiplier = $isRoundTrip ? 2 : 1;
 
-        $baseFare = round((float) $rule->base_fare * $legMultiplier, 2);
-
         // Round trip: sum both legs' real distances when the return leg's
         // distance is known (independent return route); fall back to
         // doubling the outbound leg when it isn't (e.g. hourly/no return
@@ -57,8 +55,17 @@ class BookingFareCalculator
             ? $distanceKm + ($returnDistanceKm ?? $distanceKm)
             : $distanceKm;
 
+        // Within the base-fare threshold (e.g. 6 km), the flat base fare
+        // *is* the fare — no per-km charge on top. Beyond it, there's no
+        // base fare at all and the trip bills purely on distance.
+        $appliesBaseFare = $rule->appliesBaseFare($totalDistance);
+
+        $baseFare = $appliesBaseFare
+            ? round((float) $rule->base_fare * $legMultiplier, 2)
+            : 0.0;
+
         $billableKm = max($totalDistance - (float) $rule->included_km, 0);
-        $distanceFare = $type === 'hourly'
+        $distanceFare = ($type === 'hourly' || $appliesBaseFare)
             ? 0.0
             : round($rule->effectiveKmFare($totalDistance) * $billableKm, 2);
 

@@ -79,6 +79,19 @@
                         <x-admin.input-error :messages="$errors->get('timezone')" />
                     </div>
 
+                    <div class="mb-5">
+                        <x-admin.input-label for="default_country" value="{{ __('Default Country') }}" />
+                        <select id="default_country" name="default_country"
+                            class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                            <option value="">{{ __('None') }}</option>
+                            @foreach ($dialCodes as $dialCode)
+                                <option value="{{ $dialCode->iso2 }}" @selected(old('default_country', $settings->default_country) === $dialCode->iso2)>{{ $dialCode->name }} ({{ $dialCode->dial }})</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-luxury-muted">{{ __('Sets the default phone country code on the public booking form.') }}</p>
+                        <x-admin.input-error :messages="$errors->get('default_country')" />
+                    </div>
+
                     <div>
                         <x-admin.input-label value="{{ __('Date Format') }}" />
                         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -414,4 +427,139 @@
             </div>
         </form>
     </div>
+
+    @push('styles')
+        {{-- The "bare" build ships no visual theme at all (just layout/
+             functional CSS) — every pixel below is ours, so there's nothing
+             from Tom Select's own light-mode default theme left to fight
+             with or override. --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2/dist/css/tom-select.bare.min.css">
+        <style>
+            .ts-wrapper {
+                width: 100%;
+                position: relative;
+            }
+
+            /* The closed control — matches the admin text-input component exactly. */
+            .ts-wrapper.single .ts-control {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                min-height: 0;
+                background-color: var(--color-luxury-charcoal);
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238a8a92' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 0.9rem center;
+                background-size: 1rem;
+                border: 1px solid var(--color-luxury-border);
+                border-radius: 0.5rem;
+                padding: 0.75rem 2.5rem 0.75rem 1rem;
+                font-size: 0.875rem;
+                line-height: 1.25rem;
+                color: var(--color-luxury-white);
+                cursor: pointer;
+                transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            }
+            [dir="rtl"] .ts-wrapper.single .ts-control {
+                background-position: left 0.9rem center;
+                padding: 0.75rem 1rem 0.75rem 2.5rem;
+            }
+            .ts-wrapper.single .ts-control > .item {
+                color: var(--color-luxury-white);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .ts-wrapper .ts-control input {
+                color: var(--color-luxury-white) !important;
+                font-size: 0.875rem !important;
+                font-family: inherit !important;
+            }
+            .ts-wrapper .ts-control input::placeholder {
+                color: var(--color-luxury-muted);
+            }
+            .ts-wrapper.focus .ts-control {
+                border-color: var(--color-luxury-gold);
+                box-shadow: 0 0 0 1px var(--color-luxury-gold);
+            }
+
+            /* Dropdown panel — matches the app's existing nav-dropdown look
+               (rounded-2xl border bg-luxury-charcoal shadow-2xl/50). */
+            .ts-dropdown {
+                width: 100%;
+                margin-top: 0.5rem;
+                background-color: var(--color-luxury-charcoal);
+                border: 1px solid var(--color-luxury-border);
+                border-radius: 1rem;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                overflow: hidden;
+                z-index: 60;
+            }
+            .ts-dropdown .ts-dropdown-input {
+                background-color: var(--color-luxury-graphite);
+                border: none;
+                border-bottom: 1px solid var(--color-luxury-border);
+                border-radius: 0;
+                color: var(--color-luxury-white);
+                font-size: 0.8125rem;
+                padding: 0.75rem 1rem;
+            }
+            .ts-dropdown .ts-dropdown-input::placeholder {
+                color: var(--color-luxury-muted);
+            }
+            .ts-dropdown .ts-dropdown-input:focus {
+                outline: none;
+                box-shadow: none;
+            }
+            .ts-dropdown .ts-dropdown-content {
+                max-height: 15rem;
+                padding: 0.375rem;
+                scrollbar-width: thin;
+                scrollbar-color: var(--color-luxury-slate) transparent;
+            }
+            .ts-dropdown .ts-dropdown-content::-webkit-scrollbar {
+                width: 6px;
+            }
+            .ts-dropdown .ts-dropdown-content::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .ts-dropdown .ts-dropdown-content::-webkit-scrollbar-thumb {
+                background-color: var(--color-luxury-slate);
+                border-radius: 9999px;
+            }
+            .ts-dropdown .option {
+                color: var(--color-luxury-muted);
+                border-radius: 0.625rem;
+                padding: 0.625rem 0.75rem;
+                font-size: 0.8125rem;
+                cursor: pointer;
+                transition: background-color 0.1s ease, color 0.1s ease;
+            }
+            .ts-dropdown .option.active {
+                background-color: var(--color-luxury-graphite);
+                color: var(--color-luxury-gold);
+            }
+            .ts-dropdown .option.selected {
+                color: var(--color-luxury-gold);
+                font-weight: 600;
+            }
+            .ts-dropdown .no-results {
+                color: var(--color-luxury-muted);
+                padding: 0.625rem 0.75rem;
+                font-size: 0.8125rem;
+            }
+        </style>
+    @endpush
+
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2/dist/js/tom-select.complete.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                ['timezone', 'default_country'].forEach(function (id) {
+                    const el = document.getElementById(id);
+                    if (el) new TomSelect(el, { create: false, maxOptions: null });
+                });
+            });
+        </script>
+    @endpush
 </x-admin.layouts.app>

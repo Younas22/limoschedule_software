@@ -14,6 +14,7 @@ class PricingRule extends Model
         'vehicle_category_id',
         'label',
         'base_fare',
+        'base_fare_threshold_km',
         'km_fare',
         'long_distance_threshold_km',
         'long_distance_km_fare',
@@ -40,6 +41,7 @@ class PricingRule extends Model
     {
         return [
             'base_fare' => 'decimal:2',
+            'base_fare_threshold_km' => 'decimal:2',
             'km_fare' => 'decimal:2',
             'long_distance_threshold_km' => 'decimal:2',
             'long_distance_km_fare' => 'decimal:2',
@@ -99,6 +101,16 @@ class PricingRule extends Model
             : null;
 
         return $rule ?? static::global();
+    }
+
+    /**
+     * Whether the base fare applies to a trip of this total distance — when
+     * a threshold is set, only short trips (at or under it) get the base
+     * fare; longer trips bill purely on distance instead.
+     */
+    public function appliesBaseFare(float $totalDistanceKm): bool
+    {
+        return $this->base_fare_threshold_km === null || $totalDistanceKm <= (float) $this->base_fare_threshold_km;
     }
 
     /**

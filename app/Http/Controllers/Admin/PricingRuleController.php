@@ -66,6 +66,7 @@ class PricingRuleController extends Controller
     {
         $data = $request->validate([
             'base_fare' => ['required', 'numeric', 'min:0'],
+            'base_fare_threshold_km' => ['nullable', 'numeric', 'min:0'],
             'km_fare' => ['required', 'numeric', 'min:0'],
             'long_distance_threshold_km' => ['nullable', 'numeric', 'min:0'],
             'long_distance_km_fare' => ['nullable', 'numeric', 'min:0'],

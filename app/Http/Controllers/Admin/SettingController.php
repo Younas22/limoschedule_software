@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DialCode;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class SettingController extends Controller
     {
         $settings = Setting::current();
         $timezones = timezone_identifiers_list();
+        $dialCodes = DialCode::whereNotNull('iso2')->whereNotNull('phone_code')->where('phone_code', '!=', '')->orderBy('name')->get();
 
         $dateFormats = [
             'Y-m-d' => now()->format('Y-m-d'),
@@ -26,7 +28,7 @@ class SettingController extends Controller
             'F j, Y' => now()->format('F j, Y'),
         ];
 
-        return view('admin.settings.edit', compact('settings', 'timezones', 'dateFormats'));
+        return view('admin.settings.edit', compact('settings', 'timezones', 'dateFormats', 'dialCodes'));
     }
 
     public function update(Request $request): RedirectResponse
@@ -56,6 +58,7 @@ class SettingController extends Controller
             'hours.*.close' => ['nullable', 'date_format:H:i'],
             'hours.*.closed' => ['nullable', 'boolean'],
             'timezone' => ['required', 'timezone'],
+            'default_country' => ['nullable', 'string', 'size:2', 'exists:dial_codes,iso2'],
             'date_format' => ['required', 'string', 'max:20'],
             'tax_label' => ['required', 'string', 'max:50'],
             'tax_rate' => ['required', 'numeric', 'min:0', 'max:100'],

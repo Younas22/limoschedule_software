@@ -28,6 +28,7 @@ class Setting extends Model
         'business_hours',
         'google_maps_embed_url',
         'timezone',
+        'default_country',
         'date_format',
         'tax_label',
         'tax_rate',

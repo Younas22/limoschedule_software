@@ -1,8 +1,28 @@
 @props(['route'])
 
 @php
-    $bookingSettings = booking_setting();
-    $whatsappEnabled = (bool) ($bookingSettings->manual_booking_enabled && $bookingSettings->whatsapp_number);
+    $waNumber = setting('whatsapp');
+    $waDigits = $waNumber ? preg_replace('/\D+/', '', $waNumber) : null;
+
+    $waLines = [
+        __('Hi! I found this route on your website (Popular Routes) and would like to book it:'),
+        '',
+        __('From').': '.$route->pickup,
+        __('To').': '.$route->dropoff,
+    ];
+
+    if ($route->distance) {
+        $waLines[] = __('Distance').': '.rtrim(rtrim(number_format((float) $route->distance, 1), '0'), '.').' '.$route->distance_unit;
+    }
+
+    if ($route->estimated_price) {
+        $waLines[] = __('Estimated Price').': '.currency($route->estimated_price);
+    }
+
+    $waLines[] = '';
+    $waLines[] = __('Please confirm availability.');
+
+    $waMessage = implode("\n", $waLines);
 @endphp
 
 <div {{ $attributes->merge(['class' => 'flex h-full flex-col justify-between rounded-2xl border border-luxury-border bg-luxury-charcoal p-5 transition hover:border-luxury-gold/40']) }}>
@@ -32,16 +52,11 @@
         </div>
     </div>
 
-    @if ($whatsappEnabled)
-        {{-- Manual booking mode: skip the form entirely, go straight to WhatsApp. --}}
-        @php
-            $waMessage = __("Hi! I'd like to book a ride from :pickup to :dropoff. Please confirm availability.", [
-                'pickup' => $route->pickup,
-                'dropoff' => $route->dropoff,
-            ]);
-            $waDigits = preg_replace('/\D/', '', $bookingSettings->whatsapp_number);
-        @endphp
-        <a href="https://wa.me/{{ $waDigits }}?text={{ urlencode($waMessage) }}" target="_blank" rel="noopener"
+    @if ($waDigits)
+        {{-- Popular Routes always books straight via WhatsApp, regardless of
+             the site's manual/website booking mode — these are quick,
+             pre-priced routes best confirmed by chat. --}}
+        <a href="https://wa.me/{{ $waDigits }}?text={{ rawurlencode($waMessage) }}" target="_blank" rel="noopener"
             class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
             <x-icon name="chat" class="h-4 w-4" />
             {{ __('Book This Route') }}

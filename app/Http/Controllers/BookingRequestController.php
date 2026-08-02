@@ -41,7 +41,7 @@ class BookingRequestController extends Controller
 
         $data = $request->validate([
             'name' => [Rule::requiredIf(! $loggedInCustomer), 'nullable', 'string', 'max:255'],
-            'email' => [Rule::requiredIf(! $loggedInCustomer), 'nullable', 'email', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'vehicle_category_id' => ['required', 'exists:vehicle_categories,id'],
             'type' => ['nullable', Rule::in(array_keys(Booking::TYPES))],
@@ -91,10 +91,21 @@ class BookingRequestController extends Controller
             return back()->withInput()->with('error', 'That vehicle category is not currently available. Please choose another, or contact us via WhatsApp.');
         }
 
-        $customer = $loggedInCustomer ?? Customer::firstOrCreate(
-            ['email' => $data['email']],
-            ['name' => $data['name'], 'phone' => $data['phone'] ?? null, 'status' => true]
-        );
+        // With no email, there's no reliable identity to dedupe guests by —
+        // firstOrCreate(['email' => null], ...) would incorrectly reuse
+        // whichever earlier emailless guest happens to match first, so
+        // every emailless booking gets its own fresh Customer record.
+        $customer = $loggedInCustomer
+            ?? (! empty($data['email'])
+                ? Customer::firstOrCreate(
+                    ['email' => $data['email']],
+                    ['name' => $data['name'], 'phone' => $data['phone'] ?? null, 'status' => true]
+                )
+                : Customer::create([
+                    'name' => $data['name'],
+                    'phone' => $data['phone'] ?? null,
+                    'status' => true,
+                ]));
 
         $bookingData = [
             'customer_id' => $customer->id,

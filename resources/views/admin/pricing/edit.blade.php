@@ -32,6 +32,12 @@
                         <x-admin.input-error :messages="$errors->get('base_fare')" />
                     </div>
                     <div>
+                        <x-admin.input-label for="base_fare_threshold_km" value="{{ __('Base Fare Applies Up To (km)') }}" />
+                        <x-admin.text-input id="base_fare_threshold_km" name="base_fare_threshold_km" type="number" step="0.01" min="0" value="{{ old('base_fare_threshold_km', $rule->base_fare_threshold_km) }}" placeholder="{{ __('e.g. 6 — leave blank to always apply') }}" />
+                        <p class="mt-1.5 text-xs text-luxury-muted">{{ __('Trips beyond this total distance skip the base fare and bill purely on distance.') }}</p>
+                        <x-admin.input-error :messages="$errors->get('base_fare_threshold_km')" />
+                    </div>
+                    <div>
                         <x-admin.input-label for="km_fare" value="{{ __('KM Fare (per km)') }}" />
                         <x-admin.text-input id="km_fare" name="km_fare" type="number" step="0.01" min="0" value="{{ old('km_fare', $rule->km_fare ?? 0) }}" required />
                         <x-admin.input-error :messages="$errors->get('km_fare')" />

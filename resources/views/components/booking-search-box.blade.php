@@ -30,6 +30,23 @@
             'iso2' => strtolower($country->iso2),
             'dial' => $country->dial,
         ])->values();
+    $defaultDialCode = setting('default_country')
+        ? \App\Models\DialCode::where('iso2', setting('default_country'))->value('phone_code')
+        : null;
+    $defaultDialCode = $defaultDialCode ? '+'.$defaultDialCode : '+1';
+
+    // "Right now" in the business's own configured timezone (not the
+    // visitor's browser clock), rounded up to the nearest half-hour slot —
+    // used to prefill the pickup date/time when nothing else is prefilled.
+    $businessNow = now(setting('timezone', config('app.timezone')));
+    $defaultDate = $businessNow->format('Y-m-d');
+    $defaultSlot = $businessNow->minute <= 30
+        ? $businessNow->copy()->minute(30)->second(0)
+        : $businessNow->copy()->addHour()->minute(0)->second(0);
+    if ($defaultSlot->format('Y-m-d') !== $defaultDate) {
+        $defaultSlot = $businessNow->copy()->hour(23)->minute(30)->second(0);
+    }
+    $defaultTime = $defaultSlot->format('H:i');
 @endphp
 
 @once
@@ -99,6 +116,9 @@
         whatsappNumber: {{ \Illuminate\Support\Js::from(setting('whatsapp')) }},
         currencySymbol: {{ \Illuminate\Support\Js::from(active_currency()?->symbol ?? '$') }},
         currencyRate: {{ \Illuminate\Support\Js::from((float) (active_currency()?->exchange_rate ?? 1)) }},
+        defaultDialCode: {{ \Illuminate\Support\Js::from($defaultDialCode) }},
+        defaultDate: {{ \Illuminate\Support\Js::from($defaultDate) }},
+        defaultTime: {{ \Illuminate\Support\Js::from($defaultTime) }},
         initial: {
             {{-- 'Rebook' links (from a past trip) prefill via query string; normal
                  validation-error redisplay prefills via old() — old() wins if both
@@ -532,9 +552,9 @@
                 <div>
                     <label for="email" class="mb-1 flex items-center gap-1 text-[11px] font-medium text-luxury-muted">
                         <x-icon name="mail" class="h-3 w-3" />
-                        {{ __('Email') }}
+                        {{ __('Email') }} <span class="text-luxury-muted/60">({{ __('optional') }})</span>
                     </label>
-                    <input type="email" id="email" name="email" x-model="email" required placeholder="{{ __('Email') }}"
+                    <input type="email" id="email" name="email" x-model="email" placeholder="{{ __('Email') }}"
                         class="w-full rounded-xl border border-luxury-border bg-luxury-black/40 px-3 py-2.5 text-sm text-luxury-white placeholder:text-luxury-muted transition focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
                     <p class="mt-1 text-xs text-red-400">{{ $errors->first('email') }}</p>
                 </div>
@@ -762,10 +782,10 @@
             name: config.initial.name || '',
             email: config.initial.email || '',
             phone: config.initial.phone || '',
-            dialCode: '+1',
+            dialCode: config.defaultDialCode || '+1',
             dialSearch: '',
             phoneNumber: config.initial.phone || '',
-            today: new Date().toISOString().split('T')[0],
+            today: config.defaultDate,
 
             // UI state for the custom dropdowns.
             tripTypeOpen: false,
@@ -818,6 +838,20 @@
                     for (let m = 0; m < 60; m += 30) {
                         this.timeSlots.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
                     }
+                }
+
+                // Default pickup date/time to "right now" in the business's
+                // own configured timezone (rounded up to the nearest
+                // half-hour slot, computed server-side) rather than leaving
+                // them blank — only when nothing was already prefilled via
+                // old()/query string, e.g. a validation-error redisplay or a
+                // "rebook" link.
+                if (!this.date) {
+                    this.date = config.defaultDate;
+                }
+
+                if (!this.time) {
+                    this.time = config.defaultTime;
                 }
 
                 this.$watch('pickup', () => this.scheduleQuote());

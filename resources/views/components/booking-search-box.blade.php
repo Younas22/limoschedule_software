@@ -96,6 +96,7 @@
         serviceTypes: {{ \Illuminate\Support\Js::from($serviceTypes) }},
         dialCodes: {{ \Illuminate\Support\Js::from($dialCodes) }},
         quoteUrl: {{ \Illuminate\Support\Js::from(route('booking.quote')) }},
+        whatsappNumber: {{ \Illuminate\Support\Js::from(setting('whatsapp')) }},
         initial: {
             {{-- 'Rebook' links (from a past trip) prefill via query string; normal
                  validation-error redisplay prefills via old() — old() wins if both
@@ -1066,7 +1067,46 @@
                     return;
                 }
 
+                // Opened synchronously inside this submit handler (the same
+                // user gesture that clicked "Book Now"), so browsers don't
+                // treat it as an unsolicited popup — the booking itself is
+                // still created normally via this form's own POST below.
+                this.notifyWhatsApp();
+
                 this.submitting = true;
+            },
+
+            notifyWhatsApp() {
+                if (!config.whatsappNumber) return;
+
+                const lines = [
+                    @json(__('New booking request')) + '!',
+                    '',
+                    @json(__('Name')) + ': ' + (this.name || '-'),
+                    @json(__('Phone')) + ': ' + (this.phone || '-'),
+                    @json(__('Pickup')) + ': ' + (this.pickup || '-'),
+                ];
+
+                if (this.type !== 'hourly') {
+                    lines.push(@json(__('Drop-off')) + ': ' + (this.dropoff || '-'));
+                } else {
+                    lines.push(@json(__('Duration')) + ': ' + this.hours + ' ' + @json(__('hour(s)')));
+                }
+
+                lines.push(
+                    @json(__('Date')) + ': ' + (this.date || '-'),
+                    @json(__('Time')) + ': ' + (this.time || '-'),
+                    @json(__('Vehicle')) + ': ' + (this.vehicleName || '-'),
+                );
+
+                if (this.quote) {
+                    lines.push(@json(__('Estimated Fare')) + ': ' + this.money(this.quote.total));
+                }
+
+                const digits = config.whatsappNumber.replace(/\D/g, '');
+                const url = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(lines.join('\n'));
+
+                window.open(url, '_blank');
             },
 
             canQuote() {

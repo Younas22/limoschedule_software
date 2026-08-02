@@ -12,8 +12,8 @@
 
 <div class="flex h-16 shrink-0 items-center gap-3 border-b border-luxury-border px-6">
     <a href="{{ route('driver.dashboard') }}" class="flex items-center gap-3">
-        @if (setting('logo_url'))
-            <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-9 w-9 rounded-lg object-contain">
+        @if (setting('favicon_url'))
+            <img src="{{ setting('favicon_url') }}" alt="{{ setting('company_name') }}" class="h-9 w-9 rounded-lg object-contain">
         @else
             <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-luxury-gold text-luxury-black font-bold">
                 {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}

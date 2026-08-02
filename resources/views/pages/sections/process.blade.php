@@ -13,7 +13,7 @@
             </div>
         @endif
 
-        <div class="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
             @foreach ($section->process_steps as $index => $step)
                 <div class="relative text-center">
                     @if (!$loop->last)

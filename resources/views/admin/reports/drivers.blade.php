@@ -14,7 +14,8 @@
         <x-admin.reports.export-buttons report="drivers" />
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -43,6 +44,36 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($rows as $driver)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <p class="truncate text-sm font-medium text-luxury-white">{{ $driver->name }}</p>
+                    <span class="shrink-0 text-sm font-semibold text-luxury-gold">{{ currency($driver->revenue ?? 0) }}</span>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-3 border-t border-luxury-border pt-3 text-xs">
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Trips') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ number_format($driver->bookings_count) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Commission') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ currency(((float) ($driver->revenue ?? 0)) * ((float) $driver->commission_rate / 100)) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Rating') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ $driver->average_rating ?? '—' }}</p>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No drivers found.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($rows->hasPages())

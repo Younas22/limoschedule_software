@@ -17,7 +17,8 @@
         @endpermission
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -85,6 +86,58 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($promotions as $promotion)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start gap-3">
+                    <div class="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-luxury-border bg-luxury-graphite">
+                        @if ($promotion->image_url)
+                            <img src="{{ $promotion->image_url }}" alt="{{ $promotion->title }}" class="h-full w-full object-cover">
+                        @else
+                            <span class="text-[10px] text-luxury-muted">No image</span>
+                        @endif
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $promotion->title }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ \Illuminate\Support\Str::limit($promotion->subtitle, 40) }}</p>
+                    </div>
+                    @if ($promotion->is_active)
+                        <span class="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400">Active</span>
+                    @else
+                        <span class="shrink-0 rounded-full bg-luxury-slate px-2.5 py-1 text-xs font-medium text-luxury-muted">Inactive</span>
+                    @endif
+                </div>
+
+                <p class="mt-3 border-t border-luxury-border pt-3 text-xs text-luxury-muted">
+                    {{ $promotion->starts_at?->format('M d, Y') ?? 'Always' }} &ndash; {{ $promotion->ends_at?->format('M d, Y') ?? 'No end' }}
+                    &middot; {{ __('Order') }}: {{ $promotion->sort_order }}
+                </p>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-luxury-border pt-3">
+                    @permission('promotions.edit')
+                        <a href="{{ route('admin.promotions.edit', $promotion) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            Edit
+                        </a>
+                    @endpermission
+                    @permission('promotions.delete')
+                        <form method="POST" action="{{ route('admin.promotions.destroy', $promotion) }}" onsubmit="return confirm('Delete this promotion?');" class="ms-auto">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="tap-scale rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                                Delete
+                            </button>
+                        </form>
+                    @endpermission
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                No promotions created yet.
+            </div>
+        @endforelse
     </div>
 
     @if ($promotions->hasPages())

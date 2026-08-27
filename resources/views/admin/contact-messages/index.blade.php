@@ -18,7 +18,8 @@
         @endif
     </form>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -73,6 +74,32 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($messages as $message)
+            <a href="{{ route('admin.contact-messages.show', $message) }}"
+                class="tap-scale block rounded-2xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $message->name }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ $message->email }}</p>
+                    </div>
+                    @if ($message->is_read)
+                        <span class="shrink-0 rounded-full bg-luxury-graphite px-2.5 py-1 text-xs font-medium text-luxury-muted">{{ __('Read') }}</span>
+                    @else
+                        <span class="shrink-0 rounded-full bg-luxury-gold/10 px-2.5 py-1 text-xs font-medium text-luxury-gold">{{ __('Unread') }}</span>
+                    @endif
+                </div>
+                <p class="mt-3 truncate border-t border-luxury-border pt-3 text-xs text-luxury-white">{{ $message->subject ?: __('(No subject)') }}</p>
+                <p class="mt-1 text-[11px] text-luxury-muted">{{ $message->created_at->format('M d, Y h:i A') }}</p>
+            </a>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No messages received yet.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($messages->hasPages())

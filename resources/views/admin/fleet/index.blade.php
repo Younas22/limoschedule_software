@@ -5,7 +5,7 @@
     </div>
 
     <div x-data="adminFleet(@js($rows), @js($office), @js(route('admin.fleet.data')))" x-init="init()" class="space-y-6">
-        <x-dispatch-map id="admin-fleet-map" class="h-72 sm:h-96" />
+        <x-dispatch-map id="admin-fleet-map" class="h-64 sm:h-80 lg:h-96" />
 
         <div class="flex items-center gap-3">
             <label for="fleet-category-filter" class="text-xs font-medium text-luxury-muted">{{ __('Vehicle Type') }}</label>
@@ -18,7 +18,8 @@
             </select>
         </div>
 
-        <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+        {{-- Desktop: full table --}}
+        <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
             <div class="overflow-x-auto">
                 <table class="w-full text-start text-sm">
                     <thead>
@@ -61,6 +62,55 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        {{-- Mobile: cards, same reactive data as the table above. --}}
+        <div class="space-y-3 sm:hidden">
+            <template x-for="row in filteredRows()" :key="row.id">
+                <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4" :class="!row.online ? 'opacity-50' : ''">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-medium text-luxury-white" x-text="row.name"></p>
+                            <p class="truncate text-xs text-luxury-muted" x-text="row.vehicle_category || '—'"></p>
+                        </div>
+                        <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium"
+                            :class="{
+                                'bg-blue-500/10 text-blue-400': row.status === 'busy',
+                                'bg-emerald-500/10 text-emerald-400': row.status === 'available',
+                                'bg-luxury-slate/40 text-luxury-muted': row.status === 'offline',
+                            }"
+                            x-text="row.status === 'busy' ? '{{ __('On Trip') }}' : (row.status === 'available' ? '{{ __('Online — Available') }}' : '{{ __('Offline') }}')"></span>
+                    </div>
+
+                    <div class="mt-3 flex items-start gap-2 border-t border-luxury-border pt-3">
+                        <x-icon name="map-pin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-luxury-gold" />
+                        <p class="min-w-0 flex-1 truncate text-xs text-luxury-muted" x-text="row.location"></p>
+                    </div>
+
+                    <div class="mt-3 grid grid-cols-2 gap-3 border-t border-luxury-border pt-3 text-xs">
+                        <div>
+                            <p class="text-luxury-muted">{{ __('Current Ride') }}</p>
+                            <p class="mt-0.5 font-medium text-luxury-white" x-text="row.current_ride || '—'"></p>
+                        </div>
+                        <div>
+                            <p class="text-luxury-muted">{{ __('Ride Ends') }}</p>
+                            <p class="mt-0.5 font-medium text-luxury-white" x-text="row.ride_ends_in_minutes !== null ? row.ride_ends_in_minutes + ' {{ __('min') }}' : '—'"></p>
+                        </div>
+                        <div>
+                            <p class="text-luxury-muted">{{ __('Next Pickup') }}</p>
+                            <p class="mt-0.5 font-medium text-luxury-white" x-text="row.next_pickup || '—'"></p>
+                        </div>
+                        <div>
+                            <p class="text-luxury-muted">{{ __('ETA') }}</p>
+                            <p class="mt-0.5 font-medium text-luxury-gold" x-text="row.eta_minutes !== null ? row.eta_minutes + ' {{ __('min') }}' : '—'"></p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <div x-show="filteredRows().length === 0" class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No drivers match this filter.') }}
             </div>
         </div>
     </div>

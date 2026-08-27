@@ -135,19 +135,9 @@
     @if ($hasPrimaryAction)
         <div class="pb-safe fixed inset-x-0 bottom-16 z-20 border-t border-luxury-border bg-luxury-charcoal/95 p-4 backdrop-blur lg:hidden">
             @if ($booking->status === 'assigned')
-                <form method="POST" action="{{ route('driver.bookings.start', $booking) }}">
-                    @csrf
-                    <button type="submit" class="tap-scale flex w-full items-center justify-center rounded-lg bg-luxury-gold px-4 py-3.5 text-base font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                        {{ __('Start Trip') }}
-                    </button>
-                </form>
+                <x-driver.ride-action-button :action="route('driver.bookings.start', $booking)" :label="__('Start Trip')" :loading-label="__('Starting…')" size="lg" />
             @else
-                <form method="POST" action="{{ route('driver.bookings.complete', $booking) }}">
-                    @csrf
-                    <button type="submit" class="tap-scale flex w-full items-center justify-center rounded-lg bg-luxury-gold px-4 py-3.5 text-base font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                        {{ __('Complete Trip') }}
-                    </button>
-                </form>
+                <x-driver.ride-action-button :action="route('driver.bookings.complete', $booking)" :label="__('Complete Trip')" :loading-label="__('Completing…')" size="lg" />
             @endif
         </div>
     @endif

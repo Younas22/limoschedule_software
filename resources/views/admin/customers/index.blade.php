@@ -25,7 +25,8 @@
         </div>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -94,5 +95,68 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($customers as $customer)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <a href="{{ route('admin.customers.show', $customer) }}" class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-luxury-border bg-luxury-graphite">
+                        @if ($customer->avatar_url)
+                            <img src="{{ $customer->avatar_url }}" alt="{{ $customer->name }}" class="h-full w-full object-cover">
+                        @else
+                            <span class="text-sm font-semibold text-luxury-muted">{{ strtoupper(substr($customer->name, 0, 1)) }}</span>
+                        @endif
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $customer->name }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ $customer->email }}</p>
+                    </div>
+                    <x-admin.status-badge :active="$customer->status" />
+                </a>
+
+                <div class="mt-3 grid grid-cols-3 gap-2 border-t border-luxury-border pt-3 text-center text-xs">
+                    <div>
+                        <p class="font-semibold text-luxury-white">{{ $customer->bookings_count }}</p>
+                        <p class="text-luxury-muted">{{ __('Bookings') }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-luxury-gold">{{ currency($customer->wallet_balance) }}</p>
+                        <p class="text-luxury-muted">{{ __('Wallet') }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-luxury-white">{{ number_format($customer->loyalty_points) }}</p>
+                        <p class="text-luxury-muted">{{ __('Loyalty') }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-luxury-border pt-3">
+                    @permission('customers.view')
+                        <a href="{{ route('admin.customers.show', $customer) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            {{ __('Profile') }}
+                        </a>
+                    @endpermission
+                    @permission('customers.edit')
+                        <a href="{{ route('admin.customers.edit', $customer) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            {{ __('Edit') }}
+                        </a>
+                    @endpermission
+                    @permission('customers.delete')
+                        <form method="POST" action="{{ route('admin.customers.destroy', $customer) }}" onsubmit="return confirm('{{ __('Delete this customer?') }}');" class="ms-auto">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="tap-scale rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                                {{ __('Delete') }}
+                            </button>
+                        </form>
+                    @endpermission
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No customers added yet.') }}
+            </div>
+        @endforelse
     </div>
 </x-admin.layouts.app>

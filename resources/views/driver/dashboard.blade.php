@@ -8,12 +8,14 @@
         $navigateUrl = $navigateTarget
             ? 'https://www.google.com/maps/dir/?api=1&destination=' . urlencode($navigateTarget)
             : null;
+        $hour = (int) now(setting('timezone', config('app.timezone')))->format('G');
+        $greeting = $hour < 12 ? __('Good morning') : ($hour < 18 ? __('Good afternoon') : __('Good evening'));
     @endphp
 
     {{-- Greeting --}}
     <div class="mb-4">
-        <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Welcome back, :name', ['name' => $firstName]) }}</h2>
-        <p class="mt-1 text-sm text-luxury-muted">{{ __("Here's your activity overview.") }}</p>
+        <h2 class="text-2xl font-semibold text-luxury-white">{{ $greeting }}, {{ $firstName }}</h2>
+        <p class="mt-1 text-sm text-luxury-muted">{{ __('Ready for your next ride?') }}</p>
     </div>
 
     {{-- Availability — the single most important control, so it gets its
@@ -34,11 +36,15 @@
                 <p class="text-xs text-luxury-muted">{{ $driver->is_online ? __('Ready to receive ride assignments.') : __('Go online to start receiving rides.') }}</p>
             </div>
         </div>
-        <form method="POST" action="{{ route('driver.status.toggle') }}" class="shrink-0">
+        <form method="POST" action="{{ route('driver.status.toggle') }}" class="shrink-0" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
-            <button type="submit"
-                class="tap-scale rounded-lg px-4 py-2.5 text-sm font-semibold transition {{ $driver->is_online ? 'border border-luxury-border text-luxury-muted hover:border-red-500/40 hover:text-red-400' : 'bg-luxury-gold text-luxury-black hover:bg-luxury-gold-light' }}">
-                {{ $driver->is_online ? __('Go Offline') : __('Go Online') }}
+            <button type="submit" :disabled="submitting" role="switch" :aria-checked="@js((bool) $driver->is_online)" aria-label="{{ __('Toggle availability') }}"
+                class="tap-scale inline-flex min-w-[8rem] items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition disabled:opacity-60 {{ $driver->is_online ? 'border border-luxury-border text-luxury-muted hover:border-red-500/40 hover:text-red-400' : 'bg-luxury-gold text-luxury-black hover:bg-luxury-gold-light' }}">
+                <svg x-show="submitting" x-cloak class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span x-text="submitting ? '{{ __('Updating…') }}' : '{{ $driver->is_online ? __('Go Offline') : __('Go Online') }}'"></span>
             </button>
         </form>
     </div>
@@ -103,19 +109,9 @@
                     </a>
 
                     @if ($activeRide)
-                        <form method="POST" action="{{ route('driver.bookings.complete', $activeRide) }}">
-                            @csrf
-                            <button type="submit" class="tap-scale flex w-full items-center justify-center rounded-lg bg-luxury-gold px-4 py-3 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                                {{ __('Complete Trip') }}
-                            </button>
-                        </form>
+                        <x-driver.ride-action-button :action="route('driver.bookings.complete', $activeRide)" :label="__('Complete Trip')" :loading-label="__('Completing…')" />
                     @else
-                        <form method="POST" action="{{ route('driver.bookings.start', $upcomingRide) }}">
-                            @csrf
-                            <button type="submit" class="tap-scale flex w-full items-center justify-center rounded-lg bg-luxury-gold px-4 py-3 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                                {{ __('Start Trip') }}
-                            </button>
-                        </form>
+                        <x-driver.ride-action-button :action="route('driver.bookings.start', $upcomingRide)" :label="__('Start Trip')" :loading-label="__('Starting…')" />
                     @endif
                 </div>
 
@@ -123,6 +119,12 @@
                     {{ __('View Full Details') }}
                 </a>
             </div>
+        </div>
+    @else
+        <div class="mb-6 rounded-2xl border border-luxury-border bg-luxury-charcoal p-8 text-center">
+            <x-icon name="car" class="mx-auto h-8 w-8 text-luxury-muted" />
+            <p class="mt-3 text-sm font-medium text-luxury-white">{{ __('No Upcoming Ride') }}</p>
+            <p class="mt-1 text-sm text-luxury-muted">{{ __("You don't have an assigned ride yet.") }}</p>
         </div>
     @endif
 
@@ -154,7 +156,7 @@
         </div>
 
         @if ($todayBookings->isNotEmpty())
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 @foreach ($todayBookings as $booking)
                     <a href="{{ route('driver.bookings.show', $booking) }}"
                         class="tap-scale flex items-center gap-4 rounded-2xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">

@@ -42,6 +42,18 @@
             @include('driver.partials.topbar')
 
             <main class="flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">
+                @if (session('status'))
+                    <div class="mb-6 rounded-lg border border-luxury-gold/30 bg-luxury-gold/10 px-4 py-3 text-sm text-luxury-gold" role="status">
+                        {{ session('status') }}
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400" role="alert">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <div class="dashboard-page-enter">
                     {{ $slot }}
                 </div>

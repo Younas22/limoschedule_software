@@ -26,7 +26,7 @@
     {{-- Filters --}}
     <form method="GET" class="mb-6 flex flex-wrap items-center gap-3">
         <select name="status" onchange="this.form.submit()"
-            class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+            class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2.5 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold sm:w-auto sm:py-2">
             <option value="">{{ __('All Statuses') }}</option>
             @foreach (\App\Models\Booking::STATUSES as $value => $label)
                 <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
@@ -34,7 +34,7 @@
         </select>
 
         <select name="type" onchange="this.form.submit()"
-            class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+            class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2.5 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold sm:w-auto sm:py-2">
             <option value="">{{ __('All Types') }}</option>
             @foreach (\App\Models\Booking::TYPES as $value => $label)
                 <option value="{{ $value }}" @selected(request('type') === $value)>{{ $label }}</option>
@@ -63,7 +63,8 @@
             </form>
         @endpermission
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: full table with bulk-select --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -197,6 +198,90 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards. Bulk-select and the inline Mark Paid / Process
+         Refund forms stay desktop-only here for space — every booking is
+         still individually reachable via View/Edit/Delete below. --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($bookings as $booking)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->booking_number }}</p>
+                        <p class="mt-0.5 truncate text-xs text-luxury-muted">{{ $booking->customer?->name ?? '—' }} &middot; {{ $booking->type_label }}</p>
+                    </div>
+                    <span class="shrink-0 text-sm font-semibold text-luxury-gold">{{ currency($booking->fare_amount) }}</span>
+                </div>
+
+                <div class="mt-3 flex items-start gap-2 border-t border-luxury-border pt-3">
+                    <x-icon name="map-pin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-luxury-gold" />
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-xs text-luxury-muted">{{ $booking->pickup_location }} &rarr; {{ $booking->dropoff_location }}</p>
+                        <p class="mt-0.5 text-[11px] text-luxury-muted">{{ $booking->pickup_datetime->format('M d, Y H:i') }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-3 flex items-center justify-between gap-3 border-t border-luxury-border pt-3 text-xs">
+                    <span class="text-luxury-muted">{{ $booking->vehicle?->name ?? '—' }} &middot; {{ $booking->driver?->name ?? __('Unassigned') }}</span>
+                    <span class="{{ $booking->payment_status === 'paid' ? 'text-emerald-400' : 'text-luxury-muted' }}">{{ $booking->payment_status_label }}</span>
+                </div>
+
+                <div class="mt-3 border-t border-luxury-border pt-3">
+                    @permission('bookings.edit')
+                        <form method="POST" action="{{ route('admin.bookings.status', $booking) }}">
+                            @csrf
+                            <select name="status" onchange="this.form.submit()"
+                                class="w-full rounded-lg border-0 px-2.5 py-2 text-xs font-medium capitalize focus:outline-none focus:ring-1 focus:ring-luxury-gold
+                                    {{ match ($booking->status) {
+                                        'completed' => 'bg-emerald-500/10 text-emerald-400',
+                                        'cancelled' => 'bg-red-500/10 text-red-400',
+                                        'assigned' => 'bg-luxury-gold/10 text-luxury-gold',
+                                        'in_progress' => 'bg-blue-500/10 text-blue-400',
+                                        'confirmed' => 'bg-luxury-secondary/10 text-luxury-secondary',
+                                        default => 'bg-luxury-slate text-luxury-muted',
+                                    } }}">
+                                @foreach (\App\Models\Booking::STATUSES as $value => $label)
+                                    <option value="{{ $value }}" @selected($booking->status === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </form>
+                    @else
+                        <span class="inline-block rounded-full bg-luxury-slate px-2.5 py-1 text-xs font-medium text-luxury-muted">{{ $booking->status_label }}</span>
+                    @endpermission
+                </div>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-luxury-border pt-3">
+                    <a href="{{ route('admin.bookings.show', $booking) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                        {{ __('View') }}
+                    </a>
+                    @php $waLinkMobile = $whatsapp->linkFor($booking); @endphp
+                    @if ($waLinkMobile)
+                        <a href="{{ $waLinkMobile }}" target="_blank" rel="noopener" class="tap-scale rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-500/10">
+                            {{ __('WhatsApp') }}
+                        </a>
+                    @endif
+                    @permission('bookings.edit')
+                        <a href="{{ route('admin.bookings.edit', $booking) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            {{ __('Edit') }}
+                        </a>
+                    @endpermission
+                    @permission('bookings.delete')
+                        <form method="POST" action="{{ route('admin.bookings.destroy', $booking) }}" onsubmit="return confirm('{{ __('Delete this booking?') }}');" class="ms-auto">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="tap-scale rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                                {{ __('Delete') }}
+                            </button>
+                        </form>
+                    @endpermission
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No bookings found.') }}
+            </div>
+        @endforelse
     </div>
     </div>
 </x-admin.layouts.app>

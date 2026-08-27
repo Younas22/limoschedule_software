@@ -4,12 +4,6 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Manage your account password.') }}</p>
     </div>
 
-    @if (session('status'))
-        <div class="mb-6 max-w-2xl rounded-lg border border-luxury-gold/30 bg-luxury-gold/10 px-4 py-3 text-sm text-luxury-gold">
-            {{ session('status') }}
-        </div>
-    @endif
-
     <div class="max-w-2xl">
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
             <h3 class="mb-4 text-sm font-semibold text-luxury-white">{{ __('Change Password') }}</h3>

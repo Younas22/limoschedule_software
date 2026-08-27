@@ -4,12 +4,6 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Update your contact information and photo.') }}</p>
     </div>
 
-    @if (session('status'))
-        <div class="mb-6 rounded-lg border border-luxury-gold/30 bg-luxury-gold/10 px-4 py-3 text-sm text-luxury-gold">
-            {{ session('status') }}
-        </div>
-    @endif
-
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <form method="POST" action="{{ route('driver.profile.update') }}" enctype="multipart/form-data" class="space-y-6 lg:col-span-2">
             @csrf

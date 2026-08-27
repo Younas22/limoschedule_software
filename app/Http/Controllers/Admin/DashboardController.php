@@ -21,6 +21,16 @@ class DashboardController extends Controller
             'customers' => Customer::count(),
         ];
 
+        // "What's happening right now" — the numbers an admin actually
+        // needs first thing, not just all-time totals.
+        $todayBookings = Booking::whereDate('pickup_datetime', now()->toDateString())->count();
+        $todayRevenue = Booking::whereDate('pickup_datetime', now()->toDateString())
+            ->where('payment_status', 'paid')
+            ->sum('fare_amount');
+        $pendingBookings = Booking::where('status', 'pending')->count();
+        $unassignedBookings = Booking::whereIn('status', ['pending', 'confirmed'])->whereNull('driver_id')->count();
+        $activeRides = Booking::where('status', 'in_progress')->count();
+
         $recentBookings = Booking::with(['customer', 'driver', 'vehicle'])
             ->latest()
             ->take(5)
@@ -33,6 +43,15 @@ class DashboardController extends Controller
             'busy' => $onlineDrivers->filter(fn (Driver $d) => (bool) $d->activeBooking())->count(),
         ];
 
-        return view('admin.dashboard', compact('stats', 'recentBookings', 'fleetSummary'));
+        return view('admin.dashboard', compact(
+            'stats',
+            'recentBookings',
+            'fleetSummary',
+            'todayBookings',
+            'todayRevenue',
+            'pendingBookings',
+            'unassignedBookings',
+            'activeRides'
+        ));
     }
 }

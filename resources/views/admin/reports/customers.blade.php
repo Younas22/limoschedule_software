@@ -14,7 +14,8 @@
         <x-admin.reports.export-buttons report="customers" />
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -49,6 +50,40 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($rows as $customer)
+            <a href="{{ route('admin.customers.show', $customer) }}"
+                class="tap-scale block rounded-2xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $customer->name }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ $customer->email }}</p>
+                    </div>
+                    <span class="shrink-0 text-sm font-semibold text-luxury-gold">{{ currency($customer->total_spent ?? 0) }}</span>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-3 border-t border-luxury-border pt-3 text-xs">
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Bookings') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ number_format($customer->bookings_count) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Wallet') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ currency($customer->wallet_balance) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Loyalty') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ number_format($customer->loyalty_points) }}</p>
+                    </div>
+                </div>
+            </a>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No customers found.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($rows->hasPages())

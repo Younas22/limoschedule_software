@@ -29,7 +29,8 @@
         </x-admin.stat-card>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -60,6 +61,26 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($rows as $booking)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->booking_number }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ $booking->customer?->name ?? '—' }} &middot; {{ $booking->vehicle?->name ?? '—' }}</p>
+                    </div>
+                    <span class="shrink-0 text-sm font-semibold text-luxury-gold">{{ currency($booking->fare_amount) }}</span>
+                </div>
+                <p class="mt-3 border-t border-luxury-border pt-3 text-xs text-luxury-muted">{{ $booking->type_label }} &middot; {{ $booking->pickup_datetime->format('M d, Y H:i') }}</p>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No paid bookings in this range.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($rows->hasPages())

@@ -42,7 +42,7 @@
         <div class="flex min-h-screen flex-1 flex-col">
             @include('admin.partials.topbar')
 
-            <main class="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+            <main class="flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">
                 @if (session('status'))
                     <div class="mb-6 rounded-lg border border-luxury-gold/30 bg-luxury-gold/10 px-4 py-3 text-sm text-luxury-gold">
                         {{ session('status') }}
@@ -60,6 +60,9 @@
 
             @include('admin.partials.footer')
         </div>
+
+        {{-- Sticky bottom navigation (mobile/tablet) --}}
+        @include('admin.partials.bottom-nav')
     </div>
 
     @stack('scripts')

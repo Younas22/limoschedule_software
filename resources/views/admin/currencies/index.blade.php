@@ -17,7 +17,8 @@
         @endpermission
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -102,5 +103,69 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($currencies as $currency)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="truncate text-sm font-medium text-luxury-white">{{ $currency->name }}</span>
+                            @if ($currency->is_default)
+                                <span class="shrink-0 rounded-full bg-luxury-gold/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-luxury-gold">{{ __('Default') }}</span>
+                            @endif
+                        </div>
+                        <p class="text-xs text-luxury-muted">{{ $currency->code }} &middot; {{ $currency->symbol }}</p>
+                    </div>
+                    <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium {{ $currency->is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-luxury-slate text-luxury-muted' }}">
+                        {{ $currency->is_active ? __('Active') : __('Disabled') }}
+                    </span>
+                </div>
+
+                <p class="mt-3 border-t border-luxury-border pt-3 text-xs text-luxury-muted">
+                    {{ __('Exchange Rate') }}: <span class="font-medium text-luxury-white">{{ number_format($currency->exchange_rate, 6) }}</span>
+                    @if ($currency->is_default) <span>({{ __('base') }})</span> @endif
+                </p>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-luxury-border pt-3">
+                    @permission('currencies.edit')
+                        <a href="{{ route('admin.currencies.edit', $currency) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            {{ __('Edit') }}
+                        </a>
+                        @unless ($currency->is_default)
+                            <form method="POST" action="{{ route('admin.currencies.default', $currency) }}">
+                                @csrf
+                                <button type="submit" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-secondary hover:text-luxury-secondary">
+                                    {{ __('Set Default') }}
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ route('admin.currencies.toggle', $currency) }}">
+                                @csrf
+                                <button type="submit" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                    {{ $currency->is_active ? __('Disable') : __('Enable') }}
+                                </button>
+                            </form>
+                        @endunless
+                    @endpermission
+                    @permission('currencies.delete')
+                        @unless ($currency->is_default)
+                            <form method="POST" action="{{ route('admin.currencies.destroy', $currency) }}" onsubmit="return confirm('{{ __('Delete this currency?') }}');" class="ms-auto">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="tap-scale rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                                    {{ __('Delete') }}
+                                </button>
+                            </form>
+                        @endunless
+                    @endpermission
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No currencies configured yet.') }}
+            </div>
+        @endforelse
     </div>
 </x-admin.layouts.app>

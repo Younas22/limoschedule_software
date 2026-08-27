@@ -1,4 +1,5 @@
 @php
+    $driver = auth()->guard('driver')->user();
     $activeLanguages = \App\Models\Language::active();
     $currentLanguage = $activeLanguages->firstWhere('code', app()->getLocale()) ?? $activeLanguages->first();
 
@@ -34,6 +35,25 @@
             <p class="text-[11px] uppercase tracking-widest text-luxury-muted">{{ __('Driver Panel') }}</p>
         </div>
     </a>
+</div>
+
+{{-- Availability — mobile menu drawer only (lg:hidden); desktop keeps it
+     in the topbar. Shown first since it's the driver's #1 priority. --}}
+<div class="border-b border-luxury-border p-4 lg:hidden">
+    <form method="POST" action="{{ route('driver.status.toggle') }}" x-data="{ submitting: false }" @submit="submitting = true"
+        class="flex items-center justify-between gap-3 rounded-xl border p-3 {{ $driver->is_online ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-luxury-border' }}">
+        @csrf
+        <div class="flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full {{ $driver->is_online ? 'bg-emerald-400' : 'bg-luxury-muted' }}"></span>
+            <span class="text-sm font-medium {{ $driver->is_online ? 'text-emerald-400' : 'text-luxury-white' }}">
+                {{ $driver->is_online ? __('Online') : __('Offline') }}
+            </span>
+        </div>
+        <button type="submit" :disabled="submitting" role="switch" :aria-checked="@js((bool) $driver->is_online)" aria-label="{{ __('Toggle availability') }}"
+            class="tap-scale rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-60 {{ $driver->is_online ? 'border border-luxury-border text-luxury-muted' : 'bg-luxury-gold text-luxury-black' }}">
+            <span x-text="submitting ? '{{ __('Updating…') }}' : '{{ $driver->is_online ? __('Go Offline') : __('Go Online') }}'"></span>
+        </button>
+    </form>
 </div>
 
 <nav class="scrollbar-luxury flex-1 space-y-1 overflow-y-auto px-3 py-6">

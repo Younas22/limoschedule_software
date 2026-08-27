@@ -31,7 +31,8 @@
     </div>
 
     {{-- Per-category rules --}}
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -89,5 +90,63 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($categories as $category)
+            @php $rule = $category->pricingRule; @endphp
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="truncate text-sm font-medium text-luxury-white">{{ $category->name }}</p>
+                    @if ($rule?->is_active)
+                        <span class="shrink-0 rounded-full bg-luxury-secondary/10 px-2.5 py-1 text-xs font-medium text-luxury-secondary">{{ __('Custom') }}</span>
+                    @else
+                        <span class="shrink-0 rounded-full bg-luxury-slate px-2.5 py-1 text-xs font-medium text-luxury-muted">{{ __('Global Default') }}</span>
+                    @endif
+                </div>
+
+                <div class="mt-3 grid grid-cols-2 gap-3 border-t border-luxury-border pt-3 text-xs">
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Base Fare') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ currency($rule?->is_active ? $rule->base_fare : $global->base_fare) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-luxury-muted">{{ __('KM Fare') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ currency($rule?->is_active ? $rule->km_fare : $global->km_fare) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Hour Fare') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ currency($rule?->is_active ? $rule->hour_fare : $global->hour_fare) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-luxury-muted">{{ __('Airport Surcharge') }}</p>
+                        <p class="mt-0.5 font-medium text-luxury-white">{{ currency($rule?->is_active ? $rule->airport_surcharge : $global->airport_surcharge) }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-luxury-border pt-3">
+                    @permission('pricing.edit')
+                        <a href="{{ route('admin.pricing.category.edit', $category) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            {{ $rule ? __('Edit') : __('Set Custom Pricing') }}
+                        </a>
+                    @endpermission
+                    @if ($rule)
+                        @permission('pricing.delete')
+                            <form method="POST" action="{{ route('admin.pricing.category.reset', $category) }}" onsubmit="return confirm('{{ __('Reset this category to the global default pricing?') }}');" class="ms-auto">
+                                @csrf
+                                <button type="submit" class="tap-scale rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                                    {{ __('Reset to Default') }}
+                                </button>
+                            </form>
+                        @endpermission
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No fleet categories found.') }}
+            </div>
+        @endforelse
     </div>
 </x-admin.layouts.app>

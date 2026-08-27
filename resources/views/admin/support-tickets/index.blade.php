@@ -25,7 +25,8 @@
         @endif
     </form>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -70,6 +71,33 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($tickets as $ticket)
+            <a href="{{ route('admin.support-tickets.show', $ticket) }}"
+                class="tap-scale block rounded-2xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-xs text-luxury-muted">{{ $ticket->ticket_number }} &middot; {{ $ticket->customer?->name ?? '—' }}</p>
+                        <p class="mt-0.5 truncate text-sm font-medium text-luxury-white">{{ $ticket->subject }}</p>
+                    </div>
+                    <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium {{ match ($ticket->status) {
+                        'closed' => 'bg-luxury-slate text-luxury-muted',
+                        'in_progress' => 'bg-luxury-secondary/10 text-luxury-secondary',
+                        default => 'bg-luxury-gold/10 text-luxury-gold',
+                    } }}">
+                        {{ $ticket->status_label }}
+                    </span>
+                </div>
+                <p class="mt-3 border-t border-luxury-border pt-3 text-xs text-luxury-muted">{{ $ticket->created_at->format('M d, Y h:i A') }}</p>
+            </a>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No support tickets found.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($tickets->hasPages())

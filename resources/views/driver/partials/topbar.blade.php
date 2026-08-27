@@ -66,12 +66,16 @@
 
         {{-- Availability — always visible, every size: this is a driver's
              single most important control. --}}
-        <form method="POST" action="{{ route('driver.status.toggle') }}">
+        <form method="POST" action="{{ route('driver.status.toggle') }}" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
-            <button type="submit"
-                class="tap-scale inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition {{ $driver->is_online ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-luxury-border text-luxury-muted hover:border-luxury-gold/40' }}">
-                <span class="h-1.5 w-1.5 rounded-full {{ $driver->is_online ? 'bg-emerald-400' : 'bg-luxury-muted' }}"></span>
-                {{ $driver->is_online ? __('Online') : __('Offline') }}
+            <button type="submit" :disabled="submitting" role="switch" :aria-checked="@js((bool) $driver->is_online)" aria-label="{{ __('Toggle availability') }}"
+                class="tap-scale inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-60 {{ $driver->is_online ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-luxury-border text-luxury-muted hover:border-luxury-gold/40' }}">
+                <svg x-show="submitting" x-cloak class="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span x-show="!submitting" class="h-1.5 w-1.5 rounded-full {{ $driver->is_online ? 'bg-emerald-400' : 'bg-luxury-muted' }}"></span>
+                <span x-text="submitting ? '{{ __('Updating…') }}' : '{{ $driver->is_online ? __('Online') : __('Offline') }}'"></span>
             </button>
         </form>
 

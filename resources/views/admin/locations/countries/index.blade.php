@@ -19,7 +19,8 @@
         @endpermission
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -72,5 +73,47 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($items as $country)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $country->name }}</p>
+                        <p class="text-xs text-luxury-muted">{{ $country->code }} &middot; {{ __(':count states', ['count' => $country->states()->count()]) }}</p>
+                    </div>
+                    <x-admin.status-badge :active="$country->is_active" />
+                </div>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-luxury-border pt-3">
+                    @permission('locations.edit')
+                        <a href="{{ route('admin.locations.countries.edit', $country) }}" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            {{ __('Edit') }}
+                        </a>
+                        <form method="POST" action="{{ route('admin.locations.countries.toggle', $country) }}">
+                            @csrf
+                            <button type="submit" class="tap-scale rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                {{ $country->is_active ? __('Disable') : __('Enable') }}
+                            </button>
+                        </form>
+                    @endpermission
+                    @permission('locations.delete')
+                        <form method="POST" action="{{ route('admin.locations.countries.destroy', $country) }}" onsubmit="return confirm('{{ __('Delete this country?') }}');" class="ms-auto">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="tap-scale rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/10">
+                                {{ __('Delete') }}
+                            </button>
+                        </form>
+                    @endpermission
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No countries added yet.') }}
+            </div>
+        @endforelse
     </div>
 </x-admin.layouts.app>

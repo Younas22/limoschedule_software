@@ -14,7 +14,8 @@
         <x-admin.reports.export-buttons report="vehicles" />
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -43,6 +44,29 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($rows as $vehicle)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $vehicle->name }}</p>
+                        <p class="truncate text-xs text-luxury-muted">{{ $vehicle->category?->name ?? '—' }}</p>
+                    </div>
+                    <span class="shrink-0 text-sm font-semibold text-luxury-gold">{{ currency($vehicle->revenue ?? 0) }}</span>
+                </div>
+                <div class="mt-3 flex items-center justify-between gap-3 border-t border-luxury-border pt-3 text-xs text-luxury-muted">
+                    <span>{{ __(':count bookings', ['count' => number_format($vehicle->bookings_count)]) }}</span>
+                    <span>{{ __('Rating') }}: {{ $vehicle->average_rating ?? '—' }}</span>
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No vehicles found.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($rows->hasPages())

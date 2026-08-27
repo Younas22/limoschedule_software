@@ -24,7 +24,7 @@
     @include('components.page-progress')
     @include('components.notifications')
 
-    <div x-data="{ sidebarOpen: false }" class="flex min-h-screen">
+    <div x-data="customerAppShell(@js($themeMode))" class="flex min-h-screen">
 
         {{-- Mobile overlay --}}
         <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
@@ -51,6 +51,45 @@
         {{-- Sticky bottom navigation (mobile/tablet) --}}
         @include('customer.partials.bottom-nav')
     </div>
+
+    <script>
+        // Shared shell state for the whole authenticated panel: sidebar
+        // open/closed, plus dark/light theme and language — lifted up here
+        // (rather than scoped to just the topbar) so both the topbar and
+        // the mobile menu drawer can read/change the same theme/language
+        // state. Session-scoped and independent from Setting::theme_mode
+        // (the public site's theme) — see components/customer/layouts/app.blade.php.
+        function customerAppShell(initialTheme) {
+            return {
+                sidebarOpen: false,
+                theme: initialTheme,
+
+                toggleTheme() {
+                    const mode = this.theme === 'dark' ? 'light' : 'dark';
+                    this.theme = mode;
+                    document.documentElement.classList.toggle('dark', mode !== 'light');
+                    document.documentElement.setAttribute('data-theme', mode);
+                    this.save({ theme_mode: mode });
+                },
+
+                setLocale(code) {
+                    this.save({ locale: code }).then(() => window.location.reload());
+                },
+
+                save(payload) {
+                    return fetch('{{ route('customer.settings.update') }}', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: JSON.stringify(payload),
+                    });
+                },
+            };
+        }
+    </script>
 
     @stack('scripts')
 </body>

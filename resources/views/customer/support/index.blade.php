@@ -33,7 +33,8 @@
         @endif
     </form>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -68,6 +69,27 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($tickets as $ticket)
+            <a href="{{ route('customer.support.show', $ticket) }}"
+                class="tap-scale block rounded-2xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-xs text-luxury-muted">{{ $ticket->ticket_number }}</p>
+                        <p class="mt-0.5 truncate text-sm font-medium text-luxury-white">{{ \Illuminate\Support\Str::limit($ticket->subject, 48) }}</p>
+                    </div>
+                    <x-customer.ticket-status-badge :status="$ticket->status" />
+                </div>
+                <p class="mt-3 border-t border-luxury-border pt-3 text-xs text-luxury-muted">{{ __('Created :date', ['date' => $ticket->created_at->format('M d, Y')]) }}</p>
+            </a>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ ($search || $status) ? __('No tickets match your search.') : __("You haven't raised any support tickets yet.") }}
+            </div>
+        @endforelse
     </div>
 
     @if ($tickets->hasPages())

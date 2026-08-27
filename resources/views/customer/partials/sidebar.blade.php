@@ -1,5 +1,9 @@
 @php
     $customer = auth()->guard('customer')->user();
+    $activeCurrencies = \App\Models\Currency::active();
+    $currentCurrency = active_currency();
+    $activeLanguages = \App\Models\Language::active();
+    $currentLanguage = $activeLanguages->firstWhere('code', app()->getLocale()) ?? $activeLanguages->first();
 
     $navItems = [
         ['label' => __('Dashboard'), 'route' => 'customer.dashboard', 'icon' => 'home'],
@@ -14,15 +18,35 @@
                 ['label' => __('Cancelled'), 'route' => 'customer.bookings.cancelled'],
             ],
         ],
-        ['label' => __('Favorites'), 'route' => 'customer.favorites.index', 'icon' => 'heart'],
-        ['label' => __('Saved Addresses'), 'route' => 'customer.addresses.index', 'icon' => 'map-pin'],
-        // Temporarily hidden from navigation (not ready to launch yet) —
-        // routes/controllers/views are untouched, just unlinked from here.
-        // ['label' => __('Wallet'), 'route' => 'customer.wallet.index', 'icon' => 'cash'],
-        // ['label' => __('Payment Methods'), 'route' => 'customer.payment-methods.index', 'icon' => 'credit-card'],
-        ['label' => __('Invoices'), 'route' => 'customer.invoices.index', 'icon' => 'download'],
-        // ['label' => __('Notifications'), 'route' => 'customer.notifications.index', 'icon' => 'bell'],
-        // ['label' => __('Reviews'), 'route' => 'customer.reviews.index', 'icon' => 'star'],
+        [
+            'type' => 'group',
+            'label' => __('Travel'),
+            'icon' => 'map-pin',
+            'children' => [
+                ['label' => __('Favorites'), 'route' => 'customer.favorites.index'],
+                ['label' => __('Saved Addresses'), 'route' => 'customer.addresses.index'],
+                ['label' => __('Invoices'), 'route' => 'customer.invoices.index'],
+            ],
+        ],
+        [
+            'type' => 'group',
+            'label' => __('Finance'),
+            'icon' => 'wallet',
+            'children' => [
+                ['label' => __('Wallet'), 'route' => 'customer.wallet.index'],
+                ['label' => __('Payment Methods'), 'route' => 'customer.payment-methods.index'],
+            ],
+        ],
+        [
+            'type' => 'group',
+            'label' => __('Support'),
+            'icon' => 'chat',
+            'children' => [
+                ['label' => __('Support Tickets'), 'route' => 'customer.support.index'],
+                ['label' => __('Notifications'), 'route' => 'customer.notifications.index'],
+                ['label' => __('My Reviews'), 'route' => 'customer.reviews.index'],
+            ],
+        ],
         [
             'type' => 'group',
             'label' => __('Account'),
@@ -33,7 +57,6 @@
                 ['label' => __('Security'), 'route' => 'customer.security.edit'],
             ],
         ],
-        ['label' => __('Support'), 'route' => 'customer.support.index', 'icon' => 'chat'],
     ];
 @endphp
 
@@ -85,6 +108,77 @@
         @endif
     @endforeach
 </nav>
+
+{{--
+    Theme / language / currency — shown here (mobile menu drawer) only.
+    On desktop (lg+) the sidebar is static and these same controls live in
+    the topbar instead, so they're not duplicated. Dropdowns open upward
+    (bottom-full) since this block sits pinned at the very bottom of the
+    drawer. Shares the shell's Alpine state (theme/toggleTheme/setLocale)
+    from components/customer/layouts/app.blade.php.
+--}}
+<div class="space-y-3 border-t border-luxury-border p-4 lg:hidden">
+    <p class="px-1 text-[11px] font-semibold uppercase tracking-wider text-luxury-muted">{{ __('Preferences') }}</p>
+
+    <button type="button" @click="toggleTheme()"
+        class="tap-scale flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-luxury-border text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-white">
+        <svg x-show="theme === 'dark'" x-cloak class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+        </svg>
+        <svg x-show="theme === 'light'" x-cloak class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+        </svg>
+        <span x-text="theme === 'dark' ? '{{ __('Dark Mode') }}' : '{{ __('Light Mode') }}'"></span>
+    </button>
+
+    <div class="grid grid-cols-2 gap-2">
+        @if ($currentLanguage && $activeLanguages->count() > 1)
+            <div x-data="{ open: false }" class="relative">
+                <button type="button" @click="open = !open" @click.outside="open = false"
+                    class="tap-scale flex h-10 w-full items-center gap-1.5 rounded-lg border border-luxury-border px-2.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-white">
+                    @if ($currentLanguage->flag_country_code)
+                        <span class="fi fi-{{ $currentLanguage->flag_country_code }} shrink-0 rounded-sm"></span>
+                    @endif
+                    <span class="min-w-0 flex-1 truncate text-start">{{ $currentLanguage->native_name ?: $currentLanguage->name }}</span>
+                    <x-icon name="chevron-down" class="h-3.5 w-3.5 shrink-0" />
+                </button>
+                <div x-show="open" x-cloak x-transition class="absolute start-0 bottom-full z-30 mb-2 w-full overflow-hidden rounded-xl border border-luxury-border bg-luxury-charcoal shadow-xl">
+                    @foreach ($activeLanguages as $language)
+                        <button type="button" @click="open = false; setLocale('{{ $language->code }}')"
+                            class="flex w-full items-center gap-2 px-3 py-2.5 text-start text-xs {{ $language->code === $currentLanguage->code ? 'text-luxury-gold' : 'text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white' }}">
+                            @if ($language->flag_country_code)
+                                <span class="fi fi-{{ $language->flag_country_code }} shrink-0 rounded-sm"></span>
+                            @endif
+                            {{ $language->native_name ?: $language->name }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        @if ($currentCurrency && $activeCurrencies->count() > 1)
+            <div x-data="{ open: false }" class="relative">
+                <button type="button" @click="open = !open" @click.outside="open = false"
+                    class="tap-scale flex h-10 w-full items-center gap-1.5 rounded-lg border border-luxury-border px-2.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-white">
+                    <span class="font-semibold">{{ $currentCurrency->symbol }}</span>
+                    <span class="min-w-0 flex-1 truncate text-start">{{ $currentCurrency->code }}</span>
+                    <x-icon name="chevron-down" class="h-3.5 w-3.5 shrink-0" />
+                </button>
+                <div x-show="open" x-cloak x-transition class="absolute start-0 bottom-full z-30 mb-2 w-full overflow-hidden rounded-xl border border-luxury-border bg-luxury-charcoal shadow-xl">
+                    @foreach ($activeCurrencies as $currencyOption)
+                        <form method="POST" action="{{ route('currency.switch', $currencyOption->code) }}">
+                            @csrf
+                            <button type="submit" class="flex w-full items-center gap-2 px-3 py-2.5 text-start text-xs transition hover:bg-luxury-graphite {{ $currencyOption->code === $currentCurrency->code ? 'text-luxury-gold' : 'text-luxury-muted' }}">
+                                <span class="w-4 shrink-0 text-center font-semibold">{{ $currencyOption->symbol }}</span>
+                                <span class="truncate">{{ $currencyOption->code }}</span>
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+    </div>
+</div>
 
 <div class="space-y-3 border-t border-luxury-border p-4">
     <a href="{{ route('pages.home') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-luxury-muted transition hover:text-luxury-white">

@@ -16,6 +16,26 @@
         window.__dispatchMapsPending = [];
         window.__dispatchMapInstances = {};
 
+        // A dark basemap that complements the luxury charcoal/gold theme —
+        // Google's default map is bright white otherwise, which looks out
+        // of place inside an all-dark panel. Markers/directions render
+        // exactly the same regardless of this style array.
+        window.__dispatchMapDarkStyle = [
+            { elementType: 'geometry', stylers: [{ color: '#1a1c20' }] },
+            { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1c20' }] },
+            { elementType: 'labels.text.fill', stylers: [{ color: '#8b8d87' }] },
+            { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#3a3c40' }] },
+            { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2c2e33' }] },
+            { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1c20' }] },
+            { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3a3226' }] },
+            { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1a1c20' }] },
+            { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#c9a24b' }] },
+            { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+            { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1013' }] },
+            { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#5c5e58' }] },
+        ];
+
         window.__initDispatchMaps = function () {
             window.__dispatchMapsReady = true;
             window.__dispatchMapsPending.forEach((call) => call());
@@ -46,6 +66,7 @@
                         zoom: 12,
                         disableDefaultUI: true,
                         zoomControl: true,
+                        styles: window.__dispatchMapDarkStyle,
                     });
                     instance = { map, markers: [], renderer: null };
                     window.__dispatchMapInstances[elementId] = instance;

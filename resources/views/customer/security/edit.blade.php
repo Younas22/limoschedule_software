@@ -39,10 +39,12 @@
             <div class="mb-4 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-luxury-white">{{ __('Active Sessions') }}</h3>
                 @if ($activeSessions->count() > 1)
-                    <form method="POST" action="{{ route('customer.security.sessions.revoke-others') }}" onsubmit="return confirm('{{ __('Log out of all other sessions?') }}');">
-                        @csrf
-                        <button type="submit" class="text-xs font-medium text-red-400 hover:text-red-300">{{ __('Log out all other sessions') }}</button>
-                    </form>
+                    <x-confirm-modal
+                        action="{{ route('customer.security.sessions.revoke-others') }}"
+                        title="{{ __('Log Out Other Sessions') }}"
+                        message="{{ __('This signs you out on every other device. You will stay signed in here.') }}"
+                        confirm-label="{{ __('Log Out Others') }}"
+                        trigger-label="{{ __('Log out all other sessions') }}" />
                 @endif
             </div>
 

@@ -30,11 +30,22 @@ class DashboardController extends Controller
             'averageRating' => $driver->average_rating,
         ];
 
+        // The ride a driver has been assigned but hasn't started yet — shown
+        // as "Up Next / Ready to Start" whenever there's no in-progress ride
+        // taking priority. Mirrors the customer dashboard's "next ride" card.
+        $upcomingRide = $driver->bookings()
+            ->with(['vehicle.category', 'customer'])
+            ->where('status', 'assigned')
+            ->where('pickup_datetime', '>=', now()->subHours(1))
+            ->orderBy('pickup_datetime')
+            ->first();
+
         return view('driver.dashboard', [
             'driver' => $driver,
             'stats' => $stats,
             'todayBookings' => $todayBookings,
             'activeRide' => $driver->activeBooking(),
+            'upcomingRide' => $upcomingRide,
         ]);
     }
 }

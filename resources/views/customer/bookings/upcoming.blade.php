@@ -4,6 +4,8 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Your scheduled rides, driver, and vehicle details.') }}</p>
     </div>
 
+    @include('customer.bookings.partials.tabs', ['active' => 'upcoming'])
+
     <form method="GET" class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div class="relative flex-1 sm:max-w-sm">
             <x-icon name="search" class="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-muted" />

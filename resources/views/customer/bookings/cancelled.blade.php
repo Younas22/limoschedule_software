@@ -4,6 +4,8 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Cancellation reasons and refund status for your cancelled rides.') }}</p>
     </div>
 
+    @include('customer.bookings.partials.tabs', ['active' => 'cancelled'])
+
     <form method="GET" class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div class="relative flex-1 sm:max-w-sm">
             <x-icon name="search" class="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-muted" />
@@ -57,7 +59,7 @@
                     </div>
 
                     {{-- Booking details --}}
-                    <div class="mt-5 grid grid-cols-2 gap-3 border-t border-luxury-border pt-5 text-xs sm:grid-cols-4">
+                    <div class="mt-5 grid grid-cols-1 gap-3 border-t border-luxury-border pt-5 text-xs sm:grid-cols-2 md:grid-cols-4">
                         <div>
                             <p class="text-luxury-muted">{{ __('Vehicle') }}</p>
                             <p class="mt-0.5 font-medium text-luxury-white">{{ $booking->vehicle?->category?->name ?? $booking->vehicle?->name ?? '—' }}</p>

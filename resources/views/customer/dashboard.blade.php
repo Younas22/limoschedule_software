@@ -1,11 +1,26 @@
 <x-customer.layouts.app :title="__('Dashboard')">
-    {{-- Welcome + Quick Booking --}}
+    @php
+        $firstName = explode(' ', auth()->guard('customer')->user()->name)[0];
+        $hour = (int) now(setting('timezone', config('app.timezone')))->format('G');
+        $greeting = $hour < 12 ? __('Good morning') : ($hour < 18 ? __('Good afternoon') : __('Good evening'));
+
+        $quickActions = [
+            ['label' => __('Book a Ride'), 'route' => 'customer.bookings.create', 'icon' => 'plus'],
+            ['label' => __('My Trips'), 'route' => 'customer.bookings.index', 'icon' => 'car'],
+            ['label' => __('Addresses'), 'route' => 'customer.addresses.index', 'icon' => 'map-pin'],
+            ['label' => __('Favorites'), 'route' => 'customer.favorites.index', 'icon' => 'heart'],
+            ['label' => __('Wallet'), 'route' => 'customer.wallet.index', 'icon' => 'wallet'],
+        ];
+    @endphp
+
+    {{-- Greeting + Primary CTA --}}
     <div class="mb-6 flex flex-col gap-4 rounded-2xl border border-luxury-gold/30 bg-gradient-to-br from-luxury-charcoal to-luxury-graphite p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('Welcome back, :name', ['name' => explode(' ', auth()->guard('customer')->user()->name)[0]]) }}</h2>
+            <p class="text-xs font-medium uppercase tracking-wider text-luxury-gold">{{ $greeting }}</p>
+            <h2 class="mt-1 text-2xl font-semibold text-luxury-white">{{ $firstName }}</h2>
             <p class="mt-1 text-sm text-luxury-muted">{{ __("Here's what's happening with your rides.") }}</p>
         </div>
-        <a href="{{ route('pages.home').'#booking-widget' }}" class="shrink-0">
+        <a href="{{ route('customer.bookings.create') }}" class="shrink-0">
             <x-admin.button type="button" variant="primary" class="w-full sm:w-auto">
                 <x-icon name="car" class="h-4 w-4" />
                 {{ __('Book a Ride') }}
@@ -13,19 +28,49 @@
         </a>
     </div>
 
-    {{-- Upcoming Ride Card --}}
+    {{-- Quick Actions --}}
+    <div class="mb-6 grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-3">
+        @foreach ($quickActions as $action)
+            <a href="{{ route($action['route']) }}"
+                class="tap-scale flex flex-col items-center gap-2 rounded-2xl border border-luxury-border bg-luxury-charcoal px-2 py-3 text-center transition hover:border-luxury-gold/40">
+                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-luxury-gold/10 text-luxury-gold">
+                    <x-icon name="{{ $action['icon'] }}" class="h-4 w-4" />
+                </span>
+                <span class="truncate text-[11px] font-medium leading-tight text-luxury-muted">{{ $action['label'] }}</span>
+            </a>
+        @endforeach
+    </div>
+
+    {{-- Your Ride --}}
     @if ($nextRide)
         <div class="mb-6 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal"
-            x-data="countdownTimer('{{ $nextRide->pickup_datetime->toIso8601String() }}')" x-init="start()">
+            x-data="countdownTimer('{{ $nextRide->pickup_datetime->toIso8601String() }}')" x-init="if (@js($nextRide->status !== 'in_progress')) start()">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-luxury-border bg-luxury-graphite/40 px-5 py-3">
                 <div class="flex items-center gap-2">
-                    <span class="text-xs font-semibold uppercase tracking-wide text-luxury-gold">{{ __('Your Next Ride') }}</span>
+                    <span class="text-xs font-semibold uppercase tracking-wide text-luxury-gold">
+                        {{ $nextRide->status === 'in_progress' ? __('Your Ride') : __('Your Next Ride') }}
+                    </span>
                     <x-customer.status-badge :status="$nextRide->status" />
                 </div>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-luxury-gold/10 px-3 py-1 text-xs font-semibold text-luxury-gold" :class="{ 'animate-pulse': isSoon }">
-                    <x-icon name="clock" class="h-3.5 w-3.5" />
-                    <span x-text="label"></span>
-                </span>
+
+                @if ($nextRide->status === 'in_progress')
+                    @if ($nextRide->estimated_arrival_at)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-luxury-gold/10 px-3 py-1 text-xs font-semibold text-luxury-gold">
+                            <x-icon name="clock" class="h-3.5 w-3.5" />
+                            {{ __('Arriving :time', ['time' => $nextRide->estimated_arrival_at->format('h:i A')]) }}
+                        </span>
+                    @endif
+                @elseif ($nextRideDispatch && $nextRideDispatch['duration_minutes'] !== null)
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-luxury-gold/10 px-3 py-1 text-xs font-semibold text-luxury-gold">
+                        <x-icon name="car" class="h-3.5 w-3.5" />
+                        {{ __('Driver ETA: :min min', ['min' => $nextRideDispatch['duration_minutes']]) }}
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-luxury-gold/10 px-3 py-1 text-xs font-semibold text-luxury-gold" :class="{ 'animate-pulse': isSoon }">
+                        <x-icon name="clock" class="h-3.5 w-3.5" />
+                        <span x-text="label"></span>
+                    </span>
+                @endif
             </div>
 
             <div class="p-5">
@@ -91,17 +136,26 @@
                         <p class="text-[11px] uppercase tracking-wide text-luxury-muted">{{ __('Fare') }}</p>
                         <p class="text-lg font-semibold text-luxury-gold">{{ currency($nextRide->fare_amount) }}</p>
                     </div>
-                    <a href="{{ route('customer.bookings.show', $nextRide) }}"
-                        class="tap-scale inline-flex items-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
-                        {{ __('View Booking') }}
-                    </a>
+                    <div class="flex items-center gap-2">
+                        @if ($nextRide->driver?->phone)
+                            <a href="tel:{{ $nextRide->driver->phone }}"
+                                class="tap-scale inline-flex items-center gap-1.5 rounded-lg border border-luxury-border px-4 py-2 text-xs font-semibold text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                <x-icon name="phone" class="h-3.5 w-3.5" />
+                                {{ __('Call Driver') }}
+                            </a>
+                        @endif
+                        <a href="{{ route('customer.bookings.show', $nextRide) }}"
+                            class="tap-scale inline-flex items-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light">
+                            {{ in_array($nextRide->status, ['confirmed', 'assigned', 'in_progress'], true) ? __('Track Ride') : __('View Booking') }}
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     @endif
 
     {{-- Stats --}}
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
         <x-admin.stat-card :label="__('Total Spent')" :value="currency($stats['totalSpent'])">
             <x-icon name="cash" class="h-5 w-5" />
         </x-admin.stat-card>
@@ -165,43 +219,44 @@
     </div>
     --}}
 
-    {{-- Recent Bookings --}}
-    <div class="mt-8 rounded-2xl border border-luxury-border bg-luxury-charcoal">
-        <div class="flex items-center justify-between border-b border-luxury-border px-6 py-4">
-            <h3 class="text-sm font-semibold text-luxury-white">{{ __('Recent Bookings') }}</h3>
+    {{-- Recent Trips — cards, not a table, so they read the same on a
+         phone as on a desktop and never need horizontal scrolling. --}}
+    <div class="mt-8">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-luxury-white">{{ __('Recent Trips') }}</h3>
             <a href="{{ route('customer.bookings.index') }}" class="text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">{{ __('View All') }}</a>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-start text-sm">
-                <thead>
-                    <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
-                        <th class="px-6 py-3 font-medium">{{ __('Booking') }}</th>
-                        <th class="px-6 py-3 font-medium">{{ __('Route') }}</th>
-                        <th class="px-6 py-3 font-medium">{{ __('Date') }}</th>
-                        <th class="px-6 py-3 font-medium">{{ __('Vehicle') }}</th>
-                        <th class="px-6 py-3 font-medium">{{ __('Status') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-luxury-border/60">
-                    @forelse ($recentBookings as $booking)
-                        <tr class="hover:bg-luxury-graphite">
-                            <td class="px-6 py-3 font-medium text-luxury-white">{{ $booking->booking_number }}</td>
-                            <td class="max-w-xs px-6 py-3 text-luxury-muted">
-                                <p class="truncate">{{ $booking->pickup_location }} &rarr; {{ $booking->dropoff_location }}</p>
-                            </td>
-                            <td class="px-6 py-3 text-luxury-muted">{{ $booking->pickup_datetime->format('M d, Y') }}</td>
-                            <td class="px-6 py-3 text-luxury-muted">{{ $booking->vehicle?->category?->name ?? $booking->vehicle?->name ?? '—' }}</td>
-                            <td class="px-6 py-3"><x-customer.status-badge :status="$booking->status" /></td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-luxury-muted">{{ __("You haven't made any bookings yet.") }}</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+        @if ($recentBookings->isNotEmpty())
+            <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                @foreach ($recentBookings as $booking)
+                    <a href="{{ route('customer.bookings.show', $booking) }}"
+                        class="tap-scale flex items-center gap-4 rounded-2xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-luxury-gold/10 text-luxury-gold">
+                            <x-icon name="car" class="h-5 w-5" />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2">
+                                <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->booking_number }}</p>
+                                <x-customer.status-badge :status="$booking->status" />
+                            </div>
+                            <p class="mt-1 truncate text-xs text-luxury-muted">{{ $booking->pickup_location }} &rarr; {{ $booking->dropoff_location }}</p>
+                            <p class="mt-0.5 text-[11px] text-luxury-muted">{{ $booking->pickup_datetime->format('M d, Y') }}</p>
+                        </div>
+                        <p class="shrink-0 text-sm font-semibold text-luxury-gold">{{ currency($booking->fare_amount) }}</p>
+                    </a>
+                @endforeach
+            </div>
+        @else
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center">
+                <x-icon name="car" class="mx-auto h-8 w-8 text-luxury-muted" />
+                <p class="mt-3 text-sm text-luxury-muted">{{ __("You haven't made any bookings yet.") }}</p>
+                <a href="{{ route('customer.bookings.create') }}" class="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-luxury-gold hover:text-luxury-gold-light">
+                    {{ __('Book your first ride') }}
+                    <x-icon name="chevron-right" class="h-4 w-4 rtl:rotate-180" />
+                </a>
+            </div>
+        @endif
     </div>
 
     @if ($nextRide)

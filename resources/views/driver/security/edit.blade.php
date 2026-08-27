@@ -35,7 +35,7 @@
                     <x-admin.input-error :messages="$errors->get('password_confirmation')" />
                 </div>
 
-                <x-admin.button type="submit" variant="primary">{{ __('Update Password') }}</x-admin.button>
+                <x-admin.button type="submit" variant="primary" class="w-full sm:w-auto">{{ __('Update Password') }}</x-admin.button>
             </form>
         </div>
     </div>

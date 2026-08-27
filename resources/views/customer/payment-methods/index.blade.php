@@ -65,18 +65,19 @@
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 class="text-sm font-semibold text-luxury-white">{{ __('Payment History') }}</h3>
             <form method="GET" class="flex items-center gap-2">
-                <div class="relative">
+                <div class="relative flex-1 sm:flex-none">
                     <x-icon name="search" class="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-muted" />
                     <input type="search" name="search" value="{{ $search }}" placeholder="{{ __('Search by booking # or transaction ID...') }}"
-                        class="w-64 rounded-lg border border-luxury-border bg-luxury-charcoal py-2 ps-9 pe-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal py-2 ps-9 pe-3 text-sm text-luxury-white placeholder:text-luxury-muted/70 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold sm:w-64">
                 </div>
                 @if ($search)
-                    <a href="{{ route('customer.payment-methods.index') }}" class="text-sm text-luxury-muted hover:text-luxury-white">{{ __('Clear') }}</a>
+                    <a href="{{ route('customer.payment-methods.index') }}" class="shrink-0 text-sm text-luxury-muted hover:text-luxury-white">{{ __('Clear') }}</a>
                 @endif
             </form>
         </div>
 
-        <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+        {{-- Desktop: table --}}
+        <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
             <div class="overflow-x-auto">
                 <table class="w-full text-start text-sm">
                     <thead>
@@ -109,6 +110,29 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        {{-- Mobile: cards --}}
+        <div class="space-y-3 sm:hidden">
+            @forelse ($payments as $payment)
+                <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-medium text-luxury-white">{{ $payment->booking_number }}</p>
+                            <p class="mt-0.5 text-xs text-luxury-muted">{{ ($payment->paid_at ?? $payment->updated_at)->format('M d, Y') }} &middot; {{ $payment->payment_gateway_label ?? '—' }}</p>
+                        </div>
+                        <x-customer.payment-badge :status="$payment->payment_status" />
+                    </div>
+                    <div class="mt-3 flex items-center justify-between border-t border-luxury-border pt-3">
+                        <span class="truncate font-mono text-[11px] text-luxury-muted">{{ $payment->transaction_id ?? '—' }}</span>
+                        <span class="shrink-0 text-sm font-semibold text-luxury-white">{{ currency($payment->fare_amount) }}</span>
+                    </div>
+                </div>
+            @empty
+                <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                    {{ $search ? __('No payments match your search.') : __('No payment history yet.') }}
+                </div>
+            @endforelse
         </div>
 
         @if ($payments->hasPages())

@@ -17,12 +17,13 @@
             <div class="flex items-center gap-2">
                 <x-customer.ticket-status-badge :status="$ticket->status" />
                 @if ($ticket->status !== 'closed')
-                    <form method="POST" action="{{ route('customer.support.close', $ticket) }}" onsubmit="return confirm('{{ __('Close this ticket?') }}');">
-                        @csrf
-                        <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-red-500/40 hover:text-red-400">
-                            {{ __('Close Ticket') }}
-                        </button>
-                    </form>
+                    <x-confirm-modal
+                        action="{{ route('customer.support.close', $ticket) }}"
+                        title="{{ __('Close This Ticket') }}"
+                        message="{{ __('You can still view this ticket after closing it, but no further replies can be added.') }}"
+                        confirm-label="{{ __('Close Ticket') }}"
+                        trigger-label="{{ __('Close Ticket') }}"
+                        trigger-class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-red-500/40 hover:text-red-400" />
                 @endif
             </div>
         </div>

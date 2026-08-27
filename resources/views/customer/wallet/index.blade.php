@@ -104,7 +104,8 @@
                 </a>
             </div>
         </div>
-        <div class="overflow-x-auto">
+        {{-- Desktop: table --}}
+        <div class="hidden overflow-x-auto sm:block">
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
@@ -137,6 +138,31 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        {{-- Mobile: cards --}}
+        <div class="divide-y divide-luxury-border/60 sm:hidden">
+            @forelse ($transactions as $transaction)
+                <div class="p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-medium text-luxury-white">{{ $transaction->reason ?? __('Transaction') }}</p>
+                            <p class="mt-0.5 text-xs text-luxury-muted">{{ $transaction->created_at->format('M d, Y — h:i A') }}</p>
+                        </div>
+                        <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-medium {{ $transaction->type === 'credit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400' }}">
+                            {{ ucfirst($transaction->type) }}
+                        </span>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between border-t border-luxury-border pt-3 text-sm">
+                        <span class="font-semibold {{ $transaction->type === 'credit' ? 'text-emerald-400' : 'text-red-400' }}">
+                            {{ $transaction->type === 'credit' ? '+' : '-' }}{{ currency($transaction->amount) }}
+                        </span>
+                        <span class="text-xs text-luxury-muted">{{ __('Balance') }}: {{ currency($transaction->balance_after) }}</span>
+                    </div>
+                </div>
+            @empty
+                <p class="px-4 py-10 text-center text-sm text-luxury-muted">{{ __('No transactions yet.') }}</p>
+            @endforelse
         </div>
     </div>
 

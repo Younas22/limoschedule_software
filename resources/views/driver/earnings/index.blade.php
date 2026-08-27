@@ -22,7 +22,8 @@
         <div class="border-b border-luxury-border px-6 py-4">
             <h3 class="text-sm font-semibold text-luxury-white">{{ __('Paid Trips') }}</h3>
         </div>
-        <div class="overflow-x-auto">
+        {{-- Desktop: table --}}
+        <div class="hidden overflow-x-auto sm:block">
             <table class="w-full text-start text-sm">
                 <thead>
                     <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
@@ -47,6 +48,21 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        {{-- Mobile: cards --}}
+        <div class="divide-y divide-luxury-border/60 sm:hidden">
+            @forelse ($bookings as $booking)
+                <div class="flex items-center justify-between gap-3 p-4">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->booking_number }}</p>
+                        <p class="mt-0.5 text-xs text-luxury-muted">{{ $booking->pickup_datetime->format('M d, Y') }} &middot; {{ __('Fare') }}: {{ currency($booking->fare_amount) }}</p>
+                    </div>
+                    <span class="shrink-0 text-base font-semibold text-luxury-gold">{{ currency($booking->fare_amount * ($commissionRate / 100)) }}</span>
+                </div>
+            @empty
+                <p class="px-4 py-10 text-center text-sm text-luxury-muted">{{ __('No paid trips yet.') }}</p>
+            @endforelse
         </div>
     </div>
 

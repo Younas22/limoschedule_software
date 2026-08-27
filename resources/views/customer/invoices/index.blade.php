@@ -4,7 +4,8 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Download invoices for your bookings.') }}</p>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -48,6 +49,40 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($bookings as $booking)
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->invoice_number }}</p>
+                        <p class="mt-0.5 text-xs text-luxury-muted">{{ $booking->booking_number }} &middot; {{ $booking->pickup_datetime->format('M d, Y') }}</p>
+                    </div>
+                    <x-customer.payment-badge :status="$booking->payment_status" />
+                </div>
+                <div class="mt-3 flex items-center justify-between gap-3 border-t border-luxury-border pt-3">
+                    <span class="text-base font-semibold text-luxury-gold">{{ currency($booking->fare_amount) }}</span>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('booking.invoice', $booking->booking_number) }}" target="_blank"
+                            class="tap-scale inline-flex items-center gap-1.5 rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            <x-icon name="eye" class="h-3.5 w-3.5" />
+                            {{ __('View') }}
+                        </a>
+                        <a href="{{ route('booking.invoice.download', $booking->booking_number) }}"
+                            class="tap-scale inline-flex items-center gap-1.5 rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            <x-icon name="download" class="h-3.5 w-3.5" />
+                            {{ __('PDF') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No invoices available yet.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($bookings->hasPages())

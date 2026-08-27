@@ -1,7 +1,7 @@
 @props(['booking', 'dispatch', 'pollUrl' => null])
 
 <div x-data="dispatchCard(@js($dispatch), @js($pollUrl))" x-init="init()" class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-1 flex items-center justify-between">
         <h3 class="text-sm font-semibold text-luxury-white">{{ __('Driver Dispatch') }}</h3>
         <span class="rounded-full px-2.5 py-1 text-xs font-medium"
             :class="{
@@ -11,6 +11,16 @@
             }"
             x-text="status === 'busy' ? '{{ __('On Trip') }}' : (status === 'in_progress' ? '{{ __('In Progress') }}' : '{{ __('Available') }}')"></span>
     </div>
+
+    {{-- Live-update state — never lets stale data quietly look fresh. --}}
+    <p class="mb-4 text-[11px] text-luxury-muted" aria-live="polite">
+        <template x-if="pollFailed">
+            <span class="text-amber-400">{{ __('Connection interrupted — retrying…') }}</span>
+        </template>
+        <template x-if="!pollFailed && pollUrl">
+            <span x-text="lastUpdatedLabel"></span>
+        </template>
+    </p>
 
     <template x-if="!data">
         <p class="text-sm text-luxury-muted">{{ __('Dispatch information is not available yet.') }}</p>
@@ -99,10 +109,19 @@
 
 <script>
     function dispatchCard(initial, pollUrl) {
+        const justNowLabel = @json(__('Updated just now'));
+        const secondsAgoLabel = @json(__('Updated :s sec ago'));
+        const minutesAgoLabel = @json(__('Updated :m min ago'));
+
         return {
             data: initial,
             pollUrl,
             timer: null,
+            clockTimer: null,
+            lastUpdatedAt: Date.now(),
+            lastUpdatedLabel: justNowLabel,
+            pollFailed: false,
+            consecutiveFailures: 0,
 
             get scenario() {
                 return this.data ? this.data.scenario : null;
@@ -117,6 +136,10 @@
 
                 if (this.pollUrl) {
                     this.timer = setInterval(() => this.poll(), 15000);
+                    // Ticks the "Updated Xs ago" label between polls, without
+                    // waiting on a network round-trip — so the number is
+                    // always honest even if a poll is late or fails.
+                    this.clockTimer = setInterval(() => this.updateLabel(), 5000);
                 }
             },
 
@@ -132,16 +155,40 @@
                 });
             },
 
+            updateLabel() {
+                const seconds = Math.round((Date.now() - this.lastUpdatedAt) / 1000);
+
+                if (seconds < 10) {
+                    this.lastUpdatedLabel = justNowLabel;
+                } else if (seconds < 60) {
+                    this.lastUpdatedLabel = secondsAgoLabel.replace(':s', seconds);
+                } else {
+                    this.lastUpdatedLabel = minutesAgoLabel.replace(':m', Math.round(seconds / 60));
+                }
+            },
+
             async poll() {
                 try {
                     const response = await fetch(this.pollUrl, { headers: { 'Accept': 'application/json' } });
-                    if (! response.ok) return;
+                    if (! response.ok) throw new Error('bad response');
 
                     const json = await response.json();
                     this.data = json.dispatch;
                     this.renderMap();
+
+                    this.pollFailed = false;
+                    this.consecutiveFailures = 0;
+                    this.lastUpdatedAt = Date.now();
+                    this.updateLabel();
                 } catch (e) {
-                    // Silently skip this tick — the next poll will retry.
+                    // A single missed tick isn't worth alarming the customer
+                    // over — the next poll usually recovers silently. Only
+                    // surface "connection interrupted" once it's happened
+                    // twice in a row.
+                    this.consecutiveFailures++;
+                    if (this.consecutiveFailures >= 2) {
+                        this.pollFailed = true;
+                    }
                 }
             },
         };

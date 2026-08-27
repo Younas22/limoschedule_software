@@ -37,6 +37,21 @@ class BookingController extends Controller
         return $this->list($request, __('My Bookings'));
     }
 
+    /**
+     * The in-panel "Book a Ride" screen — reuses the exact same public
+     * booking widget component the homepage uses (<x-booking-search-box>),
+     * just rendered inside the authenticated app shell so a logged-in
+     * customer never has to leave the panel to start a booking. The
+     * component is fully self-contained (its own Google Maps loading,
+     * fare-quote AJAX, and submit handling) and already detects a logged-in
+     * customer guard on submit, so nothing about the booking engine itself
+     * changes here.
+     */
+    public function create(): View
+    {
+        return view('customer.bookings.create');
+    }
+
     public function upcoming(Request $request): View
     {
         $search = $request->query('search');

@@ -64,6 +64,17 @@
                     <p x-show="cityName" x-cloak class="mt-1 text-xs text-luxury-muted">
                         {{ __('City detected') }}: <span class="text-luxury-gold" x-text="cityName"></span>
                     </p>
+
+                    {{-- Pin preview — so the customer can see, not just read,
+                         the exact spot this address will resolve to. --}}
+                    <div x-show="lat && lng" x-cloak class="mt-3 space-y-1">
+                        <div id="address-map-preview" class="h-40 w-full overflow-hidden rounded-xl border border-luxury-border bg-luxury-graphite"></div>
+                        <p class="flex items-center gap-1 text-[11px] text-luxury-muted">
+                            <x-icon name="map-pin" class="h-3 w-3 text-luxury-gold" />
+                            {{ __('This is the location that will be saved.') }}
+                        </p>
+                    </div>
+
                     <input type="hidden" name="lat" :value="lat ?? ''">
                     <input type="hidden" name="lng" :value="lng ?? ''">
                     <input type="hidden" name="place_id" :value="placeId ?? ''">
@@ -147,11 +158,13 @@
                         </form>
                         <span class="text-luxury-border">|</span>
                     @endunless
-                    <form method="POST" action="{{ route('customer.addresses.destroy', $address) }}" onsubmit="return confirm('{{ __('Remove this address?') }}');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-xs font-medium text-red-400 hover:text-red-300">{{ __('Remove') }}</button>
-                    </form>
+                    <x-confirm-modal
+                        action="{{ route('customer.addresses.destroy', $address) }}"
+                        method="DELETE"
+                        title="{{ __('Remove Address') }}"
+                        message="{{ __('This saved address will be permanently removed.') }}"
+                        confirm-label="{{ __('Remove') }}"
+                        trigger-label="{{ __('Remove') }}" />
                 </div>
             </div>
         @empty
@@ -176,6 +189,42 @@
                     autocompleteReady: false,
                     locating: false,
                     locateError: null,
+                    previewMap: null,
+                    previewMarker: null,
+
+                    renderPreviewMap() {
+                        if (! window.google?.maps || this.lat === null || this.lng === null) return;
+
+                        const position = { lat: this.lat, lng: this.lng };
+
+                        this.$nextTick(() => {
+                            const el = document.getElementById('address-map-preview');
+                            if (! el) return;
+
+                            if (! this.previewMap) {
+                                this.previewMap = new google.maps.Map(el, {
+                                    center: position,
+                                    zoom: 15,
+                                    disableDefaultUI: true,
+                                    gestureHandling: 'cooperative',
+                                    styles: [
+                                        { elementType: 'geometry', stylers: [{ color: '#1a1c20' }] },
+                                        { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1c20' }] },
+                                        { elementType: 'labels.text.fill', stylers: [{ color: '#8b8d87' }] },
+                                        { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+                                        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2c2e33' }] },
+                                        { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1c20' }] },
+                                        { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+                                        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1013' }] },
+                                    ],
+                                });
+                                this.previewMarker = new google.maps.Marker({ position, map: this.previewMap });
+                            } else {
+                                this.previewMap.setCenter(position);
+                                this.previewMarker.setPosition(position);
+                            }
+                        });
+                    },
 
                     selectedCountry() {
                         return this.countries.find((item) => item.name === this.country) || null;
@@ -221,6 +270,7 @@
                             this.placeId = place.place_id || null;
 
                             this.applyLocationComponents(place.address_components);
+                            this.renderPreviewMap();
                         });
                     },
 
@@ -239,6 +289,7 @@
                                 const { latitude, longitude } = position.coords;
                                 this.lat = latitude;
                                 this.lng = longitude;
+                                this.renderPreviewMap();
 
                                 if (! window.google?.maps) {
                                     this.locating = false;

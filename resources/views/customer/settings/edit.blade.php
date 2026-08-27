@@ -137,7 +137,23 @@
                         });
 
                         if (! response.ok) {
-                            throw new Error('Request failed');
+                            // Surface the actual validation message when the
+                            // server sent one (422 with a Laravel-style
+                            // {errors: {field: [messages]}} body), instead
+                            // of always hiding it behind a generic toast.
+                            let message = null;
+                            if (response.status === 422) {
+                                try {
+                                    const body = await response.json();
+                                    const firstField = body?.errors ? Object.keys(body.errors)[0] : null;
+                                    message = firstField ? body.errors[firstField][0] : (body?.message ?? null);
+                                } catch (parseError) {
+                                    // Body wasn't JSON — fall through to the generic message below.
+                                }
+                            }
+
+                            this.showToast(message || @json(__('Something went wrong. Please try again.')));
+                            return;
                         }
 
                         this.showToast(successMessage);

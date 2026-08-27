@@ -10,6 +10,8 @@
         </div>
     </div>
 
+    @include('customer.bookings.partials.tabs', ['active' => 'completed'])
+
     <form method="GET" class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div class="relative flex-1 sm:max-w-sm">
             <x-icon name="search" class="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-luxury-muted" />

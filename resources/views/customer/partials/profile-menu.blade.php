@@ -25,6 +25,10 @@
                 <x-icon name="lock" class="h-4 w-4" />
                 {{ __('Security') }}
             </a>
+            <a href="{{ route('customer.settings.edit') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white">
+                <x-icon name="settings" class="h-4 w-4" />
+                {{ __('Preferences') }}
+            </a>
         </div>
 
         <form method="POST" action="{{ route('customer.logout') }}" class="border-t border-luxury-border">

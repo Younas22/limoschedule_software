@@ -49,6 +49,7 @@ Route::middleware('customer.auth:customer')->group(function () {
         Route::get('upcoming', [BookingController::class, 'upcoming'])->name('upcoming');
         Route::get('completed', [BookingController::class, 'completed'])->name('completed');
         Route::get('cancelled', [BookingController::class, 'cancelled'])->name('cancelled');
+        Route::get('create', [BookingController::class, 'create'])->name('create');
         Route::get('{booking}', [BookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [BookingController::class, 'cancel'])->name('cancel');
         Route::get('{booking}/dispatch', [DispatchController::class, 'show'])->name('dispatch');

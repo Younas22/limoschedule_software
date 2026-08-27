@@ -1,13 +1,13 @@
-<x-driver.layouts.app :title="__('My Bookings')">
+<x-driver.layouts.app :title="__('My Rides')">
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('My Bookings') }}</h2>
+            <h2 class="text-2xl font-semibold text-luxury-white">{{ __('My Rides') }}</h2>
             <p class="mt-1 text-sm text-luxury-muted">{{ __('All trips assigned to you.') }}</p>
         </div>
 
         <form method="GET">
             <select name="status" onchange="this.form.submit()"
-                class="rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2.5 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2.5 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold sm:w-auto">
                 <option value="">{{ __('All Statuses') }}</option>
                 @foreach ($filterStatuses as $value => $label)
                     <option value="{{ $value }}" @selected($statusFilter === $value)>{{ __($label) }}</option>
@@ -16,7 +16,8 @@
         </form>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+    {{-- Desktop: table --}}
+    <div class="hidden overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal sm:block">
         <div class="overflow-x-auto">
             <table class="w-full text-start text-sm">
                 <thead>
@@ -55,6 +56,30 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- Mobile: cards --}}
+    <div class="space-y-3 sm:hidden">
+        @forelse ($bookings as $booking)
+            <a href="{{ route('driver.bookings.show', $booking) }}"
+                class="tap-scale block rounded-2xl border border-luxury-border bg-luxury-charcoal p-4 transition hover:border-luxury-gold/40">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-luxury-white">{{ $booking->customer?->name ?? $booking->booking_number }}</p>
+                        <p class="mt-0.5 text-xs text-luxury-muted">{{ $booking->booking_number }} &middot; {{ $booking->pickup_datetime->format('M d, Y — h:i A') }}</p>
+                    </div>
+                    <x-customer.status-badge :status="$booking->status" />
+                </div>
+                <div class="mt-3 flex items-start gap-2 border-t border-luxury-border pt-3">
+                    <x-icon name="map-pin" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-luxury-gold" />
+                    <p class="min-w-0 flex-1 truncate text-xs text-luxury-muted">{{ $booking->pickup_location }} &rarr; {{ $booking->dropoff_location }}</p>
+                </div>
+            </a>
+        @empty
+            <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-10 text-center text-sm text-luxury-muted">
+                {{ __('No bookings found.') }}
+            </div>
+        @endforelse
     </div>
 
     @if ($bookings->hasPages())

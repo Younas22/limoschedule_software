@@ -23,12 +23,7 @@
                 @foreach ($languages as $language)
                     <button type="button" @click="setLocale('{{ $language->code }}')"
                         :class="locale === '{{ $language->code }}' ? 'border-luxury-gold bg-luxury-gold/10 text-luxury-gold' : 'border-luxury-border text-luxury-muted hover:border-luxury-gold/40'"
-                        class="tap-scale flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition">
-                        <span class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-luxury-graphite">
-                            @if ($language->flag_url)
-                                <img src="{{ $language->flag_url }}" alt="{{ $language->name }}" class="h-full w-full object-cover">
-                            @endif
-                        </span>
+                        class="tap-scale flex items-center justify-center rounded-lg border px-3 py-2.5 text-sm transition">
                         <span class="truncate">{{ $language->native_name ?: $language->name }}</span>
                     </button>
                 @endforeach

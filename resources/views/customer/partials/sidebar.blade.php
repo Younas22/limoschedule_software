@@ -3,10 +3,17 @@
 
     $navItems = [
         ['label' => __('Dashboard'), 'route' => 'customer.dashboard', 'icon' => 'home'],
-        ['label' => __('My Bookings'), 'route' => 'customer.bookings.index', 'icon' => 'car'],
-        ['label' => __('Upcoming Trips'), 'route' => 'customer.bookings.upcoming', 'icon' => 'clock'],
-        ['label' => __('Completed Trips'), 'route' => 'customer.bookings.completed', 'icon' => 'check-circle'],
-        ['label' => __('Cancelled Trips'), 'route' => 'customer.bookings.cancelled', 'icon' => 'close'],
+        [
+            'type' => 'group',
+            'label' => __('Trips'),
+            'icon' => 'car',
+            'children' => [
+                ['label' => __('All Bookings'), 'route' => 'customer.bookings.index'],
+                ['label' => __('Upcoming'), 'route' => 'customer.bookings.upcoming'],
+                ['label' => __('Completed'), 'route' => 'customer.bookings.completed'],
+                ['label' => __('Cancelled'), 'route' => 'customer.bookings.cancelled'],
+            ],
+        ],
         ['label' => __('Favorites'), 'route' => 'customer.favorites.index', 'icon' => 'heart'],
         ['label' => __('Saved Addresses'), 'route' => 'customer.addresses.index', 'icon' => 'map-pin'],
         // Temporarily hidden from navigation (not ready to launch yet) —
@@ -16,9 +23,16 @@
         ['label' => __('Invoices'), 'route' => 'customer.invoices.index', 'icon' => 'download'],
         // ['label' => __('Notifications'), 'route' => 'customer.notifications.index', 'icon' => 'bell'],
         // ['label' => __('Reviews'), 'route' => 'customer.reviews.index', 'icon' => 'star'],
-        ['label' => __('Profile Settings'), 'route' => 'customer.profile.edit', 'icon' => 'user'],
-        ['label' => __('Preferences'), 'route' => 'customer.settings.edit', 'icon' => 'settings'],
-        ['label' => __('Security'), 'route' => 'customer.security.edit', 'icon' => 'lock'],
+        [
+            'type' => 'group',
+            'label' => __('Account'),
+            'icon' => 'user',
+            'children' => [
+                ['label' => __('Profile Settings'), 'route' => 'customer.profile.edit'],
+                ['label' => __('Preferences'), 'route' => 'customer.settings.edit'],
+                ['label' => __('Security'), 'route' => 'customer.security.edit'],
+            ],
+        ],
         ['label' => __('Support'), 'route' => 'customer.support.index', 'icon' => 'chat'],
     ];
 @endphp
@@ -41,11 +55,34 @@
 
 <nav class="scrollbar-luxury flex-1 space-y-1 overflow-y-auto px-3 py-6">
     @foreach ($navItems as $item)
-        <a href="{{ route($item['route']) }}"
-            class="tap-scale flex items-center gap-3 rounded-lg border-s-2 px-4 py-2.5 text-sm font-medium transition {{ request()->routeIs($item['route']) ? 'border-luxury-gold bg-luxury-gold/10 text-luxury-gold' : 'border-transparent text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white' }}">
-            <x-icon name="{{ $item['icon'] }}" class="h-5 w-5 shrink-0" />
-            {{ $item['label'] }}
-        </a>
+        @if (($item['type'] ?? null) === 'group')
+            @php
+                $childIsActive = collect($item['children'])->contains(fn ($child) => request()->routeIs($child['route']));
+            @endphp
+            <div x-data="{ open: {{ $childIsActive ? 'true' : 'false' }} }">
+                <button type="button" @click="open = !open"
+                    class="tap-scale flex w-full cursor-pointer items-center gap-3 rounded-lg border-s-2 px-4 py-2.5 text-sm font-medium transition {{ $childIsActive ? 'border-luxury-gold bg-luxury-gold/10 text-luxury-gold' : 'border-transparent text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white' }}">
+                    <x-icon name="{{ $item['icon'] }}" class="h-5 w-5 shrink-0" />
+                    {{ $item['label'] }}
+                    <x-icon name="chevron-down" class="ms-auto h-4 w-4 shrink-0 transition-transform" x-bind:class="open ? 'rotate-180' : ''" />
+                </button>
+
+                <div x-show="open" x-cloak x-transition class="ms-4 mt-1 space-y-1 border-s border-luxury-border ps-4">
+                    @foreach ($item['children'] as $child)
+                        <a href="{{ route($child['route']) }}"
+                            class="block rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs($child['route']) ? 'text-luxury-gold' : 'text-luxury-muted hover:text-luxury-white' }}">
+                            {{ $child['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @else
+            <a href="{{ route($item['route']) }}"
+                class="tap-scale flex items-center gap-3 rounded-lg border-s-2 px-4 py-2.5 text-sm font-medium transition {{ request()->routeIs($item['route']) ? 'border-luxury-gold bg-luxury-gold/10 text-luxury-gold' : 'border-transparent text-luxury-muted hover:bg-luxury-graphite hover:text-luxury-white' }}">
+                <x-icon name="{{ $item['icon'] }}" class="h-5 w-5 shrink-0" />
+                {{ $item['label'] }}
+            </a>
+        @endif
     @endforeach
 </nav>
 

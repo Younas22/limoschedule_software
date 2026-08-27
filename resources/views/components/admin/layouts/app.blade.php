@@ -1,6 +1,12 @@
-@php $direction = \App\Models\Language::findActiveByCode(app()->getLocale())?->direction ?? 'ltr'; @endphp
+@php
+    $direction = \App\Models\Language::findActiveByCode(app()->getLocale())?->direction ?? 'ltr';
+    // The admin panel's own dark/light preference — session-scoped and
+    // separate from Setting::theme_mode (the public website's theme), so
+    // toggling it here never changes what customers see on the live site.
+    $adminThemeMode = session('admin_theme_mode', setting('theme_mode', 'dark'));
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $direction }}" data-theme="{{ setting('theme_mode', 'dark') }}" class="{{ setting('theme_mode', 'dark') === 'light' ? '' : 'dark' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $direction }}" data-theme="{{ $adminThemeMode }}" class="{{ $adminThemeMode === 'light' ? '' : 'dark' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,6 +15,11 @@
     <link rel="icon" href="{{ setting('favicon_url') ?: asset('favicon.ico') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Windows doesn't render flag emoji, so the topbar language switcher
+         uses this CSS sprite library instead (matches driver/public). --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @stack('styles')

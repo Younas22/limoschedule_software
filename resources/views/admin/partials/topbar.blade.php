@@ -12,6 +12,7 @@
     </div>
 
     <div class="ms-auto flex items-center gap-3">
+        @include('admin.partials.theme-toggle')
         @include('admin.partials.currency-switcher')
         @include('admin.partials.locale-switcher')
         @include('admin.partials.notifications')

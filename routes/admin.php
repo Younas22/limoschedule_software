@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\EmailSettingController;
 use App\Http\Controllers\Admin\IntegrationController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\LocaleController;
+use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\Location\AirportController;
 use App\Http\Controllers\Admin\Location\CityController;
 use App\Http\Controllers\Admin\Location\CountryController;
@@ -69,6 +70,7 @@ $locationResource = function (string $segment, string $paramName, string $contro
 
 Route::post('locale/{code}', [LocaleController::class, 'switch'])->name('locale.switch');
 Route::post('currency/{code}', [CurrencyController::class, 'switch'])->name('currency.switch');
+Route::post('theme/toggle', [ThemeController::class, 'toggle'])->name('theme.toggle');
 
 Route::middleware('admin.guest')->group(function () {
     Route::get('login', fn () => redirect()->route('login'))->name('login');

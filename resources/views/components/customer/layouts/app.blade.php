@@ -12,6 +12,11 @@
     <link rel="icon" href="{{ setting('favicon_url') ?: asset('favicon.ico') }}">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Windows doesn't render flag emoji, so the topbar language switcher
+         uses this CSS sprite library instead (matches driver/admin/public). --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>

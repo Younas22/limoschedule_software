@@ -17,16 +17,16 @@
         ],
         [
             'type' => 'group',
-            'label' => __('Vehicles'),
-            'permission' => 'vehicles.view',
+            'label' => __('Fleet'),
+            'permission' => ['vehicles.view', 'drivers.view'],
             'icon' => 'car',
             'children' => [
-                ['label' => __('All Vehicles'), 'route' => 'admin.vehicles.index'],
-                ['label' => __('Categories'), 'route' => 'admin.vehicles.categories.index'],
+                ['label' => __('All Vehicles'), 'route' => 'admin.vehicles.index', 'permission' => 'vehicles.view'],
+                ['label' => __('Vehicle Categories'), 'route' => 'admin.vehicles.categories.index', 'permission' => 'vehicles.view'],
+                ['label' => __('Drivers'), 'route' => 'admin.drivers.index', 'permission' => 'drivers.view'],
+                ['label' => __('Live Fleet'), 'route' => 'admin.fleet.index', 'permission' => 'drivers.view'],
             ],
         ],
-        ['label' => __('Drivers'), 'route' => 'admin.drivers.index', 'permission' => 'drivers.view', 'icon' => 'id'],
-        ['label' => __('Live Fleet'), 'route' => 'admin.fleet.index', 'permission' => 'drivers.view', 'icon' => 'map'],
         [
             'type' => 'group',
             'label' => __('Customers'),
@@ -39,35 +39,35 @@
         ],
 
         // Money
-        ['label' => __('Pricing'), 'route' => 'admin.pricing.index', 'permission' => 'pricing.view', 'icon' => 'trending-up'],
-        ['label' => __('Payments'), 'route' => 'admin.payment-gateways.index', 'permission' => 'payments.view', 'icon' => 'credit-card'],
-        ['label' => __('Coupons'), 'route' => 'admin.coupons.index', 'permission' => 'coupons.view', 'icon' => 'cash'],
-        ['label' => __('Promotions'), 'route' => 'admin.promotions.index', 'permission' => 'promotions.view', 'icon' => 'sparkles'],
+        [
+            'type' => 'group',
+            'label' => __('Billing'),
+            'permission' => ['pricing.view', 'payments.view', 'coupons.view', 'promotions.view'],
+            'icon' => 'cash',
+            'children' => [
+                ['label' => __('Pricing'), 'route' => 'admin.pricing.index', 'permission' => 'pricing.view'],
+                ['label' => __('Payments'), 'route' => 'admin.payment-gateways.index', 'permission' => 'payments.view'],
+                ['label' => __('Coupons'), 'route' => 'admin.coupons.index', 'permission' => 'coupons.view'],
+                ['label' => __('Promotions'), 'route' => 'admin.promotions.index', 'permission' => 'promotions.view'],
+            ],
+        ],
 
         // Content / website
-        ['label' => __('Pages'), 'route' => 'admin.pages.index', 'permission' => 'content.view', 'icon' => 'document'],
         [
             'type' => 'group',
-            'label' => __('Blog'),
-            'permission' => 'blog.view',
-            'icon' => 'pencil',
+            'label' => __('Content'),
+            'permission' => ['content.view', 'blog.view', 'routes.view', 'areas.view'],
+            'icon' => 'document',
             'children' => [
-                ['label' => __('All Posts'), 'route' => 'admin.blog.index', 'permission' => 'blog.view'],
-                ['label' => __('Categories'), 'route' => 'admin.blog.categories.index', 'permission' => 'blog.view'],
-                ['label' => __('Tags'), 'route' => 'admin.blog.tags.index', 'permission' => 'blog.view'],
+                ['label' => __('Pages'), 'route' => 'admin.pages.index', 'permission' => 'content.view'],
+                ['label' => __('Blog Posts'), 'route' => 'admin.blog.index', 'permission' => 'blog.view'],
+                ['label' => __('Blog Categories'), 'route' => 'admin.blog.categories.index', 'permission' => 'blog.view'],
+                ['label' => __('Blog Tags'), 'route' => 'admin.blog.tags.index', 'permission' => 'blog.view'],
+                ['label' => __('Popular Routes'), 'route' => 'admin.popular-routes.index', 'permission' => 'routes.view'],
+                ['label' => __('Route Types'), 'route' => 'admin.popular-routes.route-types.index', 'permission' => 'routes.view'],
+                ['label' => __('Service Areas'), 'route' => 'admin.areas.index', 'permission' => 'areas.view'],
             ],
         ],
-        [
-            'type' => 'group',
-            'label' => __('Popular Routes'),
-            'permission' => 'routes.view',
-            'icon' => 'route',
-            'children' => [
-                ['label' => __('All Routes'), 'route' => 'admin.popular-routes.index'],
-                ['label' => __('Route Types'), 'route' => 'admin.popular-routes.route-types.index'],
-            ],
-        ],
-        ['label' => __('Service Areas'), 'route' => 'admin.areas.index', 'permission' => 'areas.view', 'icon' => 'map-pin'],
         [
             'type' => 'group',
             'label' => __('Locations'),
@@ -84,14 +84,19 @@
         ],
 
         // Communication
-        ['label' => __('Notifications'), 'route' => 'admin.notifications.index', 'permission' => null, 'icon' => 'bell'],
-        ['label' => __('Contact Messages'), 'route' => 'admin.contact-messages.index', 'permission' => 'messages.view', 'icon' => 'chat'],
-        ['label' => __('Support Tickets'), 'route' => 'admin.support-tickets.index', 'permission' => 'support.view', 'icon' => 'chat'],
+        [
+            'type' => 'group',
+            'label' => __('Communication'),
+            'permission' => ['messages.view', 'support.view'],
+            'icon' => 'chat',
+            'children' => [
+                ['label' => __('Notifications'), 'route' => 'admin.notifications.index'],
+                ['label' => __('Contact Messages'), 'route' => 'admin.contact-messages.index', 'permission' => 'messages.view'],
+                ['label' => __('Support Tickets'), 'route' => 'admin.support-tickets.index', 'permission' => 'support.view'],
+            ],
+        ],
 
         // System / configuration
-        ['label' => __('Roles & Permissions'), 'route' => 'admin.roles.index', 'permission' => 'roles.view', 'icon' => 'shield'],
-        ['label' => __('Languages'), 'route' => 'admin.languages.index', 'permission' => 'languages.view', 'icon' => 'globe'],
-        ['label' => __('Currencies'), 'route' => 'admin.currencies.index', 'permission' => 'currencies.view', 'icon' => 'cash'],
         [
             'type' => 'group',
             'label' => __('Settings'),
@@ -104,7 +109,18 @@
                 ['label' => __('Integrations'), 'route' => 'admin.integrations.edit', 'permission' => 'system.edit'],
             ],
         ],
-        ['label' => __('System Tools'), 'route' => 'admin.system-tools.index', 'permission' => 'system.view', 'icon' => 'wrench'],
+        [
+            'type' => 'group',
+            'label' => __('System'),
+            'permission' => ['roles.view', 'languages.view', 'currencies.view', 'system.view'],
+            'icon' => 'wrench',
+            'children' => [
+                ['label' => __('Roles & Permissions'), 'route' => 'admin.roles.index', 'permission' => 'roles.view'],
+                ['label' => __('Languages'), 'route' => 'admin.languages.index', 'permission' => 'languages.view'],
+                ['label' => __('Currencies'), 'route' => 'admin.currencies.index', 'permission' => 'currencies.view'],
+                ['label' => __('System Tools'), 'route' => 'admin.system-tools.index', 'permission' => 'system.view'],
+            ],
+        ],
     ];
 
     $icons = [
@@ -132,6 +148,17 @@
     ];
 
     $admin = auth()->guard('admin')->user();
+
+    // A nav item's 'permission' can be a single slug or an array of slugs
+    // (merged groups pulling children from several modules) — visible if
+    // the admin has at least one of them, or if no permission is set at all.
+    $canSeeNavItem = function ($permission) use ($admin) {
+        if (! $permission) {
+            return true;
+        }
+
+        return collect((array) $permission)->contains(fn ($slug) => $admin?->hasPermission($slug));
+    };
 @endphp
 
 <div class="flex h-16 shrink-0 items-center gap-3 border-b border-luxury-border px-6">
@@ -150,7 +177,7 @@
 
 <nav class="scrollbar-luxury flex-1 space-y-1 overflow-y-auto px-3 py-6">
     @foreach ($navItems as $item)
-        @continue($item['permission'] && ! $admin?->hasPermission($item['permission']))
+        @continue(! $canSeeNavItem($item['permission'] ?? null))
 
         @if (($item['type'] ?? null) === 'group')
             @php
@@ -170,7 +197,7 @@
 
                 <div x-show="open" x-cloak x-transition class="ms-4 mt-1 space-y-1 border-s border-luxury-border ps-4">
                     @foreach ($item['children'] as $child)
-                        @continue(($child['permission'] ?? null) && ! $admin?->hasPermission($child['permission']))
+                        @continue(! $canSeeNavItem($child['permission'] ?? null))
 
                         @if ($child['route'] && \Illuminate\Support\Facades\Route::has($child['route']))
                             <a href="{{ route($child['route']) }}"

@@ -15,6 +15,7 @@ class PopularRoute extends Model
         'distance',
         'distance_unit',
         'estimated_price',
+        'original_price',
         'is_active',
     ];
 
@@ -23,8 +24,22 @@ class PopularRoute extends Model
         return [
             'distance' => 'decimal:2',
             'estimated_price' => 'decimal:2',
+            'original_price' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * True only when there's a genuine discount to show — a blank or
+     * not-actually-higher "original" price silently falls back to the
+     * normal single-price display instead of showing a nonsensical or
+     * missing strikethrough.
+     */
+    public function getHasDiscountAttribute(): bool
+    {
+        return $this->original_price !== null
+            && $this->estimated_price !== null
+            && (float) $this->original_price > (float) $this->estimated_price;
     }
 
     public function routeType(): BelongsTo

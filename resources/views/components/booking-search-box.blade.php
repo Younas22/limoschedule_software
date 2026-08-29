@@ -1051,7 +1051,11 @@
             formatTimeLabel(slot) {
                 const [h, m] = slot.split(':').map(Number);
 
-                return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                // `hour12` is forced explicitly rather than left to the
+                // visitor's browser locale — several common locales (e.g.
+                // Dutch/French, both relevant here) default to 24-hour time,
+                // which silently dropped AM/PM depending on who was looking.
+                return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true });
             },
 
             formatTimeDisplay(field) {

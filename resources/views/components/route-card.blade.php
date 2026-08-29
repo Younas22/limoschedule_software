@@ -16,7 +16,9 @@
     }
 
     if ($route->estimated_price) {
-        $waLines[] = __('Estimated Price').': '.currency($route->estimated_price);
+        $waLines[] = $route->has_discount
+            ? __('Estimated Price').': '.currency($route->estimated_price).' ('.__('discounted from').' '.currency($route->original_price).')'
+            : __('Estimated Price').': '.currency($route->estimated_price);
     }
 
     $waLines[] = '';
@@ -46,8 +48,13 @@
                 {{ $route->distance ? $route->distance_unit : '' }}
             </div>
             <div class="flex items-center justify-center gap-1.5 rounded-lg bg-luxury-graphite py-2">
-                <x-icon name="cash" class="h-3.5 w-3.5" />
-                <span class="font-semibold text-luxury-gold">{{ $route->estimated_price ? currency($route->estimated_price) : '—' }}</span>
+                <x-icon name="cash" class="h-3.5 w-3.5 shrink-0" />
+                @if ($route->has_discount)
+                    <span class="text-luxury-muted line-through decoration-solid decoration-red-500 decoration-2">{{ currency($route->original_price) }}</span>
+                    <span class="font-semibold text-luxury-gold">{{ currency($route->estimated_price) }}</span>
+                @else
+                    <span class="font-semibold text-luxury-gold">{{ $route->estimated_price ? currency($route->estimated_price) : '—' }}</span>
+                @endif
             </div>
         </div>
     </div>

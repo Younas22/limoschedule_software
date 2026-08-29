@@ -78,14 +78,27 @@
                 @continue($slug === 'faq')
 
                 @if ($slug === 'services' && $navServiceLinks->isNotEmpty())
-                    <div class="group relative flex h-16 items-center">
+                    {{-- Alpine-driven (not CSS group-hover) so opening this
+                         menu can positively close its Areas neighbor and
+                         vice versa — two independent group-hover panels
+                         sitting this close together will otherwise overlap
+                         each other's hit-test area and block one another.
+                         A short close delay keeps diagonal mouse movement
+                         from the link into the panel from closing it early,
+                         without needing a wide invisible bridge div. --}}
+                    <div class="relative flex h-16 items-center"
+                        x-data="{ open: false, closeTimer: null }"
+                        @mouseenter="clearTimeout(closeTimer); $dispatch('nav-menu-open', 'services'); open = true"
+                        @mouseleave="closeTimer = setTimeout(() => open = false, 200)"
+                        @nav-menu-open.window="if ($event.detail !== 'services') open = false">
                         <a href="{{ route('pages.show', $slug) }}"
                             class="flex items-center gap-1 text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ $currentSlug === $slug ? 'text-luxury-gold' : '' }}">
                             {{ __($label) }}
-                            <x-icon name="chevron-down" class="h-3.5 w-3.5 transition group-hover:rotate-180" />
+                            <x-icon name="chevron-down" class="h-3.5 w-3.5 transition" x-bind:class="{ 'rotate-180': open }" />
                         </a>
-                        <div class="absolute start-1/2 top-full z-40 hidden w-[28rem] -translate-x-1/2 pt-3 group-hover:block">
-                            <div class="grid grid-cols-3 gap-2 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 shadow-xl">
+                        <div x-show="open" x-cloak x-transition.opacity.duration.150ms
+                            class="absolute start-1/2 top-full z-40 w-[28rem] -translate-x-1/2">
+                            <div class="grid grid-cols-3 gap-2 rounded-b-xl border border-t-0 border-luxury-border bg-luxury-charcoal p-4 shadow-xl">
                                 @foreach ($navServiceLinks as $service)
                                     <a href="{{ route('pages.show', $service['slug']) }}"
                                         class="flex flex-col items-center gap-2 rounded-lg px-2 py-3 text-center transition hover:bg-luxury-graphite">
@@ -97,14 +110,20 @@
                         </div>
                     </div>
                 @elseif ($slug === 'areas' && $navAreas->isNotEmpty())
-                    <div class="group relative flex h-16 items-center">
+                    {{-- Same Alpine pattern as the Services menu above. --}}
+                    <div class="relative flex h-16 items-center"
+                        x-data="{ open: false, closeTimer: null }"
+                        @mouseenter="clearTimeout(closeTimer); $dispatch('nav-menu-open', 'areas'); open = true"
+                        @mouseleave="closeTimer = setTimeout(() => open = false, 200)"
+                        @nav-menu-open.window="if ($event.detail !== 'areas') open = false">
                         <a href="{{ route('pages.show', $slug) }}"
                             class="flex items-center gap-1 text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ $currentSlug === $slug ? 'text-luxury-gold' : '' }}">
                             {{ __($label) }}
-                            <x-icon name="chevron-down" class="h-3.5 w-3.5 transition group-hover:rotate-180" />
+                            <x-icon name="chevron-down" class="h-3.5 w-3.5 transition" x-bind:class="{ 'rotate-180': open }" />
                         </a>
-                        <div class="absolute start-1/2 top-full z-40 hidden w-[36rem] -translate-x-1/2 pt-3 group-hover:block">
-                            <div class="grid max-h-[60vh] grid-cols-4 gap-x-4 gap-y-1 overflow-y-auto rounded-xl border border-luxury-border bg-luxury-charcoal p-4 shadow-xl">
+                        <div x-show="open" x-cloak x-transition.opacity.duration.150ms
+                            class="absolute start-1/2 top-full z-40 w-[36rem] -translate-x-1/2">
+                            <div class="grid max-h-[60vh] grid-cols-4 gap-x-4 gap-y-1 overflow-y-auto rounded-b-xl border border-t-0 border-luxury-border bg-luxury-charcoal p-4 shadow-xl">
                                 @foreach ($navAreas as $area)
                                     <a href="{{ route('areas.show', $area) }}"
                                         class="flex items-center gap-1.5 truncate rounded-lg px-2 py-2 text-sm text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">

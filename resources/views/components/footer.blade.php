@@ -13,11 +13,27 @@
         'linkedin' => setting('linkedin_url'),
         'youtube' => setting('youtube_url'),
     ];
+
+    // Same admin-driven service list as the header's "Services" mega-menu
+    // (components/header.blade.php) — a service page enabled/disabled or
+    // renamed in the admin is reflected here automatically, with no
+    // separate configuration to maintain.
+    $footerServiceIcons = [
+        'airport-transfer' => 'plane',
+        'chauffeur-service' => 'user',
+        'corporate-transfer' => 'briefcase',
+        'city-rides' => 'car',
+        'hourly-rides' => 'clock',
+        'vip-transport' => 'sparkles',
+    ];
+    $footerServiceLinks = collect(\App\Models\Page::SERVICE_PAGES)
+        ->filter(fn ($slug) => isset($navPages[$slug]))
+        ->map(fn ($slug) => ['slug' => $slug, 'label' => \App\Models\Page::PAGES[$slug]]);
 @endphp
 
-<footer class="border-t border-luxury-border pb-20 lg:pb-0">
-    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+<footer class="border-t border-luxury-border bg-luxury-charcoal pb-20 lg:pb-0">
+    <div class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
             {{-- Brand --}}
             <div class="sm:col-span-2 lg:col-span-1">
                 <a href="{{ route('pages.home') }}" class="flex items-center">
@@ -29,16 +45,17 @@
                         </span>
                     @endif
                 </a>
-                @if (setting('tagline'))
-                    <p class="mt-4 max-w-xs text-sm text-luxury-muted">{{ setting('tagline') }}</p>
-                @endif
+
+                <p class="mt-4 max-w-xs text-sm leading-relaxed text-luxury-muted">
+                    {{ setting('tagline') ?: __('Reliable, professional transportation — booked in minutes, every time.') }}
+                </p>
 
                 @if (array_filter($socialLinks))
-                    <div class="mt-4 flex items-center gap-2">
+                    <div class="mt-5 flex items-center gap-2">
                         @foreach ($socialLinks as $platform => $url)
                             @continue(! $url)
                             <a href="{{ $url }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($platform) }}"
-                                class="flex h-9 w-9 items-center justify-center rounded-full border border-luxury-border text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                class="flex h-9 w-9 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition hover:border-luxury-gold/40 hover:bg-luxury-gold/10 hover:text-luxury-gold">
                                 <x-social-icon :name="$platform" class="h-4 w-4" />
                             </a>
                         @endforeach
@@ -49,27 +66,60 @@
             {{-- Quick links --}}
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-luxury-white">{{ __('Quick Links') }}</p>
+                <span class="mt-2 block h-0.5 w-8 rounded-full bg-luxury-gold"></span>
                 <ul class="mt-4 space-y-2.5">
                     @foreach (\App\Models\Page::PAGES as $slug => $label)
                         @continue(! isset($navPages[$slug]))
                         @continue(in_array($slug, \App\Models\Page::LEGAL_PAGES, true) || in_array($slug, \App\Models\Page::SERVICE_PAGES, true))
                         <li>
-                            <a href="{{ $slug === 'home' ? route('pages.home') : route('pages.show', $slug) }}" class="text-sm text-luxury-muted transition hover:text-luxury-gold">
-                                {{ __($label) }}
+                            <a href="{{ $slug === 'home' ? route('pages.home') : route('pages.show', $slug) }}"
+                                class="group flex items-center gap-1.5 text-sm text-luxury-muted transition hover:text-luxury-gold">
+                                <x-icon name="chevron-right" class="h-3.5 w-3.5 shrink-0 text-luxury-gold/60 transition-transform duration-200 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+                                <span>{{ __($label) }}</span>
                             </a>
                         </li>
                     @endforeach
-                    <li><a href="{{ route('blog.index') }}" class="text-sm text-luxury-muted transition hover:text-luxury-gold">{{ __('Blog') }}</a></li>
+                    <li>
+                        <a href="{{ route('blog.index') }}" class="group flex items-center gap-1.5 text-sm text-luxury-muted transition hover:text-luxury-gold">
+                            <x-icon name="chevron-right" class="h-3.5 w-3.5 shrink-0 text-luxury-gold/60 transition-transform duration-200 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+                            <span>{{ __('Blog') }}</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
+
+            {{-- Services — mirrors the header's Services mega-menu list --}}
+            @if ($footerServiceLinks->isNotEmpty())
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-luxury-white">{{ __('Services') }}</p>
+                    <span class="mt-2 block h-0.5 w-8 rounded-full bg-luxury-gold"></span>
+                    <ul class="mt-4 space-y-2.5">
+                        @foreach ($footerServiceLinks as $service)
+                            <li>
+                                <a href="{{ route('pages.show', $service['slug']) }}"
+                                    class="group flex items-center gap-1.5 text-sm text-luxury-muted transition hover:text-luxury-gold">
+                                    <x-icon name="chevron-right" class="h-3.5 w-3.5 shrink-0 text-luxury-gold/60 transition-transform duration-200 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+                                    <span>{{ __($service['label']) }}</span>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             {{-- Legal --}}
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-luxury-white">{{ __('Legal') }}</p>
+                <span class="mt-2 block h-0.5 w-8 rounded-full bg-luxury-gold"></span>
                 <ul class="mt-4 space-y-2.5">
                     @foreach (\App\Models\Page::LEGAL_PAGES as $slug)
                         @continue(! isset($navPages[$slug]))
-                        <li><a href="{{ route('pages.show', $slug) }}" class="text-sm text-luxury-muted transition hover:text-luxury-gold">{{ __(\App\Models\Page::PAGES[$slug]) }}</a></li>
+                        <li>
+                            <a href="{{ route('pages.show', $slug) }}" class="group flex items-center gap-1.5 text-sm text-luxury-muted transition hover:text-luxury-gold">
+                                <x-icon name="chevron-right" class="h-3.5 w-3.5 shrink-0 text-luxury-gold/60 transition-transform duration-200 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+                                <span>{{ __(\App\Models\Page::PAGES[$slug]) }}</span>
+                            </a>
+                        </li>
                     @endforeach
                 </ul>
             </div>
@@ -77,34 +127,53 @@
             {{-- Contact --}}
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-luxury-white">{{ __('Contact') }}</p>
-                <ul class="mt-4 space-y-2.5">
+                <span class="mt-2 block h-0.5 w-8 rounded-full bg-luxury-gold"></span>
+                <ul class="mt-4 space-y-3">
                     @if (setting('address'))
-                        <li class="flex items-start gap-2.5 text-sm text-luxury-muted">
-                            <x-icon name="map-pin" class="mt-0.5 h-4 w-4 shrink-0" />
-                            <span>{{ setting('address') }}</span>
+                        <li>
+                            @if (setting('google_maps_embed_url'))
+                                <a href="{{ setting('google_maps_embed_url') }}" target="_blank" rel="noopener" class="group flex items-start gap-3">
+                            @else
+                                <div class="flex items-start gap-3">
+                            @endif
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
+                                    <x-icon name="map-pin" class="h-4 w-4" />
+                                </span>
+                                <span class="pt-2 text-sm leading-snug text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('address') }}</span>
+                            @if (setting('google_maps_embed_url'))
+                                </a>
+                            @else
+                                </div>
+                            @endif
                         </li>
                     @endif
                     @if (setting('phone'))
                         <li>
-                            <a href="tel:{{ setting('phone') }}" class="flex items-center gap-2.5 text-sm text-luxury-muted transition hover:text-luxury-gold">
-                                <x-icon name="phone" class="h-4 w-4 shrink-0" />
-                                {{ setting('phone') }}
+                            <a href="tel:{{ setting('phone') }}" class="group flex items-center gap-3">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
+                                    <x-icon name="phone" class="h-4 w-4" />
+                                </span>
+                                <span class="text-sm text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('phone') }}</span>
                             </a>
                         </li>
                     @endif
                     @if (setting('whatsapp'))
                         <li>
-                            <a href="https://wa.me/{{ preg_replace('/\D+/', '', setting('whatsapp')) }}?text={{ rawurlencode(__("Hi! I'd like to inquire about booking a ride.")) }}" target="_blank" rel="noopener" class="flex items-center gap-2.5 text-sm text-[#25D366] transition hover:brightness-110">
-                                <x-whatsapp-icon class="h-4 w-4 shrink-0" />
-                                {{ setting('whatsapp') }}
+                            <a href="https://wa.me/{{ preg_replace('/\D+/', '', setting('whatsapp')) }}?text={{ rawurlencode(__("Hi! I'd like to inquire about booking a ride.")) }}" target="_blank" rel="noopener" class="group flex items-center gap-3">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-[#25D366] transition group-hover:border-[#25D366]/50 group-hover:bg-[#25D366]/10">
+                                    <x-whatsapp-icon class="h-4 w-4" />
+                                </span>
+                                <span class="text-sm text-luxury-muted transition group-hover:text-luxury-white">{{ setting('whatsapp') }}</span>
                             </a>
                         </li>
                     @endif
                     @if (setting('email'))
                         <li>
-                            <a href="mailto:{{ setting('email') }}" class="flex items-center gap-2.5 text-sm text-luxury-muted transition hover:text-luxury-gold">
-                                <x-icon name="mail" class="h-4 w-4 shrink-0" />
-                                {{ setting('email') }}
+                            <a href="mailto:{{ setting('email') }}" class="group flex items-center gap-3">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
+                                    <x-icon name="mail" class="h-4 w-4" />
+                                </span>
+                                <span class="truncate text-sm text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('email') }}</span>
                             </a>
                         </li>
                     @endif
@@ -112,10 +181,40 @@
             </div>
         </div>
 
-        <div class="mt-10 flex flex-col items-center gap-4 border-t border-luxury-border pt-6 sm:flex-row sm:justify-between">
-            <p class="text-xs text-luxury-muted">&copy; {{ now()->year }} {{ setting('company_name', config('app.name')) }}. {{ __('All rights reserved.') }}</p>
+        {{-- Trust strip — fixed, brief-specified copy rather than admin
+             content: there is no existing "footer trust badges" data
+             source, and the PageSection "Trust Badges" type built for
+             homepage use doesn't fit a global, every-page component. --}}
+        <div class="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-luxury-border bg-luxury-border sm:grid-cols-2 lg:grid-cols-4">
+            @foreach ([
+                ['icon' => 'shield', 'title' => __('Safe & Reliable'), 'body' => __('Your safety is our top priority.')],
+                ['icon' => 'clock', 'title' => __('On-Time Service'), 'body' => __('Punctual pickups and timely arrivals.')],
+                ['icon' => 'users', 'title' => __('Professional Drivers'), 'body' => __('Experienced and courteous drivers.')],
+                ['icon' => 'chat', 'title' => __('24/7 Support'), 'body' => __("We're here whenever you need us.")],
+            ] as $trust)
+                <div class="flex items-start gap-3 bg-luxury-graphite/60 p-5">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-luxury-gold/10 text-luxury-gold">
+                        <x-icon :name="$trust['icon']" class="h-5 w-5" />
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-luxury-white">{{ $trust['title'] }}</p>
+                        <p class="mt-1 text-xs leading-snug text-luxury-muted">{{ $trust['body'] }}</p>
+                    </div>
+                </div>
+            @endforeach
+        </div>
 
-            <div class="flex items-center gap-3">
+        {{-- Bottom bar --}}
+        <div class="mt-10 grid grid-cols-1 items-center gap-4 border-t border-luxury-border py-6 sm:grid-cols-3">
+            <p class="text-center text-xs text-luxury-muted sm:text-start">
+                &copy; {{ now()->year }} {{ setting('company_name', config('app.name')) }}. {{ __('All rights reserved.') }}
+            </p>
+
+            <p class="text-center text-xs text-luxury-muted">
+                {{ __('Powered by') }} <a href="https://limoschedule.com/" target="_blank" rel="noopener" class="font-semibold text-luxury-gold transition hover:text-luxury-gold-light">LimoSchedule</a>
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center gap-2.5 sm:justify-end">
                 @if ($currentCurrency && $activeCurrencies->count() > 1)
                     <div x-data="{ open: false }" class="relative">
                         <button type="button" @click="open = !open" @click.outside="open = false"

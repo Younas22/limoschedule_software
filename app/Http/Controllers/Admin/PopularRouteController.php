@@ -82,6 +82,7 @@ class PopularRouteController extends Controller
             'distance' => ['nullable', 'numeric', 'min:0', 'max:99999.99'],
             'distance_unit' => ['required', 'in:km,mi'],
             'estimated_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'original_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
         ]);
     }
 }

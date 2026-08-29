@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
             <x-admin.input-label for="distance" :value="__('Estimated Distance')" />
             <x-admin.text-input id="distance" name="distance" type="number" step="0.01" min="0" value="{{ old('distance', $route?->distance) }}" :placeholder="__('e.g. 25')" />
@@ -45,11 +45,21 @@
             </select>
             <x-admin.input-error :messages="$errors->get('distance_unit')" />
         </div>
+    </div>
 
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
             <x-admin.input-label for="estimated_price" :value="__('Estimated Price')" />
             <x-admin.text-input id="estimated_price" name="estimated_price" type="number" step="0.01" min="0" value="{{ old('estimated_price', $route?->estimated_price) }}" :placeholder="__('e.g. 75.00')" />
+            <p class="mt-1 text-xs text-luxury-muted">{{ __('The price customers actually pay — shown in gold.') }}</p>
             <x-admin.input-error :messages="$errors->get('estimated_price')" />
+        </div>
+
+        <div>
+            <x-admin.input-label for="original_price" :value="__('Original Price (optional)')" />
+            <x-admin.text-input id="original_price" name="original_price" type="number" step="0.01" min="0" value="{{ old('original_price', $route?->original_price) }}" :placeholder="__('e.g. 95.00')" />
+            <p class="mt-1 text-xs text-luxury-muted">{{ __('Only set this to show a discount — it displays with a strikethrough next to the Estimated Price. Leave blank for a normal single price.') }}</p>
+            <x-admin.input-error :messages="$errors->get('original_price')" />
         </div>
     </div>
 </div>

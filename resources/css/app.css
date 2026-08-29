@@ -47,6 +47,27 @@
     --color-luxury-white: #141416;
 }
 
+/*
+ * Always-dark island: for photo/overlay UI on the public site (the hero,
+ * the booking widget's card, the search modal, the vehicle photo lightbox)
+ * that stays visually dark regardless of the site's light/dark theme — the
+ * same way a photo hero or a photo viewer stays dark on plenty of
+ * light-themed sites. Re-pins the shared surface/text tokens to their dark
+ * values within this subtree so the existing `text-luxury-white`,
+ * `bg-luxury-graphite`, etc. classes already used inside these components
+ * keep resolving correctly without editing their internals — only
+ * `--color-luxury-black` and `--color-luxury-gold*` are skipped here since
+ * those are never re-themed in the first place.
+ */
+.theme-dark-scope {
+    --color-luxury-charcoal: #141416;
+    --color-luxury-graphite: #1c1c1f;
+    --color-luxury-slate: #26262a;
+    --color-luxury-border: #2e2e33;
+    --color-luxury-muted: #8a8a92;
+    --color-luxury-white: #f5f5f4;
+}
+
 @layer base {
     /* Safety net against horizontal scroll on mobile — a single element
        overflowing anywhere on the page (long text, an off-canvas sidebar,
@@ -205,17 +226,29 @@
     /*
      * Scroll-triggered reveal (toggled via Alpine's x-intersect adding
      * `.is-visible`) for below-the-fold grids — unlike .animate-fade-up,
-     * this stays hidden until it actually enters the viewport.
+     * this fades in as it enters the viewport rather than on page load.
+     *
+     * `.reveal-up` itself is the resting/visible state (progressive
+     * enhancement baseline) — content must never depend on JavaScript to
+     * become visible at all. `.reveal-armed` is the "not yet revealed" pre-
+     * animation state, and it is ONLY ever added by Alpine (see the
+     * `x-init="armed = true"` pattern in items/stats/areas sections), never
+     * present in the server-rendered HTML. If Alpine fails to load — CDN
+     * blocked, JS disabled, any failure — `armed` never becomes true, the
+     * class is never applied, and the element simply sits at this default,
+     * fully visible. If Alpine loads normally, it's briefly armed (hidden)
+     * until `x-intersect` adds `.is-visible`, producing the same fade-in
+     * effect as before.
      */
     .reveal-up {
-        opacity: 0;
-        transform: translateY(1.5rem);
+        opacity: 1;
+        transform: translateY(0);
         transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .reveal-up.is-visible {
-        opacity: 1;
-        transform: translateY(0);
+    .reveal-up.reveal-armed:not(.is-visible) {
+        opacity: 0;
+        transform: translateY(1.5rem);
     }
 
     .reveal-up.delay-1 { transition-delay: 0.08s; }

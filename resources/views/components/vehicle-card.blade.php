@@ -12,8 +12,11 @@
 
 <div {{ $attributes->merge(['class' => 'flex h-full overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal transition hover:border-luxury-gold/40 '.($wide ? 'flex-col sm:flex-row' : 'flex-col')]) }}
     x-data="{ images: {{ \Illuminate\Support\Js::from($galleryImages) }}, activeImage: 0, lightboxOpen: false, lightboxIndex: 0 }">
-    {{-- Image --}}
-    <div class="{{ $wide ? 'flex flex-col sm:w-2/5' : '' }}">
+    {{-- Image — theme-dark-scope covers this whole block (the photo itself,
+         its overlaid badges, and the thumbnail strip's "+N" overlay) so
+         they stay legible against the images regardless of theme or panel.
+         See app.css. --}}
+    <div class="theme-dark-scope {{ $wide ? 'flex flex-col sm:w-2/5' : '' }}">
         <div class="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-luxury-graphite">
             <template x-if="images.length">
                 <img :src="images[activeImage]" alt="{{ $vehicle->name }}" loading="lazy"
@@ -86,9 +89,10 @@
         @endif
     </div>
 
-    {{-- Lightbox --}}
+    {{-- Lightbox — a full-screen photo viewer, theme-invariant like any
+         photo lightbox regardless of theme or panel. --}}
     <template x-if="lightboxOpen">
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-luxury-black/95 p-4"
+        <div class="theme-dark-scope fixed inset-0 z-50 flex items-center justify-center bg-luxury-black/95 p-4"
             @click.self="lightboxOpen = false" @keydown.window.escape="lightboxOpen = false">
             <button type="button" @click="lightboxOpen = false" aria-label="{{ __('Close') }}"
                 class="absolute end-4 top-4 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-luxury-charcoal text-luxury-white transition hover:text-luxury-gold">

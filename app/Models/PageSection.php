@@ -11,6 +11,7 @@ class PageSection extends Model
         'hero' => 'Hero Banner',
         'rich_text' => 'Rich Text',
         'items' => 'Item Grid (features / services / team / stats)',
+        'trust_badges' => 'Trust Badges (licensing, security, availability claims)',
         'faq' => 'FAQ List',
         'contact_info' => 'Contact Info',
         'cta' => 'Call To Action',
@@ -29,7 +30,9 @@ class PageSection extends Model
         'page_id',
         'type',
         'heading',
+        'eyebrow',
         'subheading',
+        'differentiator',
         'body',
         'image',
         'video',
@@ -76,6 +79,14 @@ class PageSection extends Model
     public function getItemsAttribute(): array
     {
         return $this->type === 'items' ? ($this->content ?? []) : [];
+    }
+
+    /**
+     * @return array<int, array{icon: ?string, title: string, description: ?string, link: ?string}>
+     */
+    public function getTrustBadgeItemsAttribute(): array
+    {
+        return $this->type === 'trust_badges' ? ($this->content ?? []) : [];
     }
 
     /**

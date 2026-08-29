@@ -40,7 +40,7 @@
                         <div>
                             <label for="contact-name" class="mb-1.5 block text-sm font-medium text-luxury-white">{{ __('Name') }}</label>
                             <input type="text" id="contact-name" name="name" value="{{ old('name') }}" required
-                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-graphite px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
                             @error('name')
                                 <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                             @enderror
@@ -49,7 +49,7 @@
                         <div>
                             <label for="contact-email" class="mb-1.5 block text-sm font-medium text-luxury-white">{{ __('Email') }}</label>
                             <input type="email" id="contact-email" name="email" value="{{ old('email') }}" required
-                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-graphite px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
                             @error('email')
                                 <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                             @enderror
@@ -58,7 +58,7 @@
                         <div>
                             <label for="contact-phone" class="mb-1.5 block text-sm font-medium text-luxury-white">{{ __('Phone') }} <span class="text-luxury-muted">({{ __('optional') }})</span></label>
                             <input type="tel" id="contact-phone" name="phone" value="{{ old('phone') }}"
-                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-graphite px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
                             @error('phone')
                                 <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                             @enderror
@@ -67,7 +67,7 @@
                         <div>
                             <label for="contact-subject" class="mb-1.5 block text-sm font-medium text-luxury-white">{{ __('Subject') }} <span class="text-luxury-muted">({{ __('optional') }})</span></label>
                             <input type="text" id="contact-subject" name="subject" value="{{ old('subject') }}"
-                                class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-graphite px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
                             @error('subject')
                                 <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                             @enderror
@@ -77,7 +77,7 @@
                     <div>
                         <label for="contact-message" class="mb-1.5 block text-sm font-medium text-luxury-white">{{ __('Message') }}</label>
                         <textarea id="contact-message" name="message" rows="5" required
-                            class="w-full rounded-lg border border-luxury-border bg-luxury-black/40 px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('message') }}</textarea>
+                            class="w-full rounded-lg border border-luxury-border bg-luxury-graphite px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('message') }}</textarea>
                         @error('message')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                         @enderror

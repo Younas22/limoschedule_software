@@ -1,6 +1,9 @@
 @props(['section'])
 
-<section class="relative flex min-h-[100svh] flex-col justify-center border-b border-luxury-border">
+{{-- theme-dark-scope: the hero's photo/video backdrop always carries a dark
+     gradient for text legibility, regardless of the site's light/dark
+     theme — this keeps its text readable in both. See app.css. --}}
+<section class="theme-dark-scope relative flex min-h-[100svh] flex-col justify-center border-b border-luxury-border">
     {{-- Background media — overflow-hidden lives here (not on the section) so the
          Ken Burns zoom stays contained without clipping the booking widget's
          dropdowns, which need to be able to render outside the hero's bounds. --}}
@@ -21,8 +24,14 @@
 
     {{-- Content --}}
     <div class="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-28 text-center sm:px-6 lg:px-8">
+        @if ($section->eyebrow)
+            <p class="animate-fade-up text-xs font-semibold uppercase tracking-[0.2em] text-luxury-gold">
+                {{ __($section->eyebrow) }}
+            </p>
+        @endif
+
         @if ($section->heading)
-            <h1 class="animate-fade-up text-4xl font-semibold leading-tight tracking-tight text-luxury-white sm:text-6xl lg:text-7xl">
+            <h1 class="animate-fade-up text-4xl font-semibold leading-tight tracking-tight text-luxury-white sm:text-6xl lg:text-7xl {{ $section->eyebrow ? 'mt-3' : '' }}">
                 {{ __($section->heading) }}
             </h1>
         @endif
@@ -30,6 +39,17 @@
         @if ($section->subheading)
             <p class="animate-fade-up delay-1 mx-auto mt-6 max-w-2xl text-base text-luxury-muted sm:text-lg">
                 {{ __($section->subheading) }}
+            </p>
+        @endif
+
+        {{-- A short, specific claim — deliberately smaller and more compact
+             than the subheading so it reads as a stated fact, not more
+             marketing copy. Admin-entered only; never auto-filled, since an
+             untrue claim here would cost more trust than none at all. --}}
+        @if ($section->differentiator)
+            <p class="animate-fade-up delay-1 mt-4 inline-flex items-center gap-2 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 px-4 py-1.5 text-xs font-semibold text-luxury-gold sm:text-sm">
+                <x-icon name="check-circle" class="h-4 w-4 shrink-0" />
+                {{ __($section->differentiator) }}
             </p>
         @endif
 

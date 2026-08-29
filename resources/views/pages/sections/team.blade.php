@@ -17,9 +17,9 @@
             @endif
 
             <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
-                x-data="{ visible: false }" x-intersect.once="visible = true">
+                x-data="{ armed: false, visible: false }" x-init="armed = true" x-intersect.once="visible = true">
                 @foreach ($members as $index => $member)
-                    <div class="reveal-up delay-{{ ($index % 6) + 1 }} text-center" :class="{ 'is-visible': visible }">
+                    <div class="reveal-up delay-{{ ($index % 6) + 1 }} text-center" :class="{ 'reveal-armed': armed, 'is-visible': visible }">
                         <div class="mx-auto h-28 w-28 overflow-hidden rounded-full border border-luxury-border bg-luxury-graphite">
                             @if (! empty($member['photo']))
                                 <x-lazy-image :src="asset('public/uploads/team/'.$member['photo'])" :alt="$member['name']" class="rounded-full" />

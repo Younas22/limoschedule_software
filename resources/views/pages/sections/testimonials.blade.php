@@ -5,7 +5,8 @@
     $testimonials = \App\Models\Review::approved()
         ->where('rating', '>=', $settings['min_rating'])
         ->whereNotNull('comment')
-        ->with('customer')
+        ->with(['customer', 'booking'])
+        ->orderByDesc('is_featured')
         ->latest()
         ->limit($settings['limit'])
         ->get();
@@ -35,7 +36,17 @@
                     @foreach ($testimonials as $review)
                         <div class="flex w-[85%] shrink-0 snap-start flex-col rounded-2xl border border-luxury-border bg-luxury-charcoal p-6 sm:w-[46%] lg:w-[31%]">
                             <x-rating-stars :rating="$review->rating" size="h-4 w-4" />
-                            <p class="mt-4 flex-1 text-sm text-luxury-muted">&ldquo;{{ $review->comment }}&rdquo;</p>
+                            {{-- Real trip context pulled from the linked booking — never
+                                 invented — so "great service" reads as "great service on
+                                 this specific route," which the audit found materially
+                                 more convincing than a generic quote. --}}
+                            @if ($review->booking?->pickup_location && $review->booking?->dropoff_location)
+                                <p class="mt-3 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-luxury-gold">
+                                    <x-icon name="map-pin" class="h-3.5 w-3.5 shrink-0" />
+                                    <span class="truncate">{{ $review->booking->pickup_location }} &rarr; {{ $review->booking->dropoff_location }}</span>
+                                </p>
+                            @endif
+                            <p class="mt-3 flex-1 text-sm text-luxury-muted">&ldquo;{{ $review->comment }}&rdquo;</p>
                             <div class="mt-5 flex items-center gap-3 border-t border-luxury-border pt-4">
                                 @if ($review->customer?->avatar_url)
                                     <img src="{{ $review->customer->avatar_url }}" alt="{{ $review->customer->name }}" loading="lazy"

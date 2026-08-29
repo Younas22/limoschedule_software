@@ -390,6 +390,7 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::put('{review}', [ReviewController::class, 'update'])->name('update')->middleware('permission:reviews.edit');
         Route::post('{review}/approve', [ReviewController::class, 'approve'])->name('approve')->middleware('permission:reviews.edit');
         Route::post('{review}/reject', [ReviewController::class, 'reject'])->name('reject')->middleware('permission:reviews.edit');
+        Route::post('{review}/toggle-featured', [ReviewController::class, 'toggleFeatured'])->name('toggle-featured')->middleware('permission:reviews.edit');
         Route::delete('{review}', [ReviewController::class, 'destroy'])->name('destroy')->middleware('permission:reviews.delete');
     });
 

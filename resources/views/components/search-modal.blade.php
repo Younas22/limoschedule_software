@@ -14,7 +14,7 @@
         x-transition:enter="transition ease-out duration-200"
         x-transition:enter-start="opacity-0 -translate-y-4 sm:translate-y-0 sm:scale-95"
         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-        class="relative mx-auto mt-0 flex min-h-screen w-full flex-col bg-luxury-black sm:mt-24 sm:min-h-0 sm:max-w-xl sm:rounded-2xl sm:border sm:border-luxury-border sm:shadow-2xl">
+        class="theme-dark-scope relative mx-auto mt-0 flex min-h-screen w-full flex-col bg-luxury-black sm:mt-24 sm:min-h-0 sm:max-w-xl sm:rounded-2xl sm:border sm:border-luxury-border sm:shadow-2xl">
 
         <div class="flex items-center gap-3 border-b border-luxury-border px-5 py-4">
             <x-icon name="search" class="h-5 w-5 shrink-0 text-luxury-muted" />

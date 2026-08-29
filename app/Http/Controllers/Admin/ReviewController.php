@@ -72,6 +72,17 @@ class ReviewController extends Controller
         return back()->with('status', 'Review rejected.');
     }
 
+    /**
+     * Pins/unpins a review to the front of the public testimonials slider
+     * regardless of recency — see resources/views/pages/sections/testimonials.blade.php.
+     */
+    public function toggleFeatured(Review $review): RedirectResponse
+    {
+        $review->update(['is_featured' => ! $review->is_featured]);
+
+        return back()->with('status', $review->is_featured ? 'Review featured.' : 'Review unfeatured.');
+    }
+
     public function destroy(Review $review): RedirectResponse
     {
         $review->delete();

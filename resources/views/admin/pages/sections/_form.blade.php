@@ -55,6 +55,22 @@
             </div>
         </div>
 
+        {{-- Hero-only: eyebrow + differentiator --}}
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'hero'" x-cloak>
+            <div>
+                <x-admin.input-label for="eyebrow" value="{{ __('Eyebrow (optional)') }}" />
+                <x-admin.text-input id="eyebrow" name="eyebrow" type="text" placeholder="{{ __('e.g. Bilzen & surrounding area') }}" value="{{ old('eyebrow', $section?->eyebrow) }}" />
+                <p class="mt-1 text-xs text-luxury-muted">{{ __('A short label shown above the headline.') }}</p>
+                <x-admin.input-error :messages="$errors->get('eyebrow')" />
+            </div>
+            <div>
+                <x-admin.input-label for="differentiator" value="{{ __('Differentiator (optional)') }}" />
+                <x-admin.text-input id="differentiator" name="differentiator" type="text" placeholder="{{ __('e.g. Fixed prices. No hidden fees.') }}" value="{{ old('differentiator', $section?->differentiator) }}" />
+                <p class="mt-1 text-xs text-luxury-muted">{{ __('One specific, true claim shown as a highlighted line near the booking widget — only use something you can actually stand behind.') }}</p>
+                <x-admin.input-error :messages="$errors->get('differentiator')" />
+            </div>
+        </div>
+
         {{-- Rich text body --}}
         <div x-show="type === 'rich_text'" x-cloak>
             <x-admin.input-label value="{{ __('Body') }}" />
@@ -282,24 +298,28 @@
         </div>
     </div>
 
-    {{-- Repeatable items (items / faq / stats / team / process) --}}
-    <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'items' || type === 'faq' || type === 'stats' || type === 'team' || type === 'process'" x-cloak>
+    {{-- Repeatable items (items / trust_badges / faq / stats / team / process) --}}
+    <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'items' || type === 'trust_badges' || type === 'faq' || type === 'stats' || type === 'team' || type === 'process'" x-cloak>
         <div class="flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-luxury-white" x-text="type === 'faq' ? 'Questions' : (type === 'stats' ? 'Stats' : (type === 'team' ? 'Team Members' : (type === 'process' ? 'Steps' : 'Items')))"></h3>
+            <h3 class="text-sm font-semibold text-luxury-white" x-text="type === 'faq' ? 'Questions' : (type === 'stats' ? 'Stats' : (type === 'team' ? 'Team Members' : (type === 'process' ? 'Steps' : (type === 'trust_badges' ? 'Trust Badges' : 'Items'))))"></h3>
             <button type="button" @click="items.push({ icon: 'star', title: '', description: '', link: '', question: '', answer: '', category: '', label: '', value: '', suffix: '', name: '', role: '', bio: '', existing_photo: '', photo_preview: '' })" class="text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">
-                {{ __('+ Add') }} <span x-text="type === 'faq' ? 'Question' : (type === 'stats' ? 'Stat' : (type === 'team' ? 'Team Member' : (type === 'process' ? 'Step' : 'Item')))"></span>
+                {{ __('+ Add') }} <span x-text="type === 'faq' ? 'Question' : (type === 'stats' ? 'Stat' : (type === 'team' ? 'Team Member' : (type === 'process' ? 'Step' : (type === 'trust_badges' ? 'Badge' : 'Item'))))"></span>
             </button>
         </div>
+
+        <p class="text-xs text-luxury-muted" x-show="type === 'trust_badges'" x-cloak>
+            {{ __('Only add claims that are actually true for this business — never an invented statistic or an unverified claim (e.g. don\'t add "Licensed & Insured" unless it really is).') }}
+        </p>
 
         <template x-for="(item, index) in items" :key="index">
             <div class="space-y-3 rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-4">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium uppercase tracking-wide text-luxury-muted" x-text="type === 'faq' ? 'Question ' + (index + 1) : (type === 'stats' ? 'Stat ' + (index + 1) : (type === 'team' ? 'Team Member ' + (index + 1) : (type === 'process' ? 'Step ' + (index + 1) : 'Item ' + (index + 1))))"></span>
+                    <span class="text-xs font-medium uppercase tracking-wide text-luxury-muted" x-text="type === 'faq' ? 'Question ' + (index + 1) : (type === 'stats' ? 'Stat ' + (index + 1) : (type === 'team' ? 'Team Member ' + (index + 1) : (type === 'process' ? 'Step ' + (index + 1) : (type === 'trust_badges' ? 'Badge ' + (index + 1) : 'Item ' + (index + 1)))))"></span>
                     <button type="button" @click="items.splice(index, 1)" class="text-xs text-red-400 hover:text-red-300">{{ __('Remove') }}</button>
                 </div>
 
-                {{-- items / process fields (process has no link) --}}
-                <template x-if="type === 'items' || type === 'process'">
+                {{-- items / trust_badges / process fields (process has no link) --}}
+                <template x-if="type === 'items' || type === 'trust_badges' || type === 'process'">
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                             <label class="mb-1 block text-xs text-luxury-muted">{{ __('Icon') }}</label>
@@ -311,16 +331,21 @@
                             </select>
                         </div>
                         <div>
-                            <label class="mb-1 block text-xs text-luxury-muted">{{ __('Title') }}</label>
+                            <label class="mb-1 block text-xs text-luxury-muted" x-text="type === 'trust_badges' ? '{{ __('Title (e.g. Licensed & Insured)') }}' : '{{ __('Title') }}'"></label>
                             <input type="text" :name="'items[' + index + '][title]'" x-model="item.title"
                                 class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
                         </div>
-                        <div class="sm:col-span-2">
+                        <div class="sm:col-span-2" x-show="type !== 'trust_badges'">
                             <label class="mb-1 block text-xs text-luxury-muted">{{ __('Description') }}</label>
                             <textarea :name="'items[' + index + '][description]'" x-model="item.description" rows="2"
                                 class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold"></textarea>
                         </div>
-                        <div class="sm:col-span-2" x-show="type === 'items'">
+                        <div class="sm:col-span-2" x-show="type === 'trust_badges'">
+                            <label class="mb-1 block text-xs text-luxury-muted">{{ __('Short note (optional)') }}</label>
+                            <input type="text" :name="'items[' + index + '][description]'" x-model="item.description" placeholder="{{ __('e.g. Registered with the local transport authority') }}"
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        </div>
+                        <div class="sm:col-span-2" x-show="type === 'items' || type === 'trust_badges'">
                             <label class="mb-1 block text-xs text-luxury-muted">{{ __('Link (optional)') }}</label>
                             <input type="text" :name="'items[' + index + '][link]'" x-model="item.link" placeholder="/services"
                                 class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">

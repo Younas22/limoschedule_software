@@ -14,10 +14,10 @@
         @endif
 
         <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-            x-data="{ visible: false }" x-intersect.once="visible = true">
+            x-data="{ armed: false, visible: false }" x-init="armed = true" x-intersect.once="visible = true">
             @foreach ($section->items as $item)
                 <div class="reveal-up delay-{{ ($loop->index % 6) + 1 }} group rounded-2xl border border-luxury-border bg-luxury-charcoal p-6 transition duration-300 hover:-translate-y-1 hover:border-luxury-gold/40 hover:shadow-xl hover:shadow-black/30"
-                    :class="{ 'is-visible': visible }">
+                    :class="{ 'reveal-armed': armed, 'is-visible': visible }">
                     <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-luxury-gold/10 text-luxury-gold transition duration-300 group-hover:scale-110 group-hover:bg-luxury-gold group-hover:text-luxury-black">
                         <x-icon :name="$item['icon'] ?? 'star'" class="h-5 w-5" />
                     </span>

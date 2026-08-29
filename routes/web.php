@@ -9,6 +9,7 @@ use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\ThemeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PageController::class, 'home'])->name('pages.home');
@@ -23,6 +24,7 @@ Route::post('login', [LoginController::class, 'store']);
 
 Route::post('locale/{code}', [LocaleController::class, 'switch'])->name('locale.switch');
 Route::post('currency/{code}', [CurrencyController::class, 'switch'])->name('currency.switch');
+Route::post('theme/toggle', [ThemeController::class, 'toggle'])->name('theme.toggle');
 
 Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
 

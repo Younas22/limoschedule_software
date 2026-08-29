@@ -145,7 +145,9 @@ class PageSectionController extends Controller
         $data = $request->validate([
             'type' => ['required', Rule::in(array_keys(PageSection::TYPES))],
             'heading' => ['nullable', 'string', 'max:255'],
+            'eyebrow' => ['nullable', 'string', 'max:60'],
             'subheading' => ['nullable', 'string', 'max:255'],
+            'differentiator' => ['nullable', 'string', 'max:160'],
             'body' => [Rule::requiredIf($type === 'rich_text'), 'nullable', 'string'],
             'image' => ['nullable', 'image', 'max:4096'],
             'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:25600'],
@@ -153,8 +155,8 @@ class PageSectionController extends Controller
             'button_url' => ['nullable', 'string', 'max:255'],
             'button_text_2' => ['nullable', 'string', 'max:100'],
             'button_url_2' => ['nullable', 'string', 'max:255'],
-            'items' => [Rule::requiredIf(in_array($type, ['items', 'faq', 'stats', 'team', 'process'], true)), 'nullable', 'array'],
-            'items.*.title' => ['required_if:type,items', 'required_if:type,process', 'nullable', 'string', 'max:255'],
+            'items' => [Rule::requiredIf(in_array($type, ['items', 'trust_badges', 'faq', 'stats', 'team', 'process'], true)), 'nullable', 'array'],
+            'items.*.title' => ['required_if:type,items', 'required_if:type,trust_badges', 'required_if:type,process', 'nullable', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:1000'],
             'items.*.icon' => ['nullable', 'string', 'max:50'],
             'items.*.link' => ['nullable', 'string', 'max:255'],
@@ -185,6 +187,14 @@ class PageSectionController extends Controller
 
         $data['content'] = match ($type) {
             'items' => collect($data['items'] ?? [])
+                ->filter(fn ($item) => filled($item['title'] ?? null))
+                ->map(fn ($item) => [
+                    'icon' => $item['icon'] ?? null,
+                    'title' => $item['title'],
+                    'description' => $item['description'] ?? null,
+                    'link' => $item['link'] ?? null,
+                ])->values()->all(),
+            'trust_badges' => collect($data['items'] ?? [])
                 ->filter(fn ($item) => filled($item['title'] ?? null))
                 ->map(fn ($item) => [
                     'icon' => $item['icon'] ?? null,

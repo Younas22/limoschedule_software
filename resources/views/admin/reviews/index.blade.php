@@ -84,9 +84,14 @@
                                 <p class="text-xs">{{ $review->vehicle?->name ?? '—' }}</p>
                             </td>
                             <td class="px-6 py-3">
-                                <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ $review->status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : ($review->status === 'pending' ? 'bg-luxury-gold/10 text-luxury-gold' : 'bg-red-500/10 text-red-400') }}">
-                                    {{ $review->status_label }}
-                                </span>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="rounded-full px-2.5 py-1 text-xs font-medium {{ $review->status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : ($review->status === 'pending' ? 'bg-luxury-gold/10 text-luxury-gold' : 'bg-red-500/10 text-red-400') }}">
+                                        {{ $review->status_label }}
+                                    </span>
+                                    @if ($review->is_featured)
+                                        <span class="rounded-full bg-luxury-gold/10 px-2.5 py-1 text-xs font-medium text-luxury-gold">{{ __('Featured') }}</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-3">
                                 <div class="flex flex-wrap items-center justify-end gap-2">
@@ -107,6 +112,14 @@
                                                 @csrf
                                                 <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-red-500/40 hover:text-red-400">
                                                     {{ __('Reject') }}
+                                                </button>
+                                            </form>
+                                        @endif
+                                        @if ($review->status === 'approved')
+                                            <form method="POST" action="{{ route('admin.reviews.toggle-featured', $review) }}">
+                                                @csrf
+                                                <button type="submit" class="rounded-lg border border-luxury-border px-3 py-1.5 text-xs font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                                                    {{ $review->is_featured ? __('Unfeature') : __('Feature') }}
                                                 </button>
                                             </form>
                                         @endif

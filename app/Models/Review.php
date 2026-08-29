@@ -22,12 +22,14 @@ class Review extends Model
         'rating',
         'comment',
         'status',
+        'is_featured',
     ];
 
     protected function casts(): array
     {
         return [
             'rating' => 'integer',
+            'is_featured' => 'boolean',
         ];
     }
 
@@ -54,6 +56,11 @@ class Review extends Model
     public function scopeApproved(Builder $query): Builder
     {
         return $query->where('status', 'approved');
+    }
+
+    public function scopeFeatured(Builder $query): Builder
+    {
+        return $query->where('is_featured', true);
     }
 
     public function getStatusLabelAttribute(): string

@@ -16,6 +16,11 @@
 @php
     $navPages = $navPages ?? \App\Models\Page::where('is_active', true)->get()->keyBy('slug');
     $direction = \App\Models\Language::findActiveByCode(app()->getLocale())?->direction ?? 'ltr';
+    // The public site's own dark/light preference — session-scoped per
+    // visitor (see ThemeController), and deliberately independent of
+    // Setting::theme_mode, which is documented as an admin/customer-panel-
+    // only preference and must never change what a site visitor sees.
+    $themeMode = session('public_theme_mode', 'dark');
     $pageTitle = $title ? seo_title($title) : (setting('meta_title') ?: setting('company_name', config('app.name', 'Limo Schedule')));
     $metaDescription = $description ?: setting('meta_description') ?: setting('tagline');
     $resolvedOgImage = $ogImage ?: setting('og_image_url') ?: setting('logo_url');
@@ -27,14 +32,14 @@
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $direction }}"
-    {{-- The public marketing site always stays on the luxury dark theme —
-         Admin Settings → Light Mode is an admin/customer-panel-only
-         preference (Setting::theme_mode) and must never bleed into the
-         public site's branding. --}}
-    data-theme="dark" class="dark">
+    {{-- The visitor's own per-session choice (see $themeMode above) — still
+         entirely independent of Admin Settings → Light Mode, which only
+         ever affects the admin/customer/driver panels. --}}
+    data-theme="{{ $themeMode }}" class="{{ $themeMode === 'light' ? '' : 'dark' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $pageTitle }}</title>
     @if ($metaDescription)
         <meta name="description" content="{{ $metaDescription }}">
@@ -109,14 +114,14 @@
 
     {{ $head ?? '' }}
 </head>
-<body class="min-h-screen bg-luxury-black font-sans text-luxury-white antialiased">
+<body class="min-h-screen bg-luxury-charcoal font-sans text-luxury-white antialiased">
     <x-page-progress />
 
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-luxury-gold focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-luxury-black">
         {{ __('Skip to content') }}
     </a>
 
-    <div x-data="{ sidebarOpen: false, searchOpen: false }" @keydown.escape.window="sidebarOpen = false">
+    <div x-data="publicSiteShell(@js($themeMode))" @keydown.escape.window="sidebarOpen = false">
         <x-notifications />
 
         <x-header :nav-pages="$navPages" :current-slug="$currentSlug" />
@@ -136,5 +141,39 @@
 
         <x-search-modal />
     </div>
+
+    <script>
+        // Shared shell state for the whole public site: the mobile sidebar,
+        // the search overlay, and the visitor's own dark/light preference —
+        // lifted up here (rather than scoped to just the header) so the
+        // header, the mobile menu, and the bottom nav can all read/change
+        // the same theme state. Session-scoped via ThemeController, and
+        // entirely independent of Setting::theme_mode (the admin/customer/
+        // driver panels' theme) — see the same pattern in
+        // components/customer/layouts/app.blade.php.
+        function publicSiteShell(initialTheme) {
+            return {
+                sidebarOpen: false,
+                searchOpen: false,
+                theme: initialTheme,
+
+                toggleTheme() {
+                    const mode = this.theme === 'dark' ? 'light' : 'dark';
+                    this.theme = mode;
+                    document.documentElement.classList.toggle('dark', mode !== 'light');
+                    document.documentElement.setAttribute('data-theme', mode);
+
+                    fetch('{{ route('theme.toggle') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                    }).catch(() => {});
+                },
+            };
+        }
+    </script>
 </body>
 </html>

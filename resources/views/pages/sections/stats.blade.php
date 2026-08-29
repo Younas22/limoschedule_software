@@ -17,9 +17,9 @@
             @endif
 
             <div class="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-4"
-                x-data="{ visible: false }" x-intersect.once="visible = true">
+                x-data="{ armed: false, visible: false }" x-init="armed = true" x-intersect.once="visible = true">
                 @foreach ($stats as $stat)
-                    <div class="reveal-up delay-{{ ($loop->index % 6) + 1 }} text-center" :class="{ 'is-visible': visible }"
+                    <div class="reveal-up delay-{{ ($loop->index % 6) + 1 }} text-center" :class="{ 'reveal-armed': armed, 'is-visible': visible }"
                         x-data="statCounter({{ (int) ($stat['value'] ?? 0) }})" x-effect="visible && start()">
                         @if (! empty($stat['icon']))
                             <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-luxury-gold/10 text-luxury-gold">
@@ -27,8 +27,11 @@
                             </span>
                         @endif
 
+                        {{-- Server-rendered fallback text (the real final number, just
+                             unanimated) so the figure is never blank if Alpine fails to
+                             load — x-text only overwrites it once Alpine actually runs. --}}
                         <p class="mt-3 text-3xl font-bold text-luxury-gold sm:text-4xl">
-                            <span x-text="formatted"></span>{{ $stat['suffix'] ?? '' }}
+                            <span x-text="formatted">{{ number_format((int) ($stat['value'] ?? 0)) }}</span>{{ $stat['suffix'] ?? '' }}
                         </p>
 
                         @if (! empty($stat['label']))

@@ -19,11 +19,11 @@
             @endif
 
             <div class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                x-data="{ visible: false }" x-intersect.once="visible = true">
+                x-data="{ armed: false, visible: false }" x-init="armed = true" x-intersect.once="visible = true">
                 @foreach ($areas as $area)
                     <a href="{{ route('areas.show', $area) }}"
                         class="reveal-up delay-{{ ($loop->index % 6) + 1 }} flex items-center gap-2 rounded-xl border border-luxury-border bg-luxury-charcoal px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-luxury-gold/40"
-                        :class="{ 'is-visible': visible }">
+                        :class="{ 'reveal-armed': armed, 'is-visible': visible }">
                         <x-icon name="map-pin" class="h-4 w-4 shrink-0 text-luxury-gold" />
                         <span class="truncate text-sm font-medium text-luxury-white">{{ $area->name }}</span>
                     </a>

@@ -12,6 +12,22 @@
     $activeCurrencies = \App\Models\Currency::active();
     $currentCurrency = active_currency();
 
+    // Mega-menu contents for the "Services" and "Areas" nav items — spread
+    // across a 4-column grid on hover instead of one long single-column
+    // dropdown, so every item stays visible and scannable at a glance.
+    $navServiceIcons = [
+        'airport-transfer' => 'plane',
+        'chauffeur-service' => 'user',
+        'corporate-transfer' => 'briefcase',
+        'city-rides' => 'car',
+        'hourly-rides' => 'clock',
+        'vip-transport' => 'sparkles',
+    ];
+    $navServiceLinks = collect(\App\Models\Page::SERVICE_PAGES)
+        ->filter(fn ($slug) => isset($navPages[$slug]))
+        ->map(fn ($slug) => ['slug' => $slug, 'label' => \App\Models\Page::PAGES[$slug], 'icon' => $navServiceIcons[$slug] ?? 'car']);
+    $navAreas = isset($navPages['areas']) ? \App\Models\Area::active()->ordered()->get() : collect();
+
     // Whichever guard is logged in (customer, admin, or driver — a visitor
     // can only be authenticated on one at a time) drives the navbar's
     // account state, so it's always obvious someone is logged in no matter
@@ -59,10 +75,52 @@
             @foreach (\App\Models\Page::PAGES as $slug => $label)
                 @continue(! isset($navPages[$slug]))
                 @continue(in_array($slug, \App\Models\Page::LEGAL_PAGES, true) || in_array($slug, \App\Models\Page::SERVICE_PAGES, true))
-                <a href="{{ $slug === 'home' ? route('pages.home') : route('pages.show', $slug) }}"
-                    class="text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ $currentSlug === $slug ? 'text-luxury-gold' : '' }}">
-                    {{ __($label) }}
-                </a>
+                @continue($slug === 'faq')
+
+                @if ($slug === 'services' && $navServiceLinks->isNotEmpty())
+                    <div class="group relative flex h-16 items-center">
+                        <a href="{{ route('pages.show', $slug) }}"
+                            class="flex items-center gap-1 text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ $currentSlug === $slug ? 'text-luxury-gold' : '' }}">
+                            {{ __($label) }}
+                            <x-icon name="chevron-down" class="h-3.5 w-3.5 transition group-hover:rotate-180" />
+                        </a>
+                        <div class="absolute start-1/2 top-full z-40 hidden w-[28rem] -translate-x-1/2 pt-3 group-hover:block">
+                            <div class="grid grid-cols-3 gap-2 rounded-xl border border-luxury-border bg-luxury-charcoal p-4 shadow-xl">
+                                @foreach ($navServiceLinks as $service)
+                                    <a href="{{ route('pages.show', $service['slug']) }}"
+                                        class="flex flex-col items-center gap-2 rounded-lg px-2 py-3 text-center transition hover:bg-luxury-graphite">
+                                        <x-icon name="{{ $service['icon'] }}" class="h-5 w-5 text-luxury-gold" />
+                                        <span class="text-xs font-medium leading-tight text-luxury-white">{{ __($service['label']) }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @elseif ($slug === 'areas' && $navAreas->isNotEmpty())
+                    <div class="group relative flex h-16 items-center">
+                        <a href="{{ route('pages.show', $slug) }}"
+                            class="flex items-center gap-1 text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ $currentSlug === $slug ? 'text-luxury-gold' : '' }}">
+                            {{ __($label) }}
+                            <x-icon name="chevron-down" class="h-3.5 w-3.5 transition group-hover:rotate-180" />
+                        </a>
+                        <div class="absolute start-1/2 top-full z-40 hidden w-[36rem] -translate-x-1/2 pt-3 group-hover:block">
+                            <div class="grid max-h-[60vh] grid-cols-4 gap-x-4 gap-y-1 overflow-y-auto rounded-xl border border-luxury-border bg-luxury-charcoal p-4 shadow-xl">
+                                @foreach ($navAreas as $area)
+                                    <a href="{{ route('areas.show', $area) }}"
+                                        class="flex items-center gap-1.5 truncate rounded-lg px-2 py-2 text-sm text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">
+                                        <x-icon name="map-pin" class="h-3.5 w-3.5 shrink-0 text-luxury-gold" />
+                                        <span class="truncate">{{ $area->name }}</span>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <a href="{{ $slug === 'home' ? route('pages.home') : route('pages.show', $slug) }}"
+                        class="text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ $currentSlug === $slug ? 'text-luxury-gold' : '' }}">
+                        {{ __($label) }}
+                    </a>
+                @endif
             @endforeach
             <a href="{{ route('blog.index') }}" class="text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ request()->routeIs('blog.*') ? 'text-luxury-gold' : '' }}">
                 {{ __('Blog') }}

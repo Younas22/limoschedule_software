@@ -12,11 +12,11 @@ class SitemapController extends Controller
 {
     public function sitemap(): Response
     {
-        $pages = Page::where('is_active', true)->get();
+        $pages = Page::where('is_active', true)->where('robots_index', true)->get();
 
-        $areas = Area::active()->get(['slug', 'updated_at']);
+        $areas = Area::active()->where('robots_index', true)->get(['slug', 'updated_at']);
 
-        $posts = BlogPost::published()->get(['slug', 'updated_at']);
+        $posts = BlogPost::published()->where('robots_index', true)->get(['slug', 'updated_at']);
 
         $categories = BlogCategory::active()
             ->whereHas('posts', fn ($q) => $q->published())

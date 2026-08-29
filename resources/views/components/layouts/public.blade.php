@@ -1,11 +1,29 @@
-@props(['title' => null, 'description' => null, 'currentSlug' => null, 'ogImage' => null, 'ogType' => 'website', 'publishedTime' => null])
+@props([
+    'title' => null,
+    'description' => null,
+    'currentSlug' => null,
+    'ogImage' => null,
+    'ogType' => 'website',
+    'publishedTime' => null,
+    // Per-page SEO overrides — every call site defaults to the
+    // site-wide/indexable behavior that was already in place before these
+    // existed, so nothing currently indexed changes unless a page opts in.
+    'canonicalOverride' => null,
+    'robotsIndex' => null,
+    'robotsFollow' => null,
+])
 
 @php
     $navPages = $navPages ?? \App\Models\Page::where('is_active', true)->get()->keyBy('slug');
     $direction = \App\Models\Language::findActiveByCode(app()->getLocale())?->direction ?? 'ltr';
-    $pageTitle = $title ? $title.' — '.setting('company_name', config('app.name', 'Limo Schedule')) : (setting('meta_title') ?: setting('company_name', config('app.name', 'Limo Schedule')));
+    $pageTitle = $title ? seo_title($title) : (setting('meta_title') ?: setting('company_name', config('app.name', 'Limo Schedule')));
     $metaDescription = $description ?: setting('meta_description') ?: setting('tagline');
     $resolvedOgImage = $ogImage ?: setting('og_image_url') ?: setting('logo_url');
+    $canonicalUrl = $canonicalOverride ?: url()->current();
+    $robotsIndex = $robotsIndex ?? setting('default_robots_index', true);
+    $robotsFollow = $robotsFollow ?? setting('default_robots_follow', true);
+    $robotsContent = ($robotsIndex ? 'index' : 'noindex').', '.($robotsFollow ? 'follow' : 'nofollow');
+    $schemaBuilder = app(\App\Services\SchemaBuilder::class);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $direction }}"
@@ -27,6 +45,7 @@
     @if (setting('google_site_verification'))
         <meta name="google-site-verification" content="{{ setting('google_site_verification') }}">
     @endif
+    <meta name="robots" content="{{ $robotsContent }}">
     @if (setting('google_analytics_id'))
         <script async src="https://www.googletagmanager.com/gtag/js?id={{ setting('google_analytics_id') }}"></script>
         <script>
@@ -36,7 +55,7 @@
             gtag('config', {{ \Illuminate\Support\Js::from(setting('google_analytics_id')) }});
         </script>
     @endif
-    <link rel="canonical" href="{{ url()->current() }}">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
 
     {{-- Open Graph --}}
     <meta property="og:title" content="{{ $pageTitle }}">
@@ -44,7 +63,7 @@
         <meta property="og:description" content="{{ $metaDescription }}">
     @endif
     <meta property="og:type" content="{{ $ogType }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
     @if ($resolvedOgImage)
         <meta property="og:image" content="{{ $resolvedOgImage }}">
     @endif
@@ -69,8 +88,13 @@
     <link rel="icon" href="{{ setting('favicon_url') ?: asset('favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ setting('favicon_url') ?: asset('favicon.ico') }}">
 
-    {{-- Organization structured data --}}
-    <script type="application/ld+json">{!! json_encode(organization_schema(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+    {{-- Site-wide structured data — LocalBusiness/TaxiService (per the
+         configured business type) plus WebSite. Page-specific schema
+         (FAQPage, BreadcrumbList) is emitted alongside the content it
+         describes instead of threaded through this layout — see
+         pages/sections/faq.blade.php and components/breadcrumbs.blade.php. --}}
+    <script type="application/ld+json">{!! json_encode($schemaBuilder->organization(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+    <script type="application/ld+json">{!! json_encode($schemaBuilder->website(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('admin.partials.theme-vars')

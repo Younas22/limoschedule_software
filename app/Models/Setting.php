@@ -11,8 +11,26 @@ class Setting extends Model
 
     public const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+    /**
+     * Options for the "business type" setting — drives which schema.org
+     * LocalBusiness subtype the dynamic schema builder emits (see
+     * App\Services\SchemaBuilder) and, later, template terminology.
+     */
+    public const BUSINESS_TYPES = [
+        'taxi' => 'Taxi',
+        'limo' => 'Limo',
+        'limousine' => 'Limousine',
+        'black_car' => 'Black Car',
+        'chauffeur' => 'Chauffeur',
+        'airport_transfer' => 'Airport Transfer',
+        'private_transportation' => 'Private Transportation',
+        'corporate_transportation' => 'Corporate Transportation',
+        'other' => 'Other',
+    ];
+
     protected $fillable = [
         'company_name',
+        'business_type',
         'tagline',
         'meta_title',
         'logo',
@@ -40,6 +58,9 @@ class Setting extends Model
         'theme_mode',
         'meta_description',
         'meta_keywords',
+        'seo_title_template',
+        'default_robots_index',
+        'default_robots_follow',
         'og_image',
         'google_site_verification',
         'google_analytics_id',
@@ -58,6 +79,8 @@ class Setting extends Model
             'office_lat' => 'decimal:7',
             'office_lng' => 'decimal:7',
             'business_hours' => 'array',
+            'default_robots_index' => 'boolean',
+            'default_robots_follow' => 'boolean',
         ];
     }
 

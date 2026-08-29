@@ -74,6 +74,11 @@
             </p>
         </div>
     </section>
+
+    @php $faqSchema = app(\App\Services\SchemaBuilder::class)->faqPage($section->faq_items); @endphp
+    @if ($faqSchema)
+        <script type="application/ld+json">{!! json_encode($faqSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+    @endif
 @endif
 
 <script>

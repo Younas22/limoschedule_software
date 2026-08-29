@@ -11,7 +11,7 @@
 
     <div class="space-y-6">
         {{-- Page Settings --}}
-        <form method="POST" action="{{ route('admin.pages.update', $page) }}" class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+        <form method="POST" action="{{ route('admin.pages.update', $page) }}" enctype="multipart/form-data" class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
             @csrf
             @method('PUT')
 
@@ -35,6 +35,36 @@
                     <textarea id="meta_description" name="meta_description" rows="2"
                         class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('meta_description', $page->meta_description) }}</textarea>
                     <x-admin.input-error :messages="$errors->get('meta_description')" />
+                </div>
+
+                <div>
+                    <x-admin.input-label for="canonical_override" value="{{ __('Canonical URL (optional)') }}" />
+                    <x-admin.text-input id="canonical_override" name="canonical_override" type="url" value="{{ old('canonical_override', $page->canonical_override) }}" placeholder="{{ url()->current() }}" />
+                    <p class="mt-1 text-xs text-luxury-muted">{{ __('Leave blank to use this page\'s own URL — only set this if this content is a duplicate of another page.') }}</p>
+                    <x-admin.input-error :messages="$errors->get('canonical_override')" />
+                </div>
+
+                <div x-data="{ preview: '{{ $page->og_image_url }}' }">
+                    <x-admin.input-label value="{{ __('Social Share Image (optional)') }}" />
+                    <div class="flex items-center gap-4">
+                        <div class="flex h-14 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-luxury-border bg-luxury-graphite">
+                            <template x-if="preview"><img :src="preview" alt="" class="h-full w-full object-cover"></template>
+                            <template x-if="!preview"><span class="text-[10px] text-luxury-muted">{{ __('No image') }}</span></template>
+                        </div>
+                        <label class="flex-1 cursor-pointer rounded-lg border border-dashed border-luxury-border px-4 py-3 text-center text-xs text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                            <span>{{ __('Click to upload image') }}</span>
+                            <input type="file" name="og_image" accept="image/*" class="hidden" @change="preview = $event.target.files.length ? URL.createObjectURL($event.target.files[0]) : preview">
+                        </label>
+                    </div>
+                    <p class="mt-2 text-xs text-luxury-muted">{{ __('Falls back to the site-wide default when left blank.') }}</p>
+                    <x-admin.input-error :messages="$errors->get('og_image')" />
+                </div>
+
+                <div class="sm:col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <x-admin.toggle name="robots_index" :checked="old('robots_index', $page->robots_index)"
+                        label="{{ __('Allow search engines to index this page') }}" />
+                    <x-admin.toggle name="robots_follow" :checked="old('robots_follow', $page->robots_follow)"
+                        label="{{ __('Allow search engines to follow links on this page') }}" />
                 </div>
 
                 <div class="sm:col-span-2">

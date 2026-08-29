@@ -37,6 +37,9 @@ class BlogPost extends Model
         'meta_description',
         'meta_keywords',
         'custom_schema',
+        'canonical_override',
+        'robots_index',
+        'robots_follow',
     ];
 
     protected function casts(): array
@@ -45,6 +48,8 @@ class BlogPost extends Model
             'is_featured' => 'boolean',
             'views_count' => 'integer',
             'published_at' => 'datetime',
+            'robots_index' => 'boolean',
+            'robots_follow' => 'boolean',
         ];
     }
 

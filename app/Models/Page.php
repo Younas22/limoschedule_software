@@ -56,6 +56,10 @@ class Page extends Model
         'name',
         'meta_title',
         'meta_description',
+        'og_image',
+        'canonical_override',
+        'robots_index',
+        'robots_follow',
         'custom_schema',
         'is_active',
     ];
@@ -64,7 +68,14 @@ class Page extends Model
     {
         return [
             'is_active' => 'boolean',
+            'robots_index' => 'boolean',
+            'robots_follow' => 'boolean',
         ];
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        return $this->og_image ? asset('public/uploads/pages/'.$this->og_image) : null;
     }
 
     public function getRouteKeyName(): string

@@ -49,5 +49,30 @@ Route::get('/{slug}', [PageController::class, 'show'])
 // Blog post detail lives at the site root (no "/blog/" prefix) — registered
 // after pages.show so known static-page slugs are matched there first, and
 // any other single-segment slug falls through here to be looked up as a
-// blog post (implicit model binding 404s naturally if it doesn't exist).
-Route::get('/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
+// blog post. Kept as implicit model binding ({post:slug}) rather than a
+// bare {slug} — a bare {slug} here would have the exact same URI signature
+// as pages.show's own {slug} route above, and Laravel's route collection
+// silently lets the second registration overwrite the first for routing
+// purposes when two routes share a method+URI string.
+Route::get('/{post:slug}', [BlogController::class, 'show'])
+    ->name('blog.show')
+    ->missing(function (\Illuminate\Http\Request $request) {
+        if ($redirect = \App\Models\Redirect::findFor($request->route('post'))) {
+            return redirect('/'.$redirect->new_path, $redirect->type);
+        }
+
+        abort(404);
+    });
+
+// Lowest priority — only ever reached once nothing above has matched, so
+// this can never intercept a working route. Checks the admin-managed
+// redirects table before giving up with a real 404.
+Route::fallback(function (\Illuminate\Http\Request $request) {
+    $redirect = \App\Models\Redirect::findFor($request->path());
+
+    if ($redirect) {
+        return redirect('/'.$redirect->new_path, $redirect->type);
+    }
+
+    abort(404);
+});

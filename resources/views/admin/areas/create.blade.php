@@ -4,7 +4,7 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Add a town or city to your list of service areas.') }}</p>
     </div>
 
-    <form method="POST" action="{{ route('admin.areas.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.areas.store') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @include('admin.areas._form')
 

@@ -117,10 +117,13 @@ class BlogPostController extends Controller
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
             'meta_keywords' => ['nullable', 'string', 'max:255'],
+            'canonical_override' => ['nullable', 'url', 'max:255'],
             'custom_schema' => ['nullable', 'string'],
         ]);
 
         $data['is_featured'] = $request->boolean('is_featured');
+        $data['robots_index'] = $request->boolean('robots_index', $post === null);
+        $data['robots_follow'] = $request->boolean('robots_follow', $post === null);
         $data['slug'] = ($post ?? new BlogPost())->uniqueSlug(filled($data['slug'] ?? null) ? $data['slug'] : $data['title']);
 
         if (blank($data['published_at'] ?? null)) {

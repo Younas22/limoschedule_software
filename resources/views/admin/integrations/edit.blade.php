@@ -17,6 +17,12 @@
             <p class="text-xs text-luxury-muted">
                 {{ __('GOOGLE_MAPS_API_KEY — used for Places Autocomplete, Distance Matrix, Geocoding, and the live dispatch map. Saving here writes directly to the .env file on the server.') }}
             </p>
+            <p class="text-xs text-luxury-muted">
+                {{ __('Don\'t have a key yet?') }}
+                <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer" class="text-luxury-gold underline hover:no-underline">
+                    {{ __('Get an API key from Google Cloud Console') }}
+                </a>
+            </p>
 
             <form @submit.prevent="save('{{ route('admin.integrations.google-maps.update') }}')">
                 <x-admin.input-label for="google_maps_api_key" value="{{ __('API Key') }}" />

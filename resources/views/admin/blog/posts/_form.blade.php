@@ -71,6 +71,19 @@
                 </div>
 
                 <div>
+                    <x-admin.input-label for="canonical_override" value="{{ __('Canonical URL (optional)') }}" />
+                    <x-admin.text-input id="canonical_override" name="canonical_override" type="url" value="{{ old('canonical_override', $post?->canonical_override) }}" />
+                    <x-admin.input-error :messages="$errors->get('canonical_override')" />
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <x-admin.toggle name="robots_index" :checked="old('robots_index', $post?->robots_index ?? true)"
+                        label="{{ __('Allow search engines to index this post') }}" />
+                    <x-admin.toggle name="robots_follow" :checked="old('robots_follow', $post?->robots_follow ?? true)"
+                        label="{{ __('Allow search engines to follow links on this post') }}" />
+                </div>
+
+                <div>
                     <x-admin.input-label for="custom_schema" value="{{ __('Schema Markup (optional)') }}" />
                     <textarea id="custom_schema" name="custom_schema" rows="6" spellcheck="false"
                         class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 font-mono text-xs text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition"

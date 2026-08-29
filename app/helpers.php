@@ -88,6 +88,32 @@ if (! function_exists('currency')) {
     }
 }
 
+if (! function_exists('seo_title')) {
+    /**
+     * Builds a <title>/OG-title from the site's configurable template
+     * (Setting::seo_title_template, e.g. "{page_title} | {business_name}"),
+     * guarding against the business name being appended twice when the page
+     * title already contains it (e.g. an admin-written title of "Airport
+     * Transfer | Qasim Taxi" would otherwise become "... | Qasim Taxi —
+     * Qasim Taxi").
+     */
+    function seo_title(string $pageTitle): string
+    {
+        $businessName = (string) setting('company_name', config('app.name', 'Limo Schedule'));
+
+        if ($businessName !== '' && str_contains(mb_strtolower($pageTitle), mb_strtolower($businessName))) {
+            return $pageTitle;
+        }
+
+        $template = (string) setting('seo_title_template') ?: '{page_title} | {business_name}';
+
+        return strtr($template, [
+            '{page_title}' => $pageTitle,
+            '{business_name}' => $businessName,
+        ]);
+    }
+}
+
 if (! function_exists('organization_schema')) {
     /**
      * Site-wide Organization structured data (JSON-LD), built here rather than

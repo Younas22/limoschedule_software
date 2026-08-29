@@ -12,6 +12,12 @@ class Area extends Model
         'name',
         'slug',
         'description',
+        'meta_title',
+        'meta_description',
+        'og_image',
+        'canonical_override',
+        'robots_index',
+        'robots_follow',
         'sort_order',
         'is_active',
     ];
@@ -20,7 +26,14 @@ class Area extends Model
     {
         return [
             'is_active' => 'boolean',
+            'robots_index' => 'boolean',
+            'robots_follow' => 'boolean',
         ];
+    }
+
+    public function getOgImageUrlAttribute(): ?string
+    {
+        return $this->og_image ? asset('public/uploads/areas/'.$this->og_image) : null;
     }
 
     protected static function booted(): void

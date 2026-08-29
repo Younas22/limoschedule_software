@@ -51,10 +51,15 @@
     /* Safety net against horizontal scroll on mobile — a single element
        overflowing anywhere on the page (long text, an off-canvas sidebar,
        a wide table) would otherwise widen the whole document instead of
-       just that element. */
+       just that element.
+       `clip` rather than `hidden`: both block the horizontal overflow, but
+       `hidden` makes html/body an overflow (scroll) container, which is a
+       well-known browser quirk that silently breaks `position: sticky` for
+       every descendant on the page (e.g. the blog post Table of Contents).
+       `clip` blocks the overflow without creating that scroll container. */
     html,
     body {
-        overflow-x: hidden;
+        overflow-x: clip;
     }
 
     /* Smoothly scroll to in-page anchors (e.g. "Book Now" buttons linking

@@ -15,7 +15,7 @@
             $errorTab = 'contact';
         } elseif ($errors->hasAny(['tax_label', 'tax_rate'])) {
             $errorTab = 'billing';
-        } elseif ($errors->hasAny(['meta_title', 'meta_description', 'meta_keywords', 'og_image', 'google_site_verification', 'google_analytics_id'])) {
+        } elseif ($errors->hasAny(['meta_title', 'meta_description', 'meta_keywords', 'seo_title_template', 'og_image', 'google_site_verification', 'google_analytics_id'])) {
             $errorTab = 'seo';
         } elseif ($errors->hasAny(['facebook_url', 'instagram_url', 'twitter_url', 'linkedin_url', 'youtube_url'])) {
             $errorTab = 'social';
@@ -61,6 +61,18 @@
                             <x-admin.input-label for="tagline" value="{{ __('Tagline') }}" />
                             <x-admin.text-input id="tagline" name="tagline" type="text" value="{{ old('tagline', $settings->tagline) }}" />
                             <x-admin.input-error :messages="$errors->get('tagline')" />
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <x-admin.input-label for="business_type" value="{{ __('Business Type') }}" />
+                            <select id="business_type" name="business_type"
+                                class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">
+                                @foreach (\App\Models\Setting::BUSINESS_TYPES as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('business_type', $settings->business_type) === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-luxury-muted">{{ __('Used to pick the right structured-data (schema.org) type for your website — helps Google understand what kind of business you are.') }}</p>
+                            <x-admin.input-error :messages="$errors->get('business_type')" />
                         </div>
                     </div>
                 </div>
@@ -338,6 +350,15 @@
                     </div>
 
                     <div class="mb-5">
+                        <x-admin.input-label for="seo_title_template" value="{{ __('Page Title Format') }}" />
+                        <x-admin.text-input id="seo_title_template" name="seo_title_template" type="text" value="{{ old('seo_title_template', $settings->seo_title_template) }}" placeholder="{page_title} | {business_name}" />
+                        <p class="mt-1 text-xs text-luxury-muted">
+                            {{ __('Controls how every page\'s browser-tab title is built. Use {page_title} and {business_name} as placeholders — e.g. "Airport Transfer | :name". If a page\'s own title already includes your business name, it\'s never added twice.', ['name' => $settings->company_name]) }}
+                        </p>
+                        <x-admin.input-error :messages="$errors->get('seo_title_template')" />
+                    </div>
+
+                    <div class="mb-5">
                         <x-admin.input-label for="meta_description" value="{{ __('Default Meta Description') }}" />
                         <textarea id="meta_description" name="meta_description" rows="2" maxlength="500"
                             class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('meta_description', $settings->meta_description) }}</textarea>
@@ -383,6 +404,18 @@
                         <x-admin.text-input id="google_analytics_id" name="google_analytics_id" type="text" value="{{ old('google_analytics_id', $settings->google_analytics_id) }}" placeholder="e.g. G-XXXXXXXXXX" />
                         <p class="mt-1 text-xs text-luxury-muted">{{ __('Your GA4 Measurement ID. The tracking code is added to every page automatically once saved.') }}</p>
                         <x-admin.input-error :messages="$errors->get('google_analytics_id')" />
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                    <h3 class="mb-1 text-sm font-semibold text-luxury-white">{{ __('Search Engine Indexing') }}</h3>
+                    <p class="mb-4 text-xs text-luxury-muted">{{ __("Default behavior for any page, area, or blog post that doesn't set its own — individual pages can still override this.") }}</p>
+
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <x-admin.toggle name="default_robots_index" :checked="old('default_robots_index', $settings->default_robots_index)"
+                            label="{{ __('Allow search engines to index new pages') }}" description="{{ __('Off = new pages start hidden from Google until you turn them on individually.') }}" />
+                        <x-admin.toggle name="default_robots_follow" :checked="old('default_robots_follow', $settings->default_robots_follow)"
+                            label="{{ __('Allow search engines to follow links') }}" description="{{ __('Leave this on unless you have a specific reason to turn it off.') }}" />
                     </div>
                 </div>
             </div>

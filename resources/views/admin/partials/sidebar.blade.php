@@ -66,6 +66,7 @@
                 ['label' => __('Popular Routes'), 'route' => 'admin.popular-routes.index', 'permission' => 'routes.view'],
                 ['label' => __('Route Types'), 'route' => 'admin.popular-routes.route-types.index', 'permission' => 'routes.view'],
                 ['label' => __('Service Areas'), 'route' => 'admin.areas.index', 'permission' => 'areas.view'],
+                ['label' => __('Redirects'), 'route' => 'admin.redirects.index', 'permission' => 'content.view'],
             ],
         ],
         [

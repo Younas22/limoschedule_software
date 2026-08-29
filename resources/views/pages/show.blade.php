@@ -1,6 +1,33 @@
-<x-layouts.public :title="$page->meta_title ?: $page->name" :description="$page->meta_description" :current-slug="$page->slug" :nav-pages="$navPages">
+@php
+    $breadcrumbItems = null;
+
+    if ($page->slug !== 'home') {
+        $breadcrumbItems = [['label' => __('Home'), 'url' => route('pages.home')]];
+
+        if (in_array($page->slug, \App\Models\Page::SERVICE_PAGES, true) && \Illuminate\Support\Facades\Route::has('pages.show')) {
+            $breadcrumbItems[] = ['label' => __('Services'), 'url' => route('pages.show', 'services')];
+        }
+
+        $breadcrumbItems[] = ['label' => __($page->name), 'url' => null];
+    }
+@endphp
+
+<x-layouts.public
+    :title="$page->meta_title ?: $page->name"
+    :description="$page->meta_description"
+    :current-slug="$page->slug"
+    :nav-pages="$navPages"
+    :og-image="$page->og_image_url"
+    :canonical-override="$page->canonical_override"
+    :robots-index="$page->robots_index"
+    :robots-follow="$page->robots_follow"
+>
     @if ($page->custom_schema)
         <x-slot:head>{!! $page->custom_schema !!}</x-slot:head>
+    @endif
+
+    @if ($breadcrumbItems)
+        <x-breadcrumbs :items="$breadcrumbItems" />
     @endif
 
     @forelse ($sections as $section)

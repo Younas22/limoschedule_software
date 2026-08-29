@@ -35,6 +35,7 @@ use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\PopularRouteController;
+use App\Http\Controllers\Admin\RedirectController;
 use App\Http\Controllers\Admin\RouteTypeController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\PromotionController;
@@ -270,6 +271,15 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::post('{area}/toggle', [AreaController::class, 'toggleStatus'])->name('toggle')->middleware('permission:areas.edit');
         Route::post('{area}/move-up', [AreaController::class, 'moveUp'])->name('move-up')->middleware('permission:areas.edit');
         Route::post('{area}/move-down', [AreaController::class, 'moveDown'])->name('move-down')->middleware('permission:areas.edit');
+    });
+
+    Route::prefix('redirects')->name('redirects.')->group(function () {
+        Route::get('/', [RedirectController::class, 'index'])->name('index')->middleware('permission:content.view');
+        Route::get('create', [RedirectController::class, 'create'])->name('create')->middleware('permission:content.create');
+        Route::post('/', [RedirectController::class, 'store'])->name('store')->middleware('permission:content.create');
+        Route::get('{redirect}/edit', [RedirectController::class, 'edit'])->name('edit')->middleware('permission:content.edit');
+        Route::put('{redirect}', [RedirectController::class, 'update'])->name('update')->middleware('permission:content.edit');
+        Route::delete('{redirect}', [RedirectController::class, 'destroy'])->name('destroy')->middleware('permission:content.delete');
     });
 
     Route::prefix('coupons')->name('coupons.')->group(function () {

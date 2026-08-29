@@ -3,12 +3,29 @@
     $pageHeading = $isAirport
         ? __('Taxi to :area', ['area' => $area->name])
         : __('Taxi Service in :area', ['area' => $area->name]);
-    $metaDescription = $area->description
-        ? __($area->description)
-        : __('Reliable taxi service in :area — airport transfers, city rides, and fixed, upfront pricing.', ['area' => $area->name]);
+    $pageTitle = $area->meta_title ?: $pageHeading;
+    $metaDescription = $area->meta_description
+        ?: ($area->description
+            ? __($area->description)
+            : __('Reliable taxi service in :area — airport transfers, city rides, and fixed, upfront pricing.', ['area' => $area->name]));
+    $breadcrumbItems = [
+        ['label' => __('Home'), 'url' => route('pages.home')],
+        ['label' => __('Areas'), 'url' => route('pages.show', 'areas')],
+        ['label' => $area->name, 'url' => null],
+    ];
 @endphp
 
-<x-layouts.public :title="$pageHeading" :description="$metaDescription" current-slug="areas">
+<x-layouts.public
+    :title="$pageTitle"
+    :description="$metaDescription"
+    current-slug="areas"
+    :og-image="$area->og_image_url"
+    :canonical-override="$area->canonical_override"
+    :robots-index="$area->robots_index"
+    :robots-follow="$area->robots_follow"
+>
+    <x-breadcrumbs :items="$breadcrumbItems" />
+
     {{-- Header --}}
     <section class="border-b border-luxury-border bg-gradient-to-br from-luxury-charcoal to-luxury-graphite">
         <div class="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-8">

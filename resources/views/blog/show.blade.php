@@ -1,5 +1,6 @@
 <x-layouts.public :title="$post->meta_title ?: $post->title" :description="$post->meta_description ?: $post->excerpt_or_summary"
-    :og-image="$post->featured_image_url" og-type="article" :published-time="$post->published_at?->toIso8601String()">
+    :og-image="$post->featured_image_url" og-type="article" :published-time="$post->published_at?->toIso8601String()"
+    :canonical-override="$post->canonical_override" :robots-index="$post->robots_index" :robots-follow="$post->robots_follow">
 
     <x-slot:head>
         <script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
@@ -7,6 +8,12 @@
             {!! $post->custom_schema !!}
         @endif
     </x-slot:head>
+
+    <x-breadcrumbs :items="[
+        ['label' => __('Home'), 'url' => route('pages.home')],
+        ['label' => __('Blog'), 'url' => route('blog.index')],
+        ['label' => $post->title, 'url' => null],
+    ]" />
     @if ($post->featured_image_url)
         <div class="mx-auto max-w-6xl px-4 pt-12 sm:px-6 lg:px-8">
             <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="mx-auto max-h-[32rem] w-full rounded-2xl object-contain">

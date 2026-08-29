@@ -4,7 +4,7 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ $area->name }}</p>
     </div>
 
-    <form method="POST" action="{{ route('admin.areas.update', $area) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.areas.update', $area) }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
         @include('admin.areas._form')

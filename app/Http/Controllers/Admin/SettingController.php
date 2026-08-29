@@ -8,6 +8,7 @@ use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SettingController extends Controller
@@ -44,6 +45,7 @@ class SettingController extends Controller
 
         $data = $request->validate([
             'company_name' => ['required', 'string', 'max:255'],
+            'business_type' => ['required', 'string', Rule::in(array_keys(Setting::BUSINESS_TYPES))],
             'tagline' => ['nullable', 'string', 'max:255'],
             'logo' => ['nullable', 'image', 'max:2048'],
             'logo_dark' => ['nullable', 'image', 'max:2048'],
@@ -71,6 +73,7 @@ class SettingController extends Controller
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
             'meta_keywords' => ['nullable', 'string', 'max:255'],
+            'seo_title_template' => ['nullable', 'string', 'max:255'],
             'og_image' => ['nullable', 'image', 'max:4096'],
             'google_site_verification' => ['nullable', 'string', 'max:255'],
             'google_analytics_id' => ['nullable', 'string', 'max:50'],
@@ -82,6 +85,8 @@ class SettingController extends Controller
         ]);
 
         $data['invoice_logo_dark'] = $request->boolean('invoice_logo_dark');
+        $data['default_robots_index'] = $request->boolean('default_robots_index');
+        $data['default_robots_follow'] = $request->boolean('default_robots_follow');
 
         $data['business_hours'] = collect(Setting::DAYS)->mapWithKeys(fn ($day) => [
             $day => [

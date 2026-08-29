@@ -55,18 +55,19 @@
             </div>
         </div>
 
-        {{-- Hero-only: eyebrow + differentiator --}}
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'hero'" x-cloak>
+        {{-- Hero / CTA: eyebrow + differentiator --}}
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'hero' || type === 'cta'" x-cloak>
             <div>
                 <x-admin.input-label for="eyebrow" value="{{ __('Eyebrow (optional)') }}" />
-                <x-admin.text-input id="eyebrow" name="eyebrow" type="text" placeholder="{{ __('e.g. Bilzen & surrounding area') }}" value="{{ old('eyebrow', $section?->eyebrow) }}" />
+                <x-admin.text-input id="eyebrow" name="eyebrow" type="text" :placeholder="__('e.g. Bilzen & surrounding area')" value="{{ old('eyebrow', $section?->eyebrow) }}" />
                 <p class="mt-1 text-xs text-luxury-muted">{{ __('A short label shown above the headline.') }}</p>
                 <x-admin.input-error :messages="$errors->get('eyebrow')" />
             </div>
             <div>
                 <x-admin.input-label for="differentiator" value="{{ __('Differentiator (optional)') }}" />
-                <x-admin.text-input id="differentiator" name="differentiator" type="text" placeholder="{{ __('e.g. Fixed prices. No hidden fees.') }}" value="{{ old('differentiator', $section?->differentiator) }}" />
-                <p class="mt-1 text-xs text-luxury-muted">{{ __('One specific, true claim shown as a highlighted line near the booking widget — only use something you can actually stand behind.') }}</p>
+                <x-admin.text-input id="differentiator" name="differentiator" type="text" x-bind:placeholder="type === 'cta' ? '{{ __('e.g. 24/7 Support · Secure Booking · Professional Chauffeurs') }}' : '{{ __('e.g. Fixed prices. No hidden fees.') }}'" value="{{ old('differentiator', $section?->differentiator) }}" />
+                <p class="mt-1 text-xs text-luxury-muted" x-show="type === 'hero'">{{ __('One specific, true claim shown as a highlighted line near the booking widget — only use something you can actually stand behind.') }}</p>
+                <p class="mt-1 text-xs text-luxury-muted" x-show="type === 'cta'" x-cloak>{{ __('A small, understated trust line shown below the button.') }}</p>
                 <x-admin.input-error :messages="$errors->get('differentiator')" />
             </div>
         </div>
@@ -94,6 +95,7 @@
                 class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-2.5 text-sm text-luxury-white file:mr-3 file:rounded-md file:border-0 file:bg-luxury-slate file:px-3 file:py-1.5 file:text-xs file:text-luxury-white">
             <x-admin.input-error :messages="$errors->get('image')" />
             <p class="mt-1 text-xs text-luxury-muted" x-show="type === 'hero'">{{ __('Used as the background poster, and as the fallback if no video is uploaded below.') }}</p>
+            <p class="mt-1 text-xs text-luxury-muted" x-show="type === 'cta'" x-cloak>{{ __('Optional. Adds a large visual (e.g. a car photo) alongside the text. Left blank, this section shows as a simple centered banner instead.') }}</p>
         </div>
 
         {{-- Video (hero only, full-bleed background) --}}

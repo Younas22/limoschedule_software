@@ -40,14 +40,40 @@ class SitemapController extends Controller
 
     public function robots(): Response
     {
-        $lines = [
+        // An admin-authored robots.txt (Settings → SEO) always wins outright
+        // — once they've taken the wheel here, nothing below should second-
+        // guess it.
+        if (filled(setting('custom_robots_txt'))) {
+            return response(setting('custom_robots_txt'), 200)->header('Content-Type', 'text/plain');
+        }
+
+        return response($this->defaultRobotsTxt(), 200)->header('Content-Type', 'text/plain');
+    }
+
+    /**
+     * The auto-generated default — also used to show the admin a live
+     * preview of what /robots.txt currently serves when they haven't
+     * written a custom one.
+     */
+    public function defaultRobotsTxt(): string
+    {
+        // Same site-wide kill switch as the sitemap and the <meta robots>
+        // tag (see layouts/public.blade.php) — if indexing is off, tell
+        // every crawler to stay out entirely rather than leaving a
+        // half-true robots.txt that still invites them in.
+        if (! setting('default_robots_index', true)) {
+            return implode("\n", [
+                'User-agent: *',
+                'Disallow: /',
+            ]);
+        }
+
+        return implode("\n", [
             'User-agent: *',
             'Disallow: /admin',
             'Disallow: /booking/invoice',
             '',
             'Sitemap: '.url('/sitemap.xml'),
-        ];
-
-        return response(implode("\n", $lines), 200)->header('Content-Type', 'text/plain');
+        ]);
     }
 }

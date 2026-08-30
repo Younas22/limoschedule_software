@@ -82,6 +82,7 @@ class SettingController extends Controller
             'twitter_url' => ['nullable', 'url', 'max:255'],
             'linkedin_url' => ['nullable', 'url', 'max:255'],
             'youtube_url' => ['nullable', 'url', 'max:255'],
+            'custom_robots_txt' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $data['invoice_logo_dark'] = $request->boolean('invoice_logo_dark');

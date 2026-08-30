@@ -413,10 +413,23 @@
 
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <x-admin.toggle name="default_robots_index" :checked="old('default_robots_index', $settings->default_robots_index)"
-                            label="{{ __('Allow search engines to index new pages') }}" description="{{ __('Off = new pages start hidden from Google until you turn them on individually.') }}" />
+                            label="{{ __('Allow search engines to index new pages') }}" description="{{ __('Off = the entire site tells crawlers to stay out (robots.txt and every page\'s meta tag) — individual pages can still be indexed on top of this being on, but nothing overrides it being off.') }}" />
                         <x-admin.toggle name="default_robots_follow" :checked="old('default_robots_follow', $settings->default_robots_follow)"
                             label="{{ __('Allow search engines to follow links') }}" description="{{ __('Leave this on unless you have a specific reason to turn it off.') }}" />
                     </div>
+                </div>
+
+                <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                    <h3 class="mb-1 text-sm font-semibold text-luxury-white">{{ __('robots.txt') }}</h3>
+                    <p class="mb-4 text-xs text-luxury-muted">
+                        {{ __('Served live at :url. Leave blank to use the automatically generated version below, which already respects the indexing toggle above.', ['url' => url('/robots.txt')]) }}
+                    </p>
+
+                    <x-admin.input-label for="custom_robots_txt" value="{{ __('Custom robots.txt (optional)') }}" />
+                    <textarea id="custom_robots_txt" name="custom_robots_txt" rows="6" placeholder="{{ app(\App\Http\Controllers\SitemapController::class)->defaultRobotsTxt() }}"
+                        class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-4 py-3 font-mono text-xs text-luxury-white placeholder:text-luxury-muted/60 focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold transition">{{ old('custom_robots_txt', $settings->custom_robots_txt) }}</textarea>
+                    <p class="mt-1 text-xs text-luxury-muted">{{ __('Filling this in replaces the generated version completely, including the sitemap line — add it back yourself if you still want it.') }}</p>
+                    <x-admin.input-error :messages="$errors->get('custom_robots_txt')" />
                 </div>
             </div>
 

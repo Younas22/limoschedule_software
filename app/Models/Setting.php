@@ -61,6 +61,7 @@ class Setting extends Model
         'seo_title_template',
         'default_robots_index',
         'default_robots_follow',
+        'custom_robots_txt',
         'og_image',
         'google_site_verification',
         'google_analytics_id',

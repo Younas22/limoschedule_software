@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BookingRequestController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
@@ -27,6 +28,8 @@ Route::post('currency/{code}', [CurrencyController::class, 'switch'])->name('cur
 Route::post('theme/toggle', [ThemeController::class, 'toggle'])->name('theme.toggle');
 
 Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
+
+Route::post('coupon/apply', [CouponController::class, 'apply'])->name('coupon.apply')->middleware('throttle:30,1');
 
 Route::prefix('booking')->name('booking.')->group(function () {
     Route::post('/', [BookingRequestController::class, 'store'])->name('store');

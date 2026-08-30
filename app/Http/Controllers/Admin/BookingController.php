@@ -45,7 +45,7 @@ class BookingController extends Controller
 
     public function show(Booking $booking, DriverDispatchService $dispatchService): View
     {
-        $booking->load(['customer', 'driver', 'vehicle.category']);
+        $booking->load(['customer', 'driver', 'vehicle.category', 'coupon']);
 
         $dispatch = ($booking->driver && in_array($booking->status, ['confirmed', 'assigned', 'in_progress'], true))
             ? $dispatchService->dispatchInfoFor($booking)

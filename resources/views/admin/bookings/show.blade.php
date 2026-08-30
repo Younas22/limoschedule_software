@@ -211,6 +211,18 @@
                     </div>
                 @endif
 
+                @if ($booking->discount_amount > 0)
+                    <div class="mt-4 flex items-center justify-between border-t border-luxury-border pt-4 text-sm">
+                        <span class="text-luxury-muted">
+                            {{ __('Coupon Discount') }}
+                            @if ($booking->coupon)
+                                <a href="{{ route('admin.coupons.edit', $booking->coupon) }}" class="text-luxury-gold hover:text-luxury-gold-light">({{ $booking->coupon->code }})</a>
+                            @endif
+                        </span>
+                        <span class="font-medium text-emerald-400">&minus;{{ currency($booking->discount_amount) }}</span>
+                    </div>
+                @endif
+
                 @if ($booking->payment_gateway)
                     <div class="mt-4 border-t border-luxury-border pt-4">
                         <p class="text-xs uppercase tracking-wide text-luxury-muted">{{ __('Payment Method') }}</p>

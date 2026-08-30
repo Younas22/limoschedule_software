@@ -19,6 +19,7 @@ class PageSection extends Model
         'fleet' => 'Fleet Showcase (Live Vehicles)',
         'routes' => 'Popular Routes (Live Routes)',
         'areas' => 'Service Areas (Live)',
+        'promotions' => 'Promotions (Live)',
         'stats' => 'Statistics Counters',
         'blog' => 'Blog Highlights (Live Posts)',
         'vision_mission' => 'Vision & Mission',

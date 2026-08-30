@@ -52,6 +52,11 @@ class PageSeeder extends Seeder
                     'button_url_2' => '/services',
                 ],
                 [
+                    'type' => 'promotions',
+                    'heading' => 'Special Offers',
+                    'subheading' => 'Limited-time deals on select routes and services.',
+                ],
+                [
                     'type' => 'items',
                     'heading' => 'Why Choose Us',
                     'subheading' => 'A fleet and service built around your comfort.',

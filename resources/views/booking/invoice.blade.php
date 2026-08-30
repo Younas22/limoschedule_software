@@ -126,6 +126,12 @@
                     <td class="amount">{{ currency($breakdown[$key]) }}</td>
                 </tr>
             @endforeach
+            @if ($booking->discount_amount > 0)
+                <tr>
+                    <td>Coupon Discount{{ $booking->coupon ? ' ('.$booking->coupon->code.')' : '' }}</td>
+                    <td class="amount">&minus;{{ currency($booking->discount_amount) }}</td>
+                </tr>
+            @endif
         </tbody>
         @php $tax = $booking->tax_breakdown; @endphp
         <tfoot>

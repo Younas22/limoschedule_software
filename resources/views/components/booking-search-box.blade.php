@@ -672,11 +672,44 @@
                         <dd class="text-luxury-white" x-text="money(item.value)"></dd>
                     </div>
                 </template>
+                <div x-show="appliedCoupon">
+                    <dt class="text-xs text-luxury-muted">{{ __('Discount') }}</dt>
+                    <dd class="text-emerald-400" x-text="appliedCoupon ? '&minus;' + money(appliedCoupon.discount) : ''"></dd>
+                </div>
             </dl>
+
+            {{-- Coupon code --}}
+            <div class="border-t border-luxury-border/60 pt-3">
+                <template x-if="!appliedCoupon">
+                    <div class="flex items-center gap-2">
+                        <input type="text" x-model="couponCode" @keydown.enter.prevent="applyCoupon()"
+                            placeholder="{{ __('Coupon code') }}"
+                            class="min-w-0 flex-1 rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-2 text-sm uppercase text-luxury-white placeholder:text-luxury-muted placeholder:normal-case focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        <button type="button" @click="applyCoupon()" :disabled="couponChecking || !couponCode.trim()"
+                            class="shrink-0 rounded-lg border border-luxury-gold/40 px-4 py-2 text-xs font-semibold text-luxury-gold transition hover:bg-luxury-gold/10 disabled:cursor-not-allowed disabled:opacity-50">
+                            <span x-text="couponChecking ? @json(__('Checking...')) : @json(__('Apply'))"></span>
+                        </button>
+                    </div>
+                </template>
+                <template x-if="appliedCoupon">
+                    <div class="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+                        <span class="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+                            <x-icon name="check-circle" class="h-3.5 w-3.5 shrink-0" />
+                            <span x-text="appliedCoupon.code + ' — ' + appliedCoupon.label"></span>
+                        </span>
+                        <button type="button" @click="removeCoupon()" class="shrink-0 text-xs font-medium text-luxury-muted underline-offset-2 hover:text-luxury-white hover:underline">
+                            {{ __('Remove') }}
+                        </button>
+                    </div>
+                </template>
+                <p x-show="couponError" x-cloak class="mt-1.5 text-xs text-red-400" x-text="couponError"></p>
+                <input type="hidden" name="coupon_code" :value="appliedCoupon ? appliedCoupon.code : ''">
+            </div>
 
             <div class="border-t border-luxury-border/60 pt-3 text-center">
                 <p class="text-xs uppercase tracking-wide text-luxury-muted">{{ __('Estimated Total') }}</p>
-                <p class="text-3xl font-bold text-luxury-gold" x-text="quote ? money(quote.total) : ''"></p>
+                <p x-show="appliedCoupon" x-cloak class="text-sm text-luxury-muted line-through decoration-red-500 decoration-2" x-text="quote ? money(quote.total) : ''"></p>
+                <p class="text-3xl font-bold text-luxury-gold" x-text="quote ? money(finalTotal()) : ''"></p>
             </div>
 
             <p class="text-center text-[11px] leading-snug text-luxury-muted">
@@ -832,6 +865,15 @@
             quoteDebounce: null,
             quoteSignature: null,
             quoteRequestId: 0,
+
+            // Coupon state — separate from the quote fetch above so typing a
+            // code never triggers the distance/pricing round-trip, and vice
+            // versa. appliedCoupon is only ever a courtesy preview; the
+            // actual discount is re-checked server-side at submit time.
+            couponCode: '',
+            appliedCoupon: null,
+            couponError: null,
+            couponChecking: false,
 
             init() {
                 for (let h = 0; h < 24; h++) {
@@ -1140,7 +1182,11 @@
                 );
 
                 if (this.quote) {
-                    lines.push(@json(__('Estimated Fare')) + ': ' + this.money(this.quote.total));
+                    lines.push(@json(__('Estimated Fare')) + ': ' + this.money(this.finalTotal()));
+
+                    if (this.appliedCoupon) {
+                        lines.push(@json(__('Coupon Applied')) + ': ' + this.appliedCoupon.code);
+                    }
                 }
 
                 const digits = config.whatsappNumber.replace(/\D/g, '');
@@ -1214,6 +1260,64 @@
                 return Object.keys(labels)
                     .filter((key) => (this.quote[key] || 0) > 0)
                     .map((key) => ({ label: labels[key], value: this.quote[key] }));
+            },
+
+            // The number actually shown as "Estimated Total" and the one
+            // charged at booking time both derive the discount the same
+            // way: quote.total minus whatever the last successful coupon
+            // check returned — never a client-side recomputation of the
+            // coupon's own rules.
+            finalTotal() {
+                if (!this.quote) return 0;
+
+                return this.appliedCoupon ? this.appliedCoupon.new_total : this.quote.total;
+            },
+
+            applyCoupon(silent = false) {
+                const code = (silent ? this.appliedCoupon?.code : this.couponCode).trim();
+
+                if (!code || !this.quote) return;
+
+                this.couponChecking = true;
+                if (!silent) this.couponError = null;
+
+                const token = this.$el.querySelector('input[name="_token"]')?.value;
+
+                fetch(@json(route('coupon.apply')), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                    },
+                    body: JSON.stringify({ code, amount: this.quote.total }),
+                })
+                    .then(async (response) => {
+                        const json = await response.json().catch(() => null);
+
+                        if (!response.ok || !json?.valid) {
+                            this.appliedCoupon = null;
+                            this.couponError = json?.message || @json(__('That coupon could not be applied.'));
+                            return;
+                        }
+
+                        this.appliedCoupon = json;
+                        this.couponCode = json.code;
+                        this.couponError = null;
+                    })
+                    .catch(() => {
+                        this.appliedCoupon = null;
+                        this.couponError = @json(__('Unable to check that coupon right now.'));
+                    })
+                    .finally(() => {
+                        this.couponChecking = false;
+                    });
+            },
+
+            removeCoupon() {
+                this.appliedCoupon = null;
+                this.couponCode = '';
+                this.couponError = null;
             },
 
             scheduleQuote() {
@@ -1296,6 +1400,14 @@
                         this.drivers = json.drivers || [];
                         this.quote = json.breakdown;
                         this.quoteError = null;
+
+                        // Trip details changing (vehicle, distance, passengers...)
+                        // can move the total enough to make an already-applied
+                        // coupon invalid (below its minimum fare) or change what
+                        // it's worth — silently re-check it against the fresh total.
+                        if (this.appliedCoupon) {
+                            this.applyCoupon(true);
+                        }
                     })
                     .catch(() => {
                         if (requestId !== this.quoteRequestId) return;

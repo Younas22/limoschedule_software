@@ -80,6 +80,7 @@ class BookingRequestController extends Controller
             'distance_km' => ['nullable', 'numeric', 'min:0'],
             'passengers' => ['required', 'integer', 'min:1', 'max:20'],
             'luggage' => ['required', 'integer', 'min:0', 'max:20'],
+            'coupon_code' => ['nullable', 'string', 'max:50'],
         ]);
 
         $vehicle = Vehicle::where('vehicle_category_id', $data['vehicle_category_id'])
@@ -147,9 +148,15 @@ class BookingRequestController extends Controller
         ];
 
         $bookingData = $bookingCreation->attachFareBreakdown($bookingData);
+        [$bookingData, $appliedCoupon] = $bookingCreation->applyCoupon($bookingData, $data['coupon_code'] ?? null);
         $bookingData = $bookingCreation->applyPolicies($bookingData);
 
         $booking = Booking::create($bookingData);
+
+        // Only counted once the booking this coupon discounted has actually
+        // been created — never on a quote preview, and never twice for the
+        // same booking.
+        $appliedCoupon?->increment('used_count');
 
         $bookingCreation->notifyAdminsOfCreation($booking);
         $bookingCreation->notifyCustomerOfCreation($booking);
@@ -373,21 +380,21 @@ class BookingRequestController extends Controller
 
     public function confirmation(string $bookingNumber): View
     {
-        $booking = Booking::with(['vehicle.category'])->where('booking_number', $bookingNumber)->firstOrFail();
+        $booking = Booking::with(['vehicle.category', 'coupon'])->where('booking_number', $bookingNumber)->firstOrFail();
 
         return view('booking.confirmation', compact('booking'));
     }
 
     public function invoice(string $bookingNumber): View
     {
-        $booking = Booking::with(['vehicle.category', 'driver', 'customer'])->where('booking_number', $bookingNumber)->firstOrFail();
+        $booking = Booking::with(['vehicle.category', 'driver', 'customer', 'coupon'])->where('booking_number', $bookingNumber)->firstOrFail();
 
         return view('booking.invoice', compact('booking'));
     }
 
     public function downloadInvoice(string $bookingNumber)
     {
-        $booking = Booking::with(['vehicle.category', 'driver', 'customer'])->where('booking_number', $bookingNumber)->firstOrFail();
+        $booking = Booking::with(['vehicle.category', 'driver', 'customer', 'coupon'])->where('booking_number', $bookingNumber)->firstOrFail();
 
         $logoPath = setting('invoice_logo_path');
 

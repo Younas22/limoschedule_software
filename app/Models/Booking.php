@@ -67,6 +67,7 @@ class Booking extends Model
         'customer_id',
         'driver_id',
         'vehicle_id',
+        'coupon_id',
         'type',
         'pickup_location',
         'pickup_lat',
@@ -98,6 +99,7 @@ class Booking extends Model
         'has_toll',
         'notes',
         'fare_amount',
+        'discount_amount',
         'fare_breakdown',
         'status',
         'cancellation_reason',
@@ -122,6 +124,7 @@ class Booking extends Model
             'pickup_datetime' => 'datetime',
             'return_datetime' => 'datetime',
             'fare_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'distance_km' => 'decimal:2',
             'pickup_lat' => 'decimal:7',
             'pickup_lng' => 'decimal:7',
@@ -166,6 +169,11 @@ class Booking extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function review(): HasOne

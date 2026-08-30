@@ -155,6 +155,16 @@
         </p>
     </div>
 
+    {{-- Promotions note --}}
+    <div class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'promotions'" x-cloak>
+        <h3 class="text-sm font-semibold text-luxury-white">{{ __('Promotions') }}</h3>
+        <p class="text-xs text-luxury-muted">
+            {{ __('The promotions themselves (image, title, dates) are managed at') }}
+            <a href="{{ route('admin.promotions.index') }}" class="text-luxury-gold hover:text-luxury-gold-light">{{ __('Promotions') }}</a>.
+            {{ __('This section just marks where currently-active ones appear on this page — use the Heading/Subheading fields above if you want a title above it. Nothing shows here when no promotion is currently active.') }}
+        </p>
+    </div>
+
     {{-- Contact info fields --}}
     <div class="space-y-3 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6" x-show="type === 'contact_info'" x-cloak>
         <h3 class="text-sm font-semibold text-luxury-white">{{ __('Contact Details') }}</h3>

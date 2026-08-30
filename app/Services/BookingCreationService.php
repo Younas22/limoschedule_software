@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Admin;
 use App\Models\Booking;
 use App\Models\BookingSetting;
+use App\Models\Coupon;
 use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Notifications\BookingConfirmedNotification;
@@ -44,6 +45,39 @@ class BookingCreationService
         $data['fare_amount'] = $data['fare_amount'] ?? $data['fare_breakdown']['total'];
 
         return $data;
+    }
+
+    /**
+     * Re-validates a submitted coupon code against the fare that was just
+     * computed and, if it still holds up, discounts fare_amount and records
+     * which coupon was used — this is the one authoritative place a coupon
+     * ever actually changes what a customer is charged (the widget's own
+     * live preview is a courtesy, never trusted on its own). Silently no-ops
+     * for a blank/unknown/no-longer-valid code rather than failing the
+     * booking outright — a lapsed coupon shouldn't block a real ride.
+     *
+     * @return array{0: array, 1: ?Coupon} the (possibly discounted) $data, and the coupon actually applied, if any
+     */
+    public function applyCoupon(array $data, ?string $couponCode): array
+    {
+        if (blank($couponCode)) {
+            return [$data, null];
+        }
+
+        $coupon = Coupon::where('code', strtoupper($couponCode))->first();
+        $fareAmount = (float) $data['fare_amount'];
+
+        if (! $coupon || ! $coupon->isValidFor($fareAmount)) {
+            return [$data, null];
+        }
+
+        $discount = $coupon->discountFor($fareAmount);
+
+        $data['coupon_id'] = $coupon->id;
+        $data['discount_amount'] = $discount;
+        $data['fare_amount'] = round($fareAmount - $discount, 2);
+
+        return [$data, $coupon];
     }
 
     /**

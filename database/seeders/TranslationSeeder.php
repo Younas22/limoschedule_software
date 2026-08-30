@@ -52,9 +52,22 @@ class TranslationSeeder extends Seeder
             'Status' => ['ar' => 'الحالة', 'ur' => 'حیثیت', 'de' => 'Status'],
             'Fare' => ['ar' => 'الأجرة', 'ur' => 'کرایہ', 'de' => 'Fahrpreis'],
             'No bookings yet.' => ['ar' => 'لا توجد حجوزات بعد.', 'ur' => 'ابھی تک کوئی بکنگ نہیں۔', 'de' => 'Noch keine Buchungen.'],
+
+            // 404 page (resources/views/errors/404.blade.php) — added for nl/fr/ar,
+            // the site's fully-translated languages (see their ~1,478/1,368-row
+            // coverage), so the error page isn't the one place still in English.
+            'Page Not Found' => ['nl' => 'Pagina niet gevonden', 'fr' => 'Page introuvable', 'ar' => 'الصفحة غير موجودة'],
+            "This page doesn't exist" => ['nl' => 'Deze pagina bestaat niet', 'fr' => "Cette page n'existe pas", 'ar' => 'هذه الصفحة غير موجودة'],
+            "The page you're looking for may have moved or no longer exists. Here are a few places to start instead:" => [
+                'nl' => 'De pagina die u zoekt is mogelijk verplaatst of bestaat niet meer. Hier zijn een paar plekken om opnieuw te beginnen:',
+                'fr' => "La page que vous recherchez a peut-être été déplacée ou n'existe plus. Voici quelques pages pour recommencer :",
+                'ar' => 'ربما تم نقل الصفحة التي تبحث عنها أو لم تعد موجودة. إليك بعض الأماكن للبدء من جديد:',
+            ],
+            // Also fills a pre-existing gap for the same page's "Areas" button link.
+            'Areas' => ['nl' => 'Gebieden', 'fr' => 'Zones', 'ar' => 'المناطق'],
         ];
 
-        $languages = Language::whereIn('code', ['en', 'ar', 'ur', 'de'])->get()->keyBy('code');
+        $languages = Language::whereIn('code', ['en', 'ar', 'ur', 'de', 'nl', 'fr'])->get()->keyBy('code');
 
         if ($languages->isEmpty()) {
             return;

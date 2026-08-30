@@ -53,6 +53,25 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
             SetCurrency::class,
         ]);
+
+        // `append` above only controls position within the 'web' group's own
+        // array — Laravel still re-sorts the final pipeline by its global
+        // middleware priority list, where SubstituteBindings (route-model
+        // binding) sits ahead of anything not explicitly prioritized. That
+        // let a failed binding (e.g. a 404 on `/{post:slug}`) throw before
+        // SetLocale ever ran, so error pages always rendered in the default
+        // locale regardless of the visitor's selected language. Explicitly
+        // slotting both in right after StartSession (which they depend on
+        // for session('locale')/session('currency')) and therefore ahead of
+        // SubstituteBindings fixes that.
+        $middleware->appendToPriorityList(
+            after: \Illuminate\Session\Middleware\StartSession::class,
+            append: SetLocale::class,
+        );
+        $middleware->appendToPriorityList(
+            after: SetLocale::class,
+            append: SetCurrency::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -140,6 +140,8 @@
         <x-bottom-nav :current-slug="$currentSlug" />
 
         <x-search-modal />
+
+        <x-software-sale-modal />
     </div>
 
     <script>

@@ -153,7 +153,7 @@
                                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
                                     <x-icon name="phone" class="h-4 w-4" />
                                 </span>
-                                <span class="text-sm text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('phone') }}</span>
+                                <span class="min-w-0 truncate text-sm text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('phone') }}</span>
                             </a>
                         </li>
                     @endif
@@ -163,17 +163,20 @@
                                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-[#25D366] transition group-hover:border-[#25D366]/50 group-hover:bg-[#25D366]/10">
                                     <x-whatsapp-icon class="h-4 w-4" />
                                 </span>
-                                <span class="text-sm text-luxury-muted transition group-hover:text-luxury-white">{{ setting('whatsapp') }}</span>
+                                <span class="min-w-0 truncate text-sm text-luxury-muted transition group-hover:text-luxury-white">{{ setting('whatsapp') }}</span>
                             </a>
                         </li>
                     @endif
                     @if (setting('email'))
                         <li>
-                            <a href="mailto:{{ setting('email') }}" class="group flex items-center gap-3">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
+                            <a href="mailto:{{ setting('email') }}" class="group flex items-start gap-3">
+                                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
                                     <x-icon name="mail" class="h-4 w-4" />
                                 </span>
-                                <span class="truncate text-sm text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('email') }}</span>
+                                {{-- Wraps instead of truncating — the Contact column isn't
+                                     always wide enough to fit a full email on one line, and
+                                     an ellipsis was hiding part of the address entirely. --}}
+                                <span class="min-w-0 break-all pt-2.5 text-sm leading-snug text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('email') }}</span>
                             </a>
                         </li>
                     @endif

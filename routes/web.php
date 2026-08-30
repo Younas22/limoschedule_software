@@ -69,6 +69,11 @@ Route::get('/{post:slug}', [BlogController::class, 'show'])
 // Lowest priority — only ever reached once nothing above has matched, so
 // this can never intercept a working route. Checks the admin-managed
 // redirects table before giving up with a real 404.
+// Explicit ->middleware('web') because Route::fallback() does not reliably
+// inherit the implicit 'web' group middleware that withRouting() attaches to
+// this file's other routes — without it, SetLocale/SetCurrency (and the
+// session) never run, so the 404 page always rendered in the default locale
+// regardless of the visitor's selected language.
 Route::fallback(function (\Illuminate\Http\Request $request) {
     $redirect = \App\Models\Redirect::findFor($request->path());
 
@@ -77,4 +82,4 @@ Route::fallback(function (\Illuminate\Http\Request $request) {
     }
 
     abort(404);
-});
+})->middleware('web');

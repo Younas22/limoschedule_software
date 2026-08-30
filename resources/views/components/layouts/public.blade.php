@@ -25,8 +25,20 @@
     $metaDescription = $description ?: setting('meta_description') ?: setting('tagline');
     $resolvedOgImage = $ogImage ?: setting('og_image_url') ?: setting('logo_url');
     $canonicalUrl = $canonicalOverride ?: url()->current();
-    $robotsIndex = $robotsIndex ?? setting('default_robots_index', true);
-    $robotsFollow = $robotsFollow ?? setting('default_robots_follow', true);
+    // The site-wide Settings → Search Engine Indexing toggle is a kill
+    // switch, not just a fallback: once an admin has actually saved a page
+    // through the edit form, its robots_index/robots_follow are always an
+    // explicit true/false (the form has no third "inherit" state), so
+    // "default only when the page hasn't set its own" almost never applies
+    // in practice — turning the site-wide toggle off silently did nothing
+    // once every page had been saved at least once. Indexing is now only
+    // ever allowed when BOTH the site-wide toggle and the page's own value
+    // (defaulting to true when truly unset) agree; either one saying no is
+    // enough to noindex/nofollow — the per-page value can still tighten
+    // things (noindex a specific page) but can no longer loosen them past
+    // a site-wide "off".
+    $robotsIndex = setting('default_robots_index', true) && ($robotsIndex ?? true);
+    $robotsFollow = setting('default_robots_follow', true) && ($robotsFollow ?? true);
     $robotsContent = ($robotsIndex ? 'index' : 'noindex').', '.($robotsFollow ? 'follow' : 'nofollow');
     $schemaBuilder = app(\App\Services\SchemaBuilder::class);
 @endphp

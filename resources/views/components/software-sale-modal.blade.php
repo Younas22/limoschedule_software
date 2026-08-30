@@ -121,14 +121,9 @@
                 timer: null,
 
                 init() {
-                    let dismissed = false;
-                    try {
-                        dismissed = sessionStorage.getItem('sale_modal_dismissed') === '1';
-                    } catch (e) {}
-
-                    if (!dismissed) {
-                        setTimeout(() => { this.open = true; }, 900);
-                    }
+                    // Closing only dismisses the current page view — a reload
+                    // or a fresh visit should always show the offer again.
+                    setTimeout(() => { this.open = true; }, 900);
 
                     this.tick();
                     this.timer = setInterval(() => this.tick(), 1000);
@@ -156,9 +151,6 @@
 
                 close() {
                     this.open = false;
-                    try {
-                        sessionStorage.setItem('sale_modal_dismissed', '1');
-                    } catch (e) {}
                 },
             };
         }

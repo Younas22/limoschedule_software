@@ -12,19 +12,28 @@ class SitemapController extends Controller
 {
     public function sitemap(): Response
     {
-        $pages = Page::where('is_active', true)->where('robots_index', true)->get();
+        // The site-wide indexing toggle is a kill switch (see
+        // layouts/public.blade.php) — no point listing anything here that
+        // every page is now telling crawlers to skip.
+        $indexingEnabled = setting('default_robots_index', true);
 
-        $areas = Area::active()->where('robots_index', true)->get(['slug', 'updated_at']);
+        if (! $indexingEnabled) {
+            $pages = $areas = $posts = $categories = $tags = collect();
+        } else {
+            $pages = Page::where('is_active', true)->where('robots_index', true)->get();
 
-        $posts = BlogPost::published()->where('robots_index', true)->get(['slug', 'updated_at']);
+            $areas = Area::active()->where('robots_index', true)->get(['slug', 'updated_at']);
 
-        $categories = BlogCategory::active()
-            ->whereHas('posts', fn ($q) => $q->published())
-            ->get(['slug', 'updated_at']);
+            $posts = BlogPost::published()->where('robots_index', true)->get(['slug', 'updated_at']);
 
-        $tags = \App\Models\Tag::whereHas('posts', fn ($q) => $q->published())->get(['slug', 'updated_at']);
+            $categories = BlogCategory::active()
+                ->whereHas('posts', fn ($q) => $q->published())
+                ->get(['slug', 'updated_at']);
 
-        $xml = view('sitemap.index', compact('pages', 'areas', 'posts', 'categories', 'tags'))->render();
+            $tags = \App\Models\Tag::whereHas('posts', fn ($q) => $q->published())->get(['slug', 'updated_at']);
+        }
+
+        $xml = view('sitemap.index', compact('pages', 'areas', 'posts', 'categories', 'tags', 'indexingEnabled'))->render();
 
         return response($xml, 200)->header('Content-Type', 'application/xml');
     }

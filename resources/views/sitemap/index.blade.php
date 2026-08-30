@@ -18,12 +18,14 @@
         </url>
     @endforeach
 
-    <url>
-        <loc>{{ route('blog.index') }}</loc>
-        <lastmod>{{ now()->toAtomString() }}</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-    </url>
+    @if ($indexingEnabled)
+        <url>
+            <loc>{{ route('blog.index') }}</loc>
+            <lastmod>{{ now()->toAtomString() }}</lastmod>
+            <changefreq>daily</changefreq>
+            <priority>0.8</priority>
+        </url>
+    @endif
 
     @foreach ($posts as $post)
         <url>

@@ -38,7 +38,7 @@
             <div class="sm:col-span-2 lg:col-span-1">
                 <a href="{{ route('pages.home') }}" class="flex items-center">
                     @if (setting('logo_url'))
-                        <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-9 w-auto max-w-none object-contain">
+                        <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-7 w-auto max-w-none object-contain">
                     @else
                         <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-luxury-gold text-sm font-bold text-luxury-black">
                             {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}

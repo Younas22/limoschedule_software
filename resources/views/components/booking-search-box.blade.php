@@ -15,6 +15,15 @@
             'image_url' => $category->image_url,
         ])->values();
     $voiceSearchEnabled = (bool) $settings->voice_search_enabled;
+    // Surfaced as clickable suggestions next to the coupon field — a coupon
+    // is otherwise invisible to a visitor who doesn't already know the
+    // code. Still just a suggestion: whichever one they click goes through
+    // the exact same applyCoupon() check as typing it by hand, so a code
+    // that turns out not to meet its minimum fare at the current quote
+    // still gets rejected there, not here.
+    $availableCoupons = \App\Models\Coupon::active()->orderByDesc('id')->limit(6)->get()
+        ->map(fn ($coupon) => ['code' => $coupon->code, 'label' => $coupon->discount_label])
+        ->values();
     $initialStops = old('stops', []);
     $initialReturnStops = old('return_stops', []);
     $serviceTypes = collect(\App\Models\Booking::TYPES)->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values();
@@ -113,6 +122,7 @@
         serviceTypes: {{ \Illuminate\Support\Js::from($serviceTypes) }},
         dialCodes: {{ \Illuminate\Support\Js::from($dialCodes) }},
         quoteUrl: {{ \Illuminate\Support\Js::from(route('booking.quote')) }},
+        availableCoupons: {{ \Illuminate\Support\Js::from($availableCoupons) }},
         whatsappNumber: {{ \Illuminate\Support\Js::from(setting('whatsapp')) }},
         currencySymbol: {{ \Illuminate\Support\Js::from(active_currency()?->symbol ?? '$') }},
         currencyRate: {{ \Illuminate\Support\Js::from((float) (active_currency()?->exchange_rate ?? 1)) }},
@@ -687,8 +697,24 @@
                             class="min-w-0 flex-1 rounded-lg border border-luxury-border bg-luxury-black/40 px-3 py-2 text-sm uppercase text-luxury-white placeholder:text-luxury-muted placeholder:normal-case focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
                         <button type="button" @click="applyCoupon()" :disabled="couponChecking || !couponCode.trim()"
                             class="shrink-0 rounded-lg border border-luxury-gold/40 px-4 py-2 text-xs font-semibold text-luxury-gold transition hover:bg-luxury-gold/10 disabled:cursor-not-allowed disabled:opacity-50">
-                            <span x-text="couponChecking ? @json(__('Checking...')) : @json(__('Apply'))"></span>
+                            <span x-show="!couponChecking">{{ __('Apply') }}</span>
+                            <span x-show="couponChecking" x-cloak>{{ __('Checking...') }}</span>
                         </button>
+                    </div>
+                </template>
+
+                {{-- Suggested codes — the only place on the site a visitor can
+                     discover a coupon exists at all; clicking one still goes
+                     through the same applyCoupon() check as typing it. --}}
+                <template x-if="!appliedCoupon && availableCoupons.length">
+                    <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span class="text-[11px] text-luxury-muted">{{ __('Offers:') }}</span>
+                        <template x-for="coupon in availableCoupons" :key="coupon.code">
+                            <button type="button" @click="couponCode = coupon.code; applyCoupon()"
+                                class="rounded-full border border-luxury-gold/30 bg-luxury-gold/5 px-2.5 py-1 text-[11px] font-medium text-luxury-gold transition hover:bg-luxury-gold/15">
+                                <span x-text="coupon.code"></span> <span class="text-luxury-muted" x-text="'· ' + coupon.label"></span>
+                            </button>
+                        </template>
                     </div>
                 </template>
                 <template x-if="appliedCoupon">
@@ -803,6 +829,7 @@
             vehicleCategory: config.initial.vehicleCategory || (config.categories[0]?.id ?? ''),
             categories: config.categories,
             serviceTypes: config.serviceTypes,
+            availableCoupons: config.availableCoupons,
             dialCodes: config.dialCodes,
             type: config.initial.type || 'one_way',
             hours: config.initial.hours || 2,

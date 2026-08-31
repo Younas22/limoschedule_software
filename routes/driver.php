@@ -7,6 +7,7 @@ use App\Http\Controllers\Driver\BookingController;
 use App\Http\Controllers\Driver\DashboardController;
 use App\Http\Controllers\Driver\EarningsController;
 use App\Http\Controllers\Driver\LocationController;
+use App\Http\Controllers\Driver\NotificationController;
 use App\Http\Controllers\Driver\ProfileController;
 use App\Http\Controllers\Driver\RideController;
 use App\Http\Controllers\Driver\ReviewController;
@@ -34,6 +35,13 @@ Route::middleware('driver.auth:driver')->group(function () {
     Route::post('status/toggle', [StatusController::class, 'toggle'])->name('status.toggle');
 
     Route::post('location', [LocationController::class, 'update'])->name('location.update');
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::post('{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
+    });
 
     Route::prefix('bookings')->name('bookings.')->group(function () {
         Route::get('/', [BookingController::class, 'index'])->name('index');

@@ -13,6 +13,7 @@ use App\Notifications\BookingConfirmedNotification;
 use App\Notifications\BookingCreatedNotification;
 use App\Notifications\Customer\BookingConfirmedNotification as CustomerBookingConfirmedNotification;
 use App\Notifications\Customer\DriverAssignedNotification as CustomerDriverAssignedNotification;
+use App\Notifications\Driver\DriverBookingNotification;
 use App\Services\PushNotificationService;
 use Illuminate\Support\Facades\Notification;
 
@@ -175,12 +176,10 @@ class BookingCreationService
     }
 
     /**
-     * Browser-push-only "New Booking Assigned" ping for the driver a
-     * booking was just given to — drivers have no Mail-based Notification
-     * classes in this app (unlike Admin/Customer, see
-     * App\Notifications\BookingNotification / Customer\CustomerBookingNotification),
-     * so this calls PushNotificationService directly rather than going
-     * through a Laravel Notification + WebPushChannel.
+     * "New Booking Assigned" notification for the driver a booking was
+     * just given to — in-app (database, shown in the driver's own
+     * notification center) plus browser push, via the same
+     * DriverBookingNotification class every other driver-facing event uses.
      */
     public function notifyDriverOfAssignment(Booking $booking): void
     {
@@ -194,15 +193,12 @@ class BookingCreationService
             return;
         }
 
-        $this->pushNotifications->send(
-            $booking->driver,
+        $booking->driver->notify(new DriverBookingNotification(
+            $booking,
             'booking_assigned',
             __('New Booking Assigned'),
             __('Booking #:number has been assigned to you.', ['number' => $booking->booking_number]),
-            route('driver.bookings.show', $booking),
-            $booking->id,
-            ['booking_number' => $booking->booking_number]
-        );
+        ));
     }
 
     /**

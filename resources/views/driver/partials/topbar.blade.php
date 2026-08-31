@@ -79,6 +79,8 @@
             </button>
         </form>
 
+        @include('driver.partials.notifications')
+
         @include('driver.partials.profile-menu')
     </div>
 </header>

@@ -8,6 +8,7 @@
         ['label' => __('My Rides'), 'route' => 'driver.bookings.index', 'icon' => 'car'],
         ['label' => __('Earnings'), 'route' => 'driver.earnings.index', 'icon' => 'cash'],
         ['label' => __('Reviews'), 'route' => 'driver.reviews.index', 'icon' => 'star'],
+        ['label' => __('Notifications'), 'route' => 'driver.notifications.index', 'icon' => 'bell'],
         [
             'type' => 'group',
             'label' => __('Account'),

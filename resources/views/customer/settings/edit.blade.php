@@ -94,16 +94,6 @@
                 <div class="flex items-center justify-between rounded-xl border border-luxury-border bg-luxury-graphite/40 p-4 opacity-60">
                     <div class="flex items-center gap-3">
                         <span class="flex h-9 w-9 items-center justify-center rounded-full bg-luxury-slate text-luxury-muted">
-                            <x-icon name="bell" class="h-4 w-4" />
-                        </span>
-                        <p class="text-sm font-medium text-luxury-white">{{ __('Push Notifications') }}</p>
-                    </div>
-                    <span class="rounded-full bg-luxury-slate px-2.5 py-1 text-[11px] font-medium text-luxury-muted">{{ __('Soon') }}</span>
-                </div>
-
-                <div class="flex items-center justify-between rounded-xl border border-luxury-border bg-luxury-graphite/40 p-4 opacity-60">
-                    <div class="flex items-center gap-3">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-luxury-slate text-luxury-muted">
                             <x-icon name="phone" class="h-4 w-4" />
                         </span>
                         <p class="text-sm font-medium text-luxury-white">{{ __('SMS Notifications') }}</p>
@@ -112,6 +102,13 @@
                 </div>
             </div>
         </div>
+
+        {{-- Browser Notifications — "Push Notifications" used to sit as a
+             locked "Soon" row above, back when no provider was wired up.
+             Real browser push now exists (see PushNotificationService), so
+             it gets its own full enable/disable control here instead of a
+             disabled placeholder toggle. --}}
+        <x-push-notification-toggle :description="__('Get instant browser alerts about your bookings, right on this device.')" />
     </div>
 
     <script>

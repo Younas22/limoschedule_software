@@ -17,6 +17,7 @@ use App\Notifications\Customer\BookingCancelledNotification as CustomerBookingCa
 use App\Notifications\Customer\BookingConfirmedNotification as CustomerBookingConfirmedNotification;
 use App\Notifications\Customer\DriverAssignedNotification as CustomerDriverAssignedNotification;
 use App\Notifications\Customer\PaymentCompletedNotification as CustomerPaymentCompletedNotification;
+use App\Notifications\Driver\DriverBookingNotification;
 use App\Notifications\PaymentSuccessfulNotification;
 use App\Services\BookingCreationService;
 use App\Services\DriverDispatchService;
@@ -98,7 +99,7 @@ class BookingController extends Controller
         $booking->update($data);
 
         $this->notifyStatusTransition($booking, $previousStatus, $booking->status, $pushNotifications);
-        $this->notifyDriverAssignment($booking, $previousDriverId, $pushNotifications);
+        $this->notifyDriverAssignment($booking, $previousDriverId);
 
         return redirect()
             ->route('admin.bookings.index')
@@ -225,15 +226,12 @@ class BookingController extends Controller
             if ($booking->driver_id) {
                 $booking->loadMissing('driver');
 
-                $pushNotifications->send(
-                    $booking->driver,
+                $booking->driver->notify(new DriverBookingNotification(
+                    $booking,
                     'booking_cancelled',
                     __('Booking Cancelled'),
                     __('Booking #:number has been cancelled.', ['number' => $booking->booking_number]),
-                    route('driver.bookings.show', $booking),
-                    $booking->id,
-                    ['booking_number' => $booking->booking_number]
-                );
+                ));
             }
         } elseif ($newStatus === 'in_progress' && $booking->customer) {
             // Mirrors Driver\RideController::start() — an admin marking a
@@ -265,7 +263,7 @@ class BookingController extends Controller
         }
     }
 
-    private function notifyDriverAssignment(Booking $booking, ?int $previousDriverId, PushNotificationService $pushNotifications): void
+    private function notifyDriverAssignment(Booking $booking, ?int $previousDriverId): void
     {
         if (! $booking->driver_id || $booking->driver_id === $previousDriverId) {
             return;
@@ -275,15 +273,12 @@ class BookingController extends Controller
 
         $booking->loadMissing('driver');
 
-        $pushNotifications->send(
-            $booking->driver,
+        $booking->driver->notify(new DriverBookingNotification(
+            $booking,
             'booking_assigned',
             __('New Booking Assigned'),
             __('Booking #:number has been assigned to you.', ['number' => $booking->booking_number]),
-            route('driver.bookings.show', $booking),
-            $booking->id,
-            ['booking_number' => $booking->booking_number]
-        );
+        ));
     }
 
     private function notifyAdmins(BookingNotification $notification): void

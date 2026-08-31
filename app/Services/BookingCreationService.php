@@ -13,6 +13,7 @@ use App\Notifications\BookingConfirmedNotification;
 use App\Notifications\BookingCreatedNotification;
 use App\Notifications\Customer\BookingConfirmedNotification as CustomerBookingConfirmedNotification;
 use App\Notifications\Customer\DriverAssignedNotification as CustomerDriverAssignedNotification;
+use App\Services\PushNotificationService;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -23,8 +24,10 @@ use Illuminate\Support\Facades\Notification;
  */
 class BookingCreationService
 {
-    public function __construct(private readonly BookingFareCalculator $calculator)
-    {
+    public function __construct(
+        private readonly BookingFareCalculator $calculator,
+        private readonly PushNotificationService $pushNotifications
+    ) {
     }
 
     public function attachFareBreakdown(array $data): array
@@ -168,6 +171,38 @@ class BookingCreationService
 
         $this->notifyAdminsOfConfirmation($booking);
         $this->notifyCustomerOfCreation($booking);
+        $this->notifyDriverOfAssignment($booking);
+    }
+
+    /**
+     * Browser-push-only "New Booking Assigned" ping for the driver a
+     * booking was just given to — drivers have no Mail-based Notification
+     * classes in this app (unlike Admin/Customer, see
+     * App\Notifications\BookingNotification / Customer\CustomerBookingNotification),
+     * so this calls PushNotificationService directly rather than going
+     * through a Laravel Notification + WebPushChannel.
+     */
+    public function notifyDriverOfAssignment(Booking $booking): void
+    {
+        if (! $booking->driver_id) {
+            return;
+        }
+
+        $booking->loadMissing('driver');
+
+        if (! $booking->driver) {
+            return;
+        }
+
+        $this->pushNotifications->send(
+            $booking->driver,
+            'booking_assigned',
+            __('New Booking Assigned'),
+            __('Booking #:number has been assigned to you.', ['number' => $booking->booking_number]),
+            route('driver.bookings.show', $booking),
+            $booking->id,
+            ['booking_number' => $booking->booking_number]
+        );
     }
 
     /**

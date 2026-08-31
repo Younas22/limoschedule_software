@@ -49,6 +49,9 @@
                 </button>
             </div>
         </div>
+
+        {{-- Browser Notifications --}}
+        <x-push-notification-toggle :description="__('Get an instant alert the moment a new booking is assigned to you.')" />
     </div>
 
     <script>

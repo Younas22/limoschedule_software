@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\Driver;
 use App\Models\Vehicle;
+use App\Services\PushNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +30,7 @@ class DriverController extends Controller
         return view('admin.drivers.create', compact('vehicles'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, PushNotificationService $pushNotifications): RedirectResponse
     {
         $data = $this->validateDriver($request);
 
@@ -39,6 +41,18 @@ class DriverController extends Controller
         $data['password'] = filled($data['password'] ?? null) ? Hash::make($data['password']) : null;
 
         $driver = Driver::create($data + ['status' => true]);
+
+        foreach (Admin::withPermission('drivers.view')->get() as $admin) {
+            $pushNotifications->send(
+                $admin,
+                'new_driver',
+                __('New Driver'),
+                __(':name has been added as a driver.', ['name' => $driver->name]),
+                route('admin.drivers.edit', $driver),
+                null,
+                ['driver_id' => $driver->id]
+            );
+        }
 
         return redirect()
             ->route('admin.drivers.index')

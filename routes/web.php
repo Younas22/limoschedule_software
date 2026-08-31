@@ -10,6 +10,7 @@ use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ThemeController;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,16 @@ Route::post('theme/toggle', [ThemeController::class, 'toggle'])->name('theme.tog
 Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::post('coupon/apply', [CouponController::class, 'apply'])->name('coupon.apply')->middleware('throttle:30,1');
+
+// Browser push subscription management — guard-agnostic (works for
+// whichever of admin/customer/driver is actually logged in, resolved
+// server-side; see PushSubscriptionController::currentSubscriber()).
+// Throttled since a compromised/buggy client could otherwise hammer these.
+Route::prefix('push')->name('push.')->middleware('throttle:20,1')->group(function () {
+    Route::post('subscribe', [PushSubscriptionController::class, 'store'])->name('subscribe');
+    Route::post('unsubscribe', [PushSubscriptionController::class, 'destroy'])->name('unsubscribe');
+    Route::get('status', [PushSubscriptionController::class, 'status'])->name('status');
+});
 
 Route::prefix('booking')->name('booking.')->group(function () {
     Route::post('/', [BookingRequestController::class, 'store'])->name('store');

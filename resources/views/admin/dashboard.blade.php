@@ -117,6 +117,22 @@
         </div>
     </div>
 
+    <div class="mt-4 overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
+        <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+            <div>
+                <h3 class="text-sm font-semibold text-luxury-white">{{ __('Browser Push') }}</h3>
+                <p class="mt-0.5 text-xs text-luxury-muted">
+                    {{ __('Status') }}: <span class="{{ $pushStatus->push_notifications_enabled ? 'text-emerald-400' : 'text-luxury-muted' }}">{{ $pushStatus->push_notifications_enabled ? __('Enabled') : __('Disabled') }}</span>
+                    &middot; {{ __('Admin') }}: {{ $pushStatus->push_admin_enabled ? __('Enabled') : __('Disabled') }}
+                    &middot; {{ __('Customers') }}: {{ $pushStatus->push_customer_enabled ? __('Enabled') : __('Disabled') }}
+                    &middot; {{ __('Drivers') }}: {{ $pushStatus->push_driver_enabled ? __('Enabled') : __('Disabled') }}
+                    &middot; {{ __('Active Subscriptions') }}: {{ number_format($pushSubscriptionCount) }}
+                </p>
+            </div>
+            <a href="{{ route('admin.notification-settings.edit') }}" class="shrink-0 text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">{{ __('Manage') }}</a>
+        </div>
+    </div>
+
     {{-- Recent Bookings — cards, not a table, so they read the same on a
          phone as on a desktop. --}}
     <div class="mt-8">

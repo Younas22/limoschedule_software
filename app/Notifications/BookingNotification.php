@@ -36,7 +36,49 @@ abstract class BookingNotification extends Notification
      */
     public function via(mixed $notifiable): array
     {
-        return NotificationSetting::forEvent($this->eventType())?->activeChannels() ?? ['database'];
+        $channels = NotificationSetting::forEvent($this->eventType())?->activeChannels() ?? ['database'];
+
+        // Browser push has its own independent master/role/event-type
+        // switches (Settings → Notifications → Browser Push) entirely
+        // separate from the mail/database toggles above — see
+        // PushNotificationService, which WebPushChannel delegates to and
+        // which decides for itself whether this actually goes out.
+        $channels[] = \App\Channels\WebPushChannel::class;
+
+        return $channels;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function toWebPush(mixed $notifiable): ?array
+    {
+        return [
+            'event_type' => $this->pushEventType(),
+            'title' => $this->title(),
+            'body' => $this->message(),
+            'url' => route('admin.bookings.edit', $this->booking),
+            'booking_id' => $this->booking->id,
+            'data' => ['booking_number' => $this->booking->booking_number],
+        ];
+    }
+
+    /**
+     * Maps this notification's existing eventType() (also used for the
+     * in-app notification icon — see admin.notifications.index) onto the
+     * matching PushNotificationSetting column suffix. Not a 1:1 rename:
+     * the admin's granular push toggles (New Booking, Booking Cancelled,
+     * Payment Received, Booking Status Update, ...) predate and are
+     * broader than this base class's 4 concrete subclasses.
+     */
+    private function pushEventType(): string
+    {
+        return match ($this->eventType()) {
+            'booking_created' => 'new_booking',
+            'payment_successful' => 'payment_received',
+            'booking_cancelled' => 'booking_cancelled',
+            default => 'booking_status_update', // booking_confirmed
+        };
     }
 
     public function toMail(mixed $notifiable): MailMessage

@@ -20,6 +20,7 @@ use App\Notifications\Customer\PaymentCompletedNotification as CustomerPaymentCo
 use App\Notifications\PaymentSuccessfulNotification;
 use App\Services\BookingCreationService;
 use App\Services\DriverDispatchService;
+use App\Services\PushNotificationService;
 use App\Services\WhatsAppBookingLinkGenerator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -76,6 +77,7 @@ class BookingController extends Controller
 
         $bookingCreation->notifyAdminsOfCreation($booking);
         $bookingCreation->notifyCustomerOfCreation($booking);
+        $bookingCreation->notifyDriverOfAssignment($booking);
 
         return redirect()
             ->route('admin.bookings.index')
@@ -87,7 +89,7 @@ class BookingController extends Controller
         return view('admin.bookings.edit', $this->formOptions() + ['booking' => $booking, 'whatsapp' => $whatsapp]);
     }
 
-    public function update(Request $request, Booking $booking, BookingCreationService $bookingCreation): RedirectResponse
+    public function update(Request $request, Booking $booking, BookingCreationService $bookingCreation, PushNotificationService $pushNotifications): RedirectResponse
     {
         $previousStatus = $booking->status;
         $previousDriverId = $booking->driver_id;
@@ -95,8 +97,8 @@ class BookingController extends Controller
 
         $booking->update($data);
 
-        $this->notifyStatusTransition($booking, $previousStatus, $booking->status);
-        $this->notifyDriverAssignment($booking, $previousDriverId);
+        $this->notifyStatusTransition($booking, $previousStatus, $booking->status, $pushNotifications);
+        $this->notifyDriverAssignment($booking, $previousDriverId, $pushNotifications);
 
         return redirect()
             ->route('admin.bookings.index')
@@ -207,7 +209,7 @@ class BookingController extends Controller
         };
     }
 
-    private function notifyStatusTransition(Booking $booking, string $previousStatus, string $newStatus): void
+    private function notifyStatusTransition(Booking $booking, string $previousStatus, string $newStatus, PushNotificationService $pushNotifications): void
     {
         if ($newStatus === $previousStatus) {
             return;
@@ -219,16 +221,42 @@ class BookingController extends Controller
         } elseif ($newStatus === 'cancelled') {
             $this->notifyAdmins(new BookingCancelledNotification($booking));
             $booking->customer?->notify(new CustomerBookingCancelledNotification($booking));
+
+            if ($booking->driver_id) {
+                $booking->loadMissing('driver');
+
+                $pushNotifications->send(
+                    $booking->driver,
+                    'booking_cancelled',
+                    __('Booking Cancelled'),
+                    __('Booking #:number has been cancelled.', ['number' => $booking->booking_number]),
+                    route('driver.bookings.show', $booking),
+                    $booking->id,
+                    ['booking_number' => $booking->booking_number]
+                );
+            }
         }
     }
 
-    private function notifyDriverAssignment(Booking $booking, ?int $previousDriverId): void
+    private function notifyDriverAssignment(Booking $booking, ?int $previousDriverId, PushNotificationService $pushNotifications): void
     {
         if (! $booking->driver_id || $booking->driver_id === $previousDriverId) {
             return;
         }
 
         $booking->customer?->notify(new CustomerDriverAssignedNotification($booking));
+
+        $booking->loadMissing('driver');
+
+        $pushNotifications->send(
+            $booking->driver,
+            'booking_assigned',
+            __('New Booking Assigned'),
+            __('Booking #:number has been assigned to you.', ['number' => $booking->booking_number]),
+            route('driver.bookings.show', $booking),
+            $booking->id,
+            ['booking_number' => $booking->booking_number]
+        );
     }
 
     private function notifyAdmins(BookingNotification $notification): void

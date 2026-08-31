@@ -1,0 +1,90 @@
+/**
+ * LimoSchedule browser push service worker.
+ *
+ * Deliberately generic — every piece of content (title, body, icon, badge,
+ * url, type, booking_id) comes from the push payload itself, built
+ * server-side by App\Services\PushNotificationService for every send. This
+ * file never hardcodes a URL, an asset path, or branding, so an admin
+ * changing the site logo or a route changing structure needs zero changes
+ * here.
+ *
+ * Must be served from the site root (not /build/ or a subpath) — a service
+ * worker's scope defaults to its own directory, and this app has pages
+ * under /admin, /account (customer), and /driver that all need it.
+ */
+
+self.addEventListener('install', () => {
+    // Activate this version immediately rather than waiting for every open
+    // tab to close first — a push subscriber expects updates to take
+    // effect right away, not after their next full page reload cycle.
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('push', (event) => {
+    if (!event.data) {
+        return;
+    }
+
+    let payload;
+
+    try {
+        payload = event.data.json();
+    } catch (e) {
+        // A non-JSON push body is treated as plain text rather than
+        // dropped silently — still better than no notification at all.
+        payload = { title: 'LimoSchedule', body: event.data.text() };
+    }
+
+    const title = payload.title || 'LimoSchedule';
+
+    const options = {
+        body: payload.body || '',
+        icon: payload.icon || undefined,
+        badge: payload.badge || payload.icon || undefined,
+        // Distinct notifications (booking updates) each get their own
+        // banner; same-type pings (e.g. repeated dispatch pings) could tag
+        // with type+booking_id to replace rather than stack, but every
+        // event this app sends today is a one-off, so no tag is set.
+        data: {
+            url: payload.url || '/',
+            type: payload.type || null,
+            booking_id: payload.booking_id || null,
+            ...(payload.data || {}),
+        },
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            // Focus an already-open LimoSchedule tab if one exists, on
+            // whatever page it's currently on, then navigate it — avoids
+            // piling up duplicate tabs every time a notification is
+            // clicked, and works whether that tab is on the target page,
+            // a different page, or idle in the background.
+            for (const client of clientList) {
+                if ('focus' in client) {
+                    return client.focus().then(() => {
+                        if ('navigate' in client) {
+                            return client.navigate(targetUrl);
+                        }
+                    });
+                }
+            }
+
+            if (self.clients.openWindow) {
+                return self.clients.openWindow(targetUrl);
+            }
+        })
+    );
+});

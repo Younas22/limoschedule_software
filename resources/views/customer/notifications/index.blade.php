@@ -12,6 +12,8 @@
         @endif
     </div>
 
+    <x-push-notification-toggle class="mb-6" />
+
     <div class="overflow-hidden rounded-2xl border border-luxury-border bg-luxury-charcoal">
         <div class="divide-y divide-luxury-border/60">
             @forelse ($notifications as $notification)

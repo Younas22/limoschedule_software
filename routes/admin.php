@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\Location\StateController;
 use App\Http\Controllers\Admin\Location\TrainStationController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\NotificationSettingController;
+use App\Http\Controllers\Admin\PushNotificationSettingController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PageSectionController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
@@ -211,6 +212,14 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
     Route::prefix('notification-settings')->name('notification-settings.')->group(function () {
         Route::get('/', [NotificationSettingController::class, 'edit'])->name('edit')->middleware('permission:settings.view');
         Route::put('/', [NotificationSettingController::class, 'update'])->name('update')->middleware('permission:settings.edit');
+    });
+
+    // Browser push notifications — rendered as a section on the same
+    // "Notifications" settings page above, but posted separately so this
+    // never touches NotificationSettingController's own mail/in-app logic.
+    Route::prefix('push-settings')->name('push-settings.')->group(function () {
+        Route::put('/', [PushNotificationSettingController::class, 'update'])->name('update')->middleware('permission:settings.edit');
+        Route::post('test', [PushNotificationSettingController::class, 'sendTest'])->name('test')->middleware('permission:settings.edit');
     });
 
     Route::prefix('languages')->name('languages.')->group(function () {

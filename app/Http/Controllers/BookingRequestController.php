@@ -160,6 +160,7 @@ class BookingRequestController extends Controller
 
         $bookingCreation->notifyAdminsOfCreation($booking);
         $bookingCreation->notifyCustomerOfCreation($booking);
+        $bookingCreation->notifyDriverOfAssignment($booking);
 
         return redirect()->route('booking.confirmation', $booking->booking_number);
     }

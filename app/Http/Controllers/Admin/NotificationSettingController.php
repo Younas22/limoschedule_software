@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\NotificationSetting;
+use App\Models\PushNotificationSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -16,7 +17,9 @@ class NotificationSettingController extends Controller
             ->get()
             ->sortBy(fn ($setting) => array_search($setting->event_type, array_keys(NotificationSetting::EVENTS)));
 
-        return view('admin.notification-settings.edit', compact('settings'));
+        $pushSettings = PushNotificationSetting::current();
+
+        return view('admin.notification-settings.edit', compact('settings', 'pushSettings'));
     }
 
     public function update(Request $request): RedirectResponse

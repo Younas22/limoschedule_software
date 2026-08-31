@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPushSubscriptions;
 use App\Notifications\Customer\ResetPassword;
 use App\Notifications\Customer\VerifyEmail;
 use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 class Customer extends Authenticatable implements MustVerifyEmailContract
 {
-    use HasFactory, MustVerifyEmailTrait, Notifiable;
+    use HasFactory, HasPushSubscriptions, MustVerifyEmailTrait, Notifiable;
 
     public const GENDERS = [
         'male' => 'Male',

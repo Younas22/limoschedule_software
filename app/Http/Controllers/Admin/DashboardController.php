@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Driver;
+use App\Models\PushNotificationSetting;
+use App\Models\PushSubscription;
 use App\Models\Vehicle;
 use Illuminate\View\View;
 
@@ -43,6 +45,9 @@ class DashboardController extends Controller
             'busy' => $onlineDrivers->filter(fn (Driver $d) => (bool) $d->activeBooking())->count(),
         ];
 
+        $pushStatus = PushNotificationSetting::current();
+        $pushSubscriptionCount = PushSubscription::count();
+
         return view('admin.dashboard', compact(
             'stats',
             'recentBookings',
@@ -51,7 +56,9 @@ class DashboardController extends Controller
             'todayRevenue',
             'pendingBookings',
             'unassignedBookings',
-            'activeRides'
+            'activeRides',
+            'pushStatus',
+            'pushSubscriptionCount'
         ));
     }
 }

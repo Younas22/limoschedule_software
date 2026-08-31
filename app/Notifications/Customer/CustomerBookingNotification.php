@@ -44,7 +44,46 @@ abstract class CustomerBookingNotification extends Notification
             $channels = array_diff($channels, ['mail']);
         }
 
-        return array_values($channels);
+        $channels = array_values($channels);
+
+        // Browser push has its own independent master/role/event-type
+        // switches (Settings → Notifications → Browser Push), entirely
+        // separate from the mail/database toggles above — see
+        // PushNotificationService, which WebPushChannel delegates to and
+        // which decides for itself whether this actually goes out.
+        $channels[] = \App\Channels\WebPushChannel::class;
+
+        return $channels;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function toWebPush(mixed $notifiable): ?array
+    {
+        return [
+            'event_type' => $this->pushEventType(),
+            'title' => $this->title(),
+            'body' => $this->message(),
+            'url' => route('customer.bookings.show', $this->booking),
+            'booking_id' => $this->booking->id,
+            'data' => ['booking_number' => $this->booking->booking_number],
+        ];
+    }
+
+    /**
+     * Maps this notification's existing eventType() onto the matching
+     * PushNotificationSetting column suffix — booking_confirmed,
+     * driver_assigned, and booking_cancelled already match 1:1;
+     * payment_successful is the one rename (the granular toggle is
+     * labelled "Payment Received" to match the rest of the customer list).
+     */
+    private function pushEventType(): string
+    {
+        return match ($this->eventType()) {
+            'payment_successful' => 'payment_received',
+            default => $this->eventType(),
+        };
     }
 
     public function toMail(mixed $notifiable): MailMessage

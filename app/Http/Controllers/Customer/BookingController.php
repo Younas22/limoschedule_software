@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\Booking;
+use App\Notifications\BookingCancelledNotification;
 use App\Services\DriverDispatchService;
+use App\Services\PushNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -137,7 +141,7 @@ class BookingController extends Controller
         return view('customer.bookings.show', compact('booking', 'dispatch'));
     }
 
-    public function cancel(Request $request, Booking $booking): RedirectResponse
+    public function cancel(Request $request, Booking $booking, PushNotificationService $pushNotifications): RedirectResponse
     {
         abort_unless($booking->customer_id === Auth::guard('customer')->id(), 404);
 
@@ -163,6 +167,30 @@ class BookingController extends Controller
             // booking needs an admin-processed refund.
             'refund_status' => $booking->payment_status === 'paid' ? 'pending' : 'not_applicable',
         ]);
+
+        // A customer cancelling their own booking previously notified
+        // nobody at all — admins found out only by noticing the status had
+        // changed. Reusing the existing admin BookingCancelledNotification
+        // (mail/in-app/push, per Settings → Notifications) closes that gap.
+        $admins = Admin::withPermission('bookings.view')->get();
+
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new BookingCancelledNotification($booking));
+        }
+
+        if ($booking->driver_id) {
+            $booking->loadMissing('driver');
+
+            $pushNotifications->send(
+                $booking->driver,
+                'booking_cancelled',
+                __('Booking Cancelled'),
+                __('Booking #:number has been cancelled by the customer.', ['number' => $booking->booking_number]),
+                route('driver.bookings.show', $booking),
+                $booking->id,
+                ['booking_number' => $booking->booking_number]
+            );
+        }
 
         return back()->with('status', "Booking {$booking->booking_number} has been cancelled.");
     }

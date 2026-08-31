@@ -63,5 +63,38 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable) {
             //
         }
+
+        $this->configureWebPushOpenSsl();
+    }
+
+    /**
+     * web-push (minishlink/web-push) signs a fresh VAPID JWT with an EC key
+     * for every push it sends, which on some Windows PHP builds fails with
+     * "configuration file routines::no such file" — PHP's OpenSSL extension
+     * ships a compiled-in default config path that doesn't exist on this
+     * kind of local stack. Setting OPENSSL_CONF to a real openssl.cnf before
+     * any EC operation runs fixes it; Linux production servers ship a valid
+     * default and never need this (config('webpush.openssl_conf') stays
+     * unset there, so this becomes a no-op).
+     */
+    private function configureWebPushOpenSsl(): void
+    {
+        if (getenv('OPENSSL_CONF') || PHP_OS_FAMILY !== 'Windows') {
+            return;
+        }
+
+        $candidates = array_filter([
+            config('webpush.openssl_conf'),
+            'E:/sv26/apache/conf/openssl.cnf',
+            'C:/xampp/apache/conf/openssl.cnf',
+        ]);
+
+        foreach ($candidates as $path) {
+            if (is_string($path) && $path !== '' && file_exists($path)) {
+                putenv('OPENSSL_CONF='.$path);
+
+                return;
+            }
+        }
     }
 }

@@ -27,13 +27,20 @@
         <div class="mb-8 flex flex-col items-center gap-3">
             <a href="{{ route('pages.home') }}" class="flex flex-col items-center gap-3">
                 @if (setting('logo_url'))
-                    <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-12 w-12 rounded-xl object-contain">
+                    {{-- Natural aspect ratio, not squeezed into a fixed
+                         square box — the real logo is a wide wordmark, and
+                         forcing it into a 48×48 square shrank it down to a
+                         barely-visible sliver. The company-name caption
+                         below is dropped when a real logo renders (it
+                         already includes the name); the square lettermark
+                         fallback below is unaffected. --}}
+                    <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-12 w-auto max-w-[240px] object-contain">
                 @else
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-luxury-gold text-lg font-bold text-luxury-black">
                         {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}
                     </div>
+                    <p class="text-sm uppercase tracking-[0.3em] text-luxury-muted">{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</p>
                 @endif
-                <p class="text-sm uppercase tracking-[0.3em] text-luxury-muted">{{ setting('company_name', config('app.name', 'Limo Schedule')) }}</p>
             </a>
         </div>
 

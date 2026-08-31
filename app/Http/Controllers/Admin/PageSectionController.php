@@ -149,7 +149,11 @@ class PageSectionController extends Controller
             'subheading' => ['nullable', 'string', 'max:255'],
             'differentiator' => ['nullable', 'string', 'max:160'],
             'body' => [Rule::requiredIf($type === 'rich_text'), 'nullable', 'string'],
-            'image' => ['nullable', 'image', 'max:4096'],
+            // Hero/CTA backgrounds render as a wide, short banner strip —
+            // capping the source at 1900×575 keeps uploads from being
+            // needlessly larger (and heavier to load) than anything the
+            // layout will ever actually display.
+            'image' => ['nullable', 'image', 'max:4096', Rule::dimensions()->maxWidth(1900)->maxHeight(575)],
             'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:25600'],
             'button_text' => ['nullable', 'string', 'max:100'],
             'button_url' => ['nullable', 'string', 'max:255'],

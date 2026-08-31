@@ -31,7 +31,7 @@
     @endif
 
     @forelse ($sections as $section)
-        @include('pages.sections.'.str_replace('_', '-', $section->type), ['section' => $section])
+        @include('pages.sections.'.str_replace('_', '-', $section->type), ['section' => $section, 'page' => $page])
     @empty
         <div class="mx-auto max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
             <h1 class="text-2xl font-semibold text-luxury-white">{{ $page->name }}</h1>

@@ -128,12 +128,32 @@
                                 </div>
                             @endpermission
 
+                            {{-- Background thumbnail — hero/CTA are the only types with a
+                                 background image, so this doubles as a visual cue for where
+                                 "Edit" actually changes the background photo. --}}
+                            @if (in_array($section->type, ['hero', 'cta'], true))
+                                <div class="h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-luxury-border bg-luxury-slate">
+                                    @if ($section->image_url)
+                                        <img src="{{ $section->image_url }}" alt="" class="h-full w-full object-cover">
+                                    @else
+                                        <div class="flex h-full w-full items-center justify-center text-[10px] text-luxury-muted">
+                                            {{ __('No image') }}
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+
                             <div>
                                 <div class="flex items-center gap-2">
                                     <p class="font-medium text-luxury-white">{{ $section->heading ?: $section->type_label }}</p>
                                     <span class="rounded-full bg-luxury-slate px-2 py-0.5 text-[10px] uppercase tracking-wide text-luxury-muted">{{ $section->type_label }}</span>
                                 </div>
                                 <p class="mt-0.5 text-xs text-luxury-muted">{{ $section->subheading ?: ($section->body ? \Illuminate\Support\Str::limit(strip_tags($section->body), 80) : '') }}</p>
+                                @if (in_array($section->type, ['hero', 'cta'], true))
+                                    <p class="mt-0.5 text-[11px] text-luxury-muted">
+                                        {{ $section->image_url ? __('Background set — click Edit to change it.') : __('No background image set — click Edit to add one.') }}
+                                    </p>
+                                @endif
                             </div>
                         </div>
 

@@ -62,7 +62,7 @@
         {{-- Logo --}}
         <a href="{{ route('pages.home') }}" class="flex min-w-0 shrink items-center">
             @if (setting('logo_url'))
-                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-5 w-auto max-w-[130px] object-contain sm:h-7 sm:max-w-none">
+                <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-7 w-auto max-w-[150px] object-contain sm:h-9 sm:max-w-[220px]">
             @else
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-luxury-gold text-sm font-bold text-luxury-black">
                     {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}

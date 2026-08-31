@@ -10,6 +10,10 @@
     // reflect that in the copy rather than the generic "complete your
     // payment" line once it's still sitting in "pending".
     $awaitingConfirmation = $isPayable && $booking->status === 'pending' && ($stripeReady || $paypalReady);
+    // Only spread the buttons into a 2-up row once there are actually two
+    // to show — with a single active gateway, forcing sm:grid-cols-2 would
+    // leave it stuck at half width next to an empty column.
+    $activeGatewayCount = ($stripeReady ? 1 : 0) + ($paypalReady ? 1 : 0);
 @endphp
 
 @if ($isPayable && ($stripeReady || $paypalReady))
@@ -37,7 +41,7 @@
             </div>
 
             {{-- Payment method cards — real links, styled as premium selectable controls --}}
-            <div class="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="mt-6 grid grid-cols-1 gap-3 {{ $activeGatewayCount > 1 ? 'sm:grid-cols-2' : '' }}">
                 @if ($stripeReady)
                     <a href="{{ route('booking.pay', [$booking->booking_number, 'stripe']) }}"
                         class="group relative flex min-h-[3.25rem] items-center gap-2.5 rounded-xl border border-luxury-border bg-luxury-charcoal px-3 py-3.5 transition

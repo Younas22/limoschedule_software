@@ -9,11 +9,21 @@
             <div class="space-y-4 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-luxury-border bg-luxury-graphite">
-                            <svg class="h-5 w-5 text-luxury-gold" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 8.25v10.5a1.5 1.5 0 001.5 1.5h16.5a1.5 1.5 0 001.5-1.5V8.25M2.25 8.25v-1.5a1.5 1.5 0 011.5-1.5h16.5a1.5 1.5 0 011.5 1.5v1.5M6 15.75h4.5" />
-                            </svg>
-                        </div>
+                        @if ($gateway->code === 'stripe')
+                            <div class="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-luxury-border">
+                                <img src="{{ asset('images/payments/stripe-mark.png') }}" alt="Stripe" class="h-full w-full object-cover">
+                            </div>
+                        @elseif ($gateway->code === 'paypal')
+                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-luxury-border bg-white">
+                                <img src="{{ asset('images/payments/paypal-mark.svg') }}" alt="PayPal" class="h-6 w-6 object-contain">
+                            </div>
+                        @else
+                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-luxury-border bg-luxury-graphite">
+                                <svg class="h-5 w-5 text-luxury-gold" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 8.25v10.5a1.5 1.5 0 001.5 1.5h16.5a1.5 1.5 0 001.5-1.5V8.25M2.25 8.25v-1.5a1.5 1.5 0 011.5-1.5h16.5a1.5 1.5 0 011.5 1.5v1.5M6 15.75h4.5" />
+                                </svg>
+                            </div>
+                        @endif
                         <div>
                             <p class="font-semibold text-luxury-white">{{ $gateway->name }}</p>
                             <div class="mt-1 flex flex-wrap items-center gap-1.5">

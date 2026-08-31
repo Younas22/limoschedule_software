@@ -3,6 +3,7 @@
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\BookingPaymentController;
 use App\Http\Controllers\BookingRequestController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CouponController;
@@ -37,6 +38,14 @@ Route::prefix('booking')->name('booking.')->group(function () {
     Route::get('confirmation/{bookingNumber}', [BookingRequestController::class, 'confirmation'])->name('confirmation');
     Route::get('invoice/{bookingNumber}', [BookingRequestController::class, 'invoice'])->name('invoice');
     Route::get('invoice/{bookingNumber}/download', [BookingRequestController::class, 'downloadInvoice'])->name('invoice.download');
+
+    // Online payment — reachable by anyone holding the booking number,
+    // same as confirmation/invoice above (no login required for a guest
+    // booking to get paid).
+    Route::get('pay/{bookingNumber}/{gateway}', [BookingPaymentController::class, 'pay'])->name('pay')->where('gateway', 'stripe|paypal');
+    Route::get('pay/{bookingNumber}/{gateway}/cancel', [BookingPaymentController::class, 'cancel'])->name('pay.cancel')->where('gateway', 'stripe|paypal');
+    Route::get('pay/{bookingNumber}/stripe/return', [BookingPaymentController::class, 'stripeReturn'])->name('pay.stripe.return');
+    Route::get('pay/{bookingNumber}/paypal/return', [BookingPaymentController::class, 'paypalReturn'])->name('pay.paypal.return');
 });
 
 Route::get('areas/{area:slug}', [AreaController::class, 'show'])->name('areas.show');

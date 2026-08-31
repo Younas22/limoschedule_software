@@ -37,7 +37,7 @@ class BookingController extends Controller
         $bookings = Booking::with(['customer', 'driver', 'vehicle'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->query('status')))
             ->when($request->filled('type'), fn ($q) => $q->where('type', $request->query('type')))
-            ->latest('pickup_datetime')
+            ->latest('created_at')
             ->get();
 
         return view('admin.bookings.index', compact('bookings', 'whatsapp'));

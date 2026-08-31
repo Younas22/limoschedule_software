@@ -74,6 +74,8 @@
                 </div>
             </div>
 
+            <x-booking-payment-buttons :booking="$booking" />
+
             @if ($booking->status === 'completed')
                 @if ($booking->review)
                     <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6 text-center">

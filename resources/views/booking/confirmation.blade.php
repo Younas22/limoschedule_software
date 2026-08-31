@@ -3,6 +3,9 @@
     $whatsapp = setting('whatsapp');
     $whatsappDigits = $whatsapp ? preg_replace('/\D+/', '', $whatsapp) : null;
     $whatsappMessage = __('Hi! I\'d like some help with my booking :number.', ['number' => $booking->booking_number]);
+
+    $gatewaysReady = \App\Models\PaymentGateway::whereIn('code', ['stripe', 'paypal'])->get()->contains(fn ($g) => $g->isReady());
+    $awaitingPayment = $booking->status === 'pending' && $booking->payment_status !== 'paid' && $gatewaysReady;
 @endphp
 
 <x-layouts.public :title="'Booking Received'">
@@ -18,11 +21,17 @@
             <p class="animate-fade-up delay-1 relative mt-3 text-sm text-luxury-muted">
                 {{ __('Thank you! Your reference number is') }}
                 <span class="font-semibold text-luxury-gold">{{ $booking->booking_number }}</span>.
-                {{ __('Our team will confirm your ride shortly.') }}
+                @if ($awaitingPayment)
+                    {{ __('Please complete payment below to confirm your ride.') }}
+                @else
+                    {{ __('Our team will confirm your ride shortly.') }}
+                @endif
             </p>
 
+            <x-booking-payment-buttons :booking="$booking" class="animate-fade-up delay-2 relative mt-8" />
+
             @if ($phone || $whatsappDigits)
-                <div class="animate-fade-up delay-2 relative mt-8 rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-5">
+                <div class="animate-fade-up delay-3 relative mt-8 rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-5">
                     <p class="text-xs font-semibold uppercase tracking-wide text-luxury-muted">{{ __('Need Help?') }}</p>
                     <div class="mt-3 flex flex-col gap-3 sm:flex-row">
                         @if ($phone)
@@ -44,7 +53,7 @@
             @endif
 
             <a href="{{ route('pages.home') }}"
-                class="animate-fade-up delay-3 relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light sm:w-auto">
+                class="animate-fade-up delay-4 relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-luxury-gold px-6 py-3.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light sm:w-auto">
                 {{ __('Back to Home') }}
             </a>
         </div>

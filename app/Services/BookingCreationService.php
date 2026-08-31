@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\BookingSetting;
 use App\Models\Coupon;
 use App\Models\Driver;
+use App\Models\PaymentGateway;
 use App\Models\Vehicle;
 use App\Notifications\BookingConfirmedNotification;
 use App\Notifications\BookingCreatedNotification;
@@ -84,12 +85,19 @@ class BookingCreationService
      * Applies business rules from Booking Settings to a freshly-submitted
      * booking: driver auto-assignment (takes precedence, being the more
      * advanced pipeline state) and auto-confirmation.
+     *
+     * Both are held back while payment is still owed and an online gateway
+     * is actually available to collect it — a booking shouldn't jump to
+     * "confirmed" (or get a driver dispatched) before it's paid for just
+     * because it was submitted a moment ago. Once the customer pays,
+     * confirmAfterPayment() re-applies these same rules.
      */
     public function applyPolicies(array $data): array
     {
         $settings = BookingSetting::current();
+        $paymentSatisfied = ! $this->paymentRequired() || ($data['payment_status'] ?? null) === 'paid';
 
-        if ($settings->driver_auto_assignment_enabled && empty($data['driver_id'])) {
+        if ($paymentSatisfied && $settings->driver_auto_assignment_enabled && empty($data['driver_id'])) {
             $driver = Driver::where('is_online', true)
                 ->where('is_available', true)
                 ->inRandomOrder()
@@ -104,11 +112,83 @@ class BookingCreationService
             }
         }
 
-        if ($settings->auto_confirmation_enabled && $data['status'] === 'pending') {
+        if ($paymentSatisfied && $settings->auto_confirmation_enabled && $data['status'] === 'pending') {
             $data['status'] = 'confirmed';
         }
 
         return $data;
+    }
+
+    /**
+     * Whether an online gateway is actually enabled and ready to collect
+     * payment — while true, a booking is held at "pending" (never
+     * auto-confirmed or auto-assigned) until it's actually paid for.
+     */
+    public function paymentRequired(): bool
+    {
+        return PaymentGateway::whereIn('code', ['stripe', 'paypal'])->get()->contains(fn ($gateway) => $gateway->isReady());
+    }
+
+    /**
+     * Re-applies the auto-assignment/auto-confirmation policies once a
+     * booking that was held back by paymentRequired() has just been paid —
+     * the mirror image of the gate in applyPolicies() above. No-ops for a
+     * booking that isn't sitting in "pending" (e.g. an admin already
+     * confirmed it manually while it was unpaid).
+     */
+    public function confirmAfterPayment(Booking $booking): void
+    {
+        if ($booking->status !== 'pending') {
+            return;
+        }
+
+        $settings = BookingSetting::current();
+
+        if ($settings->driver_auto_assignment_enabled && ! $booking->driver_id) {
+            $driver = Driver::where('is_online', true)
+                ->where('is_available', true)
+                ->inRandomOrder()
+                ->first();
+
+            if ($driver) {
+                $booking->driver_id = $driver->id;
+                $booking->status = 'assigned';
+            }
+        }
+
+        if ($booking->status === 'pending' && $settings->auto_confirmation_enabled) {
+            $booking->status = 'confirmed';
+        }
+
+        if (! $booking->isDirty()) {
+            return;
+        }
+
+        $booking->save();
+
+        $this->notifyAdminsOfConfirmation($booking);
+        $this->notifyCustomerOfCreation($booking);
+    }
+
+    /**
+     * Admin-side counterpart to notifyCustomerOfCreation() below, fired
+     * once a booking reaches "confirmed" after the fact (i.e. via
+     * confirmAfterPayment()) rather than at initial creation, where
+     * notifyAdminsOfCreation() already covers it.
+     */
+    private function notifyAdminsOfConfirmation(Booking $booking): void
+    {
+        if ($booking->status !== 'confirmed') {
+            return;
+        }
+
+        $admins = Admin::withPermission('bookings.view')->get();
+
+        if ($admins->isEmpty()) {
+            return;
+        }
+
+        Notification::send($admins, new BookingConfirmedNotification($booking));
     }
 
     /**

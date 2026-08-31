@@ -33,36 +33,7 @@
 
 <footer class="border-t border-luxury-border bg-luxury-charcoal pb-20 lg:pb-0">
     <div class="mx-auto max-w-7xl px-4 pt-16 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
-            {{-- Brand --}}
-            <div class="sm:col-span-2 lg:col-span-1">
-                <a href="{{ route('pages.home') }}" class="flex items-center">
-                    @if (setting('logo_url'))
-                        <img src="{{ setting('logo_url') }}" alt="{{ setting('company_name') }}" class="h-7 w-auto max-w-none object-contain">
-                    @else
-                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-luxury-gold text-sm font-bold text-luxury-black">
-                            {{ strtoupper(substr(setting('company_name', 'Limo Schedule'), 0, 1)) }}
-                        </span>
-                    @endif
-                </a>
-
-                <p class="mt-4 max-w-xs text-sm leading-relaxed text-luxury-muted">
-                    {{ setting('tagline') ?: __('Reliable, professional transportation — booked in minutes, every time.') }}
-                </p>
-
-                @if (array_filter($socialLinks))
-                    <div class="mt-5 flex items-center gap-2">
-                        @foreach ($socialLinks as $platform => $url)
-                            @continue(! $url)
-                            <a href="{{ $url }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($platform) }}"
-                                class="flex h-9 w-9 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition hover:border-luxury-gold/40 hover:bg-luxury-gold/10 hover:text-luxury-gold">
-                                <x-social-icon :name="$platform" class="h-4 w-4" />
-                            </a>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-
+        <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             {{-- Quick links --}}
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-luxury-white">{{ __('Quick Links') }}</p>
@@ -169,14 +140,14 @@
                     @endif
                     @if (setting('email'))
                         <li>
-                            <a href="mailto:{{ setting('email') }}" class="group flex items-start gap-3">
-                                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
+                            <a href="mailto:{{ setting('email') }}" class="group flex items-center gap-3">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition group-hover:border-luxury-gold/40 group-hover:text-luxury-gold">
                                     <x-icon name="mail" class="h-4 w-4" />
                                 </span>
-                                {{-- Wraps instead of truncating — the Contact column isn't
-                                     always wide enough to fit a full email on one line, and
-                                     an ellipsis was hiding part of the address entirely. --}}
-                                <span class="min-w-0 break-all pt-2.5 text-sm leading-snug text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('email') }}</span>
+                                {{-- The Contact column now spans 2 grid tracks (see the
+                                     wrapper above) specifically so this fits on one line;
+                                     truncate is just a safety net for an unusually long address. --}}
+                                <span class="min-w-0 truncate text-sm text-luxury-muted transition group-hover:text-luxury-gold">{{ setting('email') }}</span>
                             </a>
                         </li>
                     @endif
@@ -184,11 +155,26 @@
             </div>
         </div>
 
+        {{-- Social links — moved out of the (now removed) brand column into
+             their own centered row, so they still appear once, just lower
+             on the page. --}}
+        @if (array_filter($socialLinks))
+            <div class="mt-10 flex items-center justify-center gap-3 border-t border-luxury-border pt-8">
+                @foreach ($socialLinks as $platform => $url)
+                    @continue(! $url)
+                    <a href="{{ $url }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($platform) }}"
+                        class="flex h-10 w-10 items-center justify-center rounded-lg border border-luxury-border bg-luxury-graphite/60 text-luxury-muted transition hover:border-luxury-gold/40 hover:bg-luxury-gold/10 hover:text-luxury-gold">
+                        <x-social-icon :name="$platform" class="h-4 w-4" />
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
         {{-- Trust strip — fixed, brief-specified copy rather than admin
              content: there is no existing "footer trust badges" data
              source, and the PageSection "Trust Badges" type built for
              homepage use doesn't fit a global, every-page component. --}}
-        <div class="mt-14 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-luxury-border bg-luxury-border sm:grid-cols-2 lg:grid-cols-4">
+        <div class="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-luxury-border bg-luxury-border sm:grid-cols-2 lg:grid-cols-4">
             @foreach ([
                 ['icon' => 'shield', 'title' => __('Safe & Reliable'), 'body' => __('Your safety is our top priority.')],
                 ['icon' => 'clock', 'title' => __('On-Time Service'), 'body' => __('Punctual pickups and timely arrivals.')],

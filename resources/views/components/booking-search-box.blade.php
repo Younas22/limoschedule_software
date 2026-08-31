@@ -1300,7 +1300,7 @@
                 return this.appliedCoupon ? this.appliedCoupon.new_total : this.quote.total;
             },
 
-            applyCoupon(silent = false) {
+            applyCoupon(silent = false, isRetry = false) {
                 const code = (silent ? this.appliedCoupon?.code : this.couponCode).trim();
 
                 if (!code || !this.quote) return;
@@ -1308,7 +1308,15 @@
                 this.couponChecking = true;
                 if (!silent) this.couponError = null;
 
-                const token = this.$el.querySelector('input[name="_token"]')?.value;
+                // Deliberately not this.$el.querySelector('input[name="_token"]')
+                // — Alpine's $el inside a method reflects whichever element the
+                // *calling* directive is bound to, not this component's root.
+                // Called from a deeply-nested button (e.g. a coupon chip), that
+                // resolves to the button itself, which has no _token descendant
+                // — silently sending the literal string "undefined" as the
+                // header and failing every request with a CSRF mismatch. The
+                // page-level meta tag has no such ambiguity.
+                const token = document.querySelector('meta[name="csrf-token"]')?.content;
 
                 fetch(@json(route('coupon.apply')), {
                     method: 'POST',
@@ -1320,23 +1328,35 @@
                     body: JSON.stringify({ code, amount: this.quote.total }),
                 })
                     .then(async (response) => {
+                        // A 419 here is always a stale/mismatched session
+                        // token, never the coupon's own fault — one silent
+                        // retry (same code, freshly re-read token) clears it
+                        // up rather than showing the customer a confusing
+                        // "CSRF" error for what looks to them like typing a
+                        // code wrong. Left mid-"Checking..." rather than
+                        // toggled off, since a second request is already on
+                        // its way.
+                        if (response.status === 419 && !isRetry) {
+                            this.applyCoupon(silent, true);
+                            return;
+                        }
+
                         const json = await response.json().catch(() => null);
 
                         if (!response.ok || !json?.valid) {
                             this.appliedCoupon = null;
                             this.couponError = json?.message || @json(__('That coupon could not be applied.'));
-                            return;
+                        } else {
+                            this.appliedCoupon = json;
+                            this.couponCode = json.code;
+                            this.couponError = null;
                         }
 
-                        this.appliedCoupon = json;
-                        this.couponCode = json.code;
-                        this.couponError = null;
+                        this.couponChecking = false;
                     })
                     .catch(() => {
                         this.appliedCoupon = null;
                         this.couponError = @json(__('Unable to check that coupon right now.'));
-                    })
-                    .finally(() => {
                         this.couponChecking = false;
                     });
             },
@@ -1396,7 +1416,15 @@
                 this.calculating = true;
                 this.quoteError = null;
 
-                const token = this.$el.querySelector('input[name="_token"]')?.value;
+                // Deliberately not this.$el.querySelector('input[name="_token"]')
+                // — Alpine's $el inside a method reflects whichever element the
+                // *calling* directive is bound to, not this component's root.
+                // Called from a deeply-nested button (e.g. a coupon chip), that
+                // resolves to the button itself, which has no _token descendant
+                // — silently sending the literal string "undefined" as the
+                // header and failing every request with a CSRF mismatch. The
+                // page-level meta tag has no such ambiguity.
+                const token = document.querySelector('meta[name="csrf-token"]')?.content;
 
                 fetch(config.quoteUrl, {
                     method: 'POST',

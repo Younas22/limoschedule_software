@@ -138,6 +138,16 @@ Route::middleware('admin.auth:admin')->group(function () use ($locationResource)
         Route::post('error-logs/clear', [SystemToolController::class, 'clearErrorLog'])->name('error-logs.clear')->middleware('permission:system.edit');
 
         Route::post('queue/failed/clear', [SystemToolController::class, 'clearFailedJobs'])->name('queue.failed.clear')->middleware('permission:system.edit');
+
+        // Raw .env editor — same trust tier as the DB drop/restore tools
+        // above (system.edit), since whoever can reach this can already do
+        // far more damage via those. A timestamped backup is written
+        // automatically before every save so a bad edit is always
+        // reversible from the same screen.
+        Route::get('env', [SystemToolController::class, 'envEditor'])->name('env.edit');
+        Route::put('env', [SystemToolController::class, 'updateEnv'])->name('env.update')->middleware('permission:system.edit');
+        Route::post('env/backups/{filename}/restore', [SystemToolController::class, 'restoreEnvBackup'])->name('env.backups.restore')->middleware('permission:system.edit');
+        Route::delete('env/backups/{filename}', [SystemToolController::class, 'destroyEnvBackup'])->name('env.backups.destroy')->middleware('permission:system.delete');
     });
 
     Route::prefix('notifications')->name('notifications.')->group(function () {

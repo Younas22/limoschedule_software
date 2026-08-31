@@ -255,6 +255,136 @@ class SystemToolController extends Controller
         return back()->with('status', "Cleared {$count} failed job(s).");
     }
 
+    public function envEditor(): View
+    {
+        return view('admin.system-tools.env', [
+            'content' => file_exists(base_path('.env')) ? file_get_contents(base_path('.env')) : '',
+            'backups' => $this->envBackups(),
+        ]);
+    }
+
+    public function updateEnv(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'content' => ['required', 'string', 'max:102400'],
+        ]);
+
+        // A blank/near-empty save is almost certainly a mistake (a wiped
+        // .env takes the entire site down — no DB connection, no app key),
+        // not a deliberate edit, so it's refused outright rather than
+        // "helpfully" saved with an automatic backup to undo.
+        if (strlen(trim($data['content'])) < 10) {
+            return back()->withInput()->with('error', 'That looks empty or accidentally cleared — nothing was saved. Restore a backup below if you need to start over.');
+        }
+
+        $this->backupEnv('before-save');
+
+        file_put_contents(base_path('.env'), $data['content']);
+
+        // .env changes only take effect once the config cache (if any) is
+        // cleared — same as the "Clear Cache" tool above, run
+        // automatically here so a save always applies immediately.
+        Artisan::call('config:clear');
+
+        ActivityLog::record('env.updated', 'Environment file (.env) was updated.', $request);
+
+        return redirect()->route('admin.system-tools.env.edit')->with('status', 'Environment file saved. A backup of the previous version was kept automatically.');
+    }
+
+    public function restoreEnvBackup(Request $request, string $filename): RedirectResponse
+    {
+        $path = $this->envBackupPath($filename);
+
+        abort_unless($path && file_exists($path), 404);
+
+        // The version being replaced is itself backed up first — a restore
+        // is just as reversible as a save.
+        $this->backupEnv('before-restore');
+
+        file_put_contents(base_path('.env'), file_get_contents($path));
+        Artisan::call('config:clear');
+
+        ActivityLog::record('env.restored', "Environment file restored from backup: {$filename}", $request);
+
+        return redirect()->route('admin.system-tools.env.edit')->with('status', "Environment file restored from \"{$filename}\".");
+    }
+
+    public function destroyEnvBackup(Request $request, string $filename): RedirectResponse
+    {
+        $path = $this->envBackupPath($filename);
+
+        if ($path && file_exists($path)) {
+            @unlink($path);
+            ActivityLog::record('env.backup_deleted', "Environment backup deleted: {$filename}", $request);
+        }
+
+        return back()->with('status', 'Backup deleted.');
+    }
+
+    /**
+     * @return array<int, array{filename: string, size_kb: float, created_at: \Illuminate\Support\Carbon}>
+     */
+    private function envBackups(): array
+    {
+        $directory = storage_path('app/env-backups');
+
+        if (! is_dir($directory)) {
+            return [];
+        }
+
+        return collect(glob($directory.DIRECTORY_SEPARATOR.'*.env-backup.txt'))
+            ->map(fn (string $path) => [
+                'filename' => basename($path),
+                'size_kb' => round(filesize($path) / 1024, 1),
+                'created_at' => \Illuminate\Support\Carbon::createFromTimestamp(filemtime($path)),
+            ])
+            ->sortByDesc('created_at')
+            ->values()
+            ->all();
+    }
+
+    private function backupEnv(string $reason): void
+    {
+        if (! file_exists(base_path('.env'))) {
+            return;
+        }
+
+        $directory = storage_path('app/env-backups');
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $filename = now()->format('Y-m-d-His').'-'.$reason.'.env-backup.txt';
+        copy(base_path('.env'), $directory.DIRECTORY_SEPARATOR.$filename);
+
+        // Keep only the most recent 20 — this is a safety net for
+        // accidental edits, not a long-term audit trail (ActivityLog
+        // already records every save/restore permanently).
+        $all = collect(glob($directory.DIRECTORY_SEPARATOR.'*.env-backup.txt'))->sortByDesc(fn ($p) => filemtime($p))->values();
+
+        foreach ($all->slice(20) as $old) {
+            @unlink($old);
+        }
+    }
+
+    /**
+     * Resolves a backup filename to its real path, refusing anything that
+     * isn't exactly one of our own generated filenames — the filename
+     * arrives from the URL, so this is the only thing standing between a
+     * crafted request and reading/deleting an arbitrary file on disk.
+     */
+    private function envBackupPath(string $filename): ?string
+    {
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}-\d{6}-[a-z-]+\.env-backup\.txt$/', $filename)) {
+            return null;
+        }
+
+        $path = storage_path('app/env-backups/'.$filename);
+
+        return file_exists($path) ? $path : null;
+    }
+
     /**
      * @return array<int, array{level: string, timestamp: string, message: string}>
      */

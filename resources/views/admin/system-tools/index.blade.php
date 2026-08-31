@@ -12,6 +12,9 @@
                 <a href="{{ route('admin.system-tools.error-logs') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
                     {{ __('Error Logs') }}
                 </a>
+                <a href="{{ route('admin.system-tools.env.edit') }}" class="rounded-lg border border-luxury-border px-4 py-2.5 text-sm font-medium text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                    {{ __('Environment (.env)') }}
+                </a>
             @endpermission
         </div>
     </div>

@@ -124,7 +124,7 @@ class BookingController extends Controller
         return back()->with('status', $count === 1 ? '1 booking deleted successfully.' : "{$count} bookings deleted successfully.");
     }
 
-    public function updateStatus(Request $request, Booking $booking): RedirectResponse
+    public function updateStatus(Request $request, Booking $booking, PushNotificationService $pushNotifications): RedirectResponse
     {
         $data = $request->validate([
             'status' => ['required', Rule::in(array_keys(Booking::STATUSES))],
@@ -133,7 +133,7 @@ class BookingController extends Controller
         $previousStatus = $booking->status;
         $booking->update($data);
 
-        $this->notifyStatusTransition($booking, $previousStatus, $booking->status);
+        $this->notifyStatusTransition($booking, $previousStatus, $booking->status, $pushNotifications);
 
         return back()->with('status', "Booking \"{$booking->booking_number}\" marked as {$booking->status_label}.");
     }
@@ -235,6 +235,33 @@ class BookingController extends Controller
                     ['booking_number' => $booking->booking_number]
                 );
             }
+        } elseif ($newStatus === 'in_progress' && $booking->customer) {
+            // Mirrors Driver\RideController::start() — an admin marking a
+            // ride "in progress" directly from the dashboard (e.g. a phone/
+            // WhatsApp booking with no driver app involved) should notify
+            // the customer exactly the same way starting it from the
+            // driver app does.
+            $pushNotifications->send(
+                $booking->customer,
+                'trip_started',
+                __('Trip Started'),
+                __('Your trip for booking #:number has started.', ['number' => $booking->booking_number]),
+                route('customer.bookings.show', $booking),
+                $booking->id,
+                ['booking_number' => $booking->booking_number]
+            );
+        } elseif ($newStatus === 'completed' && $booking->customer) {
+            // Mirrors Driver\RideController::complete() — same reasoning
+            // as the in_progress branch above.
+            $pushNotifications->send(
+                $booking->customer,
+                'trip_completed',
+                __('Trip Completed'),
+                __('Your trip for booking #:number has been completed. Thank you for riding with us!', ['number' => $booking->booking_number]),
+                route('customer.bookings.show', $booking),
+                $booking->id,
+                ['booking_number' => $booking->booking_number]
+            );
         }
     }
 

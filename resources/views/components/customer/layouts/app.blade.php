@@ -91,6 +91,8 @@
         }
     </script>
 
+    <x-push-sound-listener />
+
     @stack('scripts')
 </body>
 </html>

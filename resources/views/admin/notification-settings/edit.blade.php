@@ -25,7 +25,7 @@
     <x-push-notification-toggle class="mb-6" :description="__('Get instant browser alerts for bookings, payments, and driver activity.')" />
 
     {{-- Browser Push Notifications — master + role + granular event controls --}}
-    <form method="POST" action="{{ route('admin.push-settings.update') }}" class="mb-8 space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+    <form method="POST" action="{{ route('admin.push-settings.update') }}" enctype="multipart/form-data" class="mb-8 space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
         @csrf
         @method('PUT')
 
@@ -53,6 +53,36 @@
                 <x-admin.toggle name="push_driver_enabled" :checked="$pushSettings->push_driver_enabled"
                     label="{{ __('Driver') }}" description="{{ __('Receive browser push notifications') }}" />
             </div>
+        </div>
+
+        <div class="border-t border-luxury-border pt-5">
+            <h4 class="mb-1 text-xs font-semibold uppercase tracking-wider text-luxury-muted">{{ __('Notification Sound') }}</h4>
+            <p class="mb-3 text-xs text-luxury-muted">
+                {{ __("Plays in any open browser tab of this app when a notification arrives. When no tab is open, the browser's own default sound plays instead — no site can override that.") }}
+            </p>
+
+            <div x-data="{ fileName: null }" class="flex flex-col gap-3 rounded-xl border border-luxury-border bg-luxury-graphite/40 p-4 sm:flex-row sm:items-center">
+                @if ($pushSettings->notification_sound_url)
+                    <audio controls preload="none" src="{{ $pushSettings->notification_sound_url }}" class="h-9 w-full sm:w-64"></audio>
+                @else
+                    <p class="text-xs text-luxury-muted">{{ __('No custom sound uploaded — using the browser default.') }}</p>
+                @endif
+
+                <label class="flex-1 cursor-pointer rounded-lg border border-dashed border-luxury-border px-4 py-2.5 text-center text-xs text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
+                    <span x-text="fileName ?? '{{ __('Click to upload a sound (mp3/wav/ogg, max 1MB)') }}'"></span>
+                    <input type="file" name="notification_sound" accept="audio/*" class="hidden"
+                        @change="fileName = $event.target.files.length ? $event.target.files[0].name : null">
+                </label>
+
+                @if ($pushSettings->notification_sound_url)
+                    <label class="flex shrink-0 cursor-pointer items-center gap-2 text-xs text-luxury-muted">
+                        <input type="checkbox" name="remove_notification_sound" value="1"
+                            class="h-4 w-4 rounded border-luxury-border bg-luxury-charcoal text-red-400 focus:ring-red-400 focus:ring-offset-luxury-black">
+                        {{ __('Remove') }}
+                    </label>
+                @endif
+            </div>
+            <x-admin.input-error :messages="$errors->get('notification_sound')" />
         </div>
 
         @php

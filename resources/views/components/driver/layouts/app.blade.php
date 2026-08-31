@@ -141,5 +141,7 @@
             })();
         </script>
     @endif
+
+    <x-push-sound-listener />
 </body>
 </html>

@@ -72,6 +72,7 @@ class PushNotificationSetting extends Model
             'push_admin_enabled',
             'push_customer_enabled',
             'push_driver_enabled',
+            'notification_sound',
             ...array_keys(self::ADMIN_EVENTS),
             ...array_keys(self::DRIVER_EVENTS),
             ...array_keys(self::CUSTOMER_EVENTS),
@@ -80,7 +81,26 @@ class PushNotificationSetting extends Model
 
     protected function casts(): array
     {
-        return array_fill_keys($this->getFillable(), 'boolean');
+        // Every fillable column is a boolean toggle except the uploaded
+        // sound filename, which stays a plain string.
+        return array_fill_keys(
+            array_diff($this->getFillable(), ['notification_sound']),
+            'boolean'
+        );
+    }
+
+    /**
+     * Full URL of the admin-uploaded custom notification sound, or null to
+     * fall back to the browser's own default notification sound. Read live
+     * on every push send (see PushNotificationService::send()) — never
+     * cached separately from the settings row itself, so a re-upload takes
+     * effect on the very next notification with no extra cache-busting.
+     */
+    public function getNotificationSoundUrlAttribute(): ?string
+    {
+        return $this->notification_sound
+            ? asset('uploads/push-sounds/'.$this->notification_sound)
+            : null;
     }
 
     protected static function booted(): void

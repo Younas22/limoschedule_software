@@ -41,23 +41,47 @@ self.addEventListener('push', (event) => {
 
     const title = payload.title || 'LimoSchedule';
 
-    const options = {
-        body: payload.body || '',
-        icon: payload.icon || undefined,
-        badge: payload.badge || payload.icon || undefined,
-        // Distinct notifications (booking updates) each get their own
-        // banner; same-type pings (e.g. repeated dispatch pings) could tag
-        // with type+booking_id to replace rather than stack, but every
-        // event this app sends today is a one-off, so no tag is set.
-        data: {
-            url: payload.url || '/',
-            type: payload.type || null,
-            booking_id: payload.booking_id || null,
-            ...(payload.data || {}),
-        },
-    };
+    event.waitUntil(
+        (async () => {
+            // The Notification API has no "custom sound" option — browsers
+            // dropped that years ago, so a fully-closed browser can only
+            // ever play its own default ding for a real system push. What
+            // IS controllable: any tab of the app that's currently open
+            // (foreground or background) gets told to play the admin's
+            // uploaded sound itself via <audio>, from a payload.sound URL
+            // built fresh by PushNotificationService on every send — never
+            // hardcoded here, so a re-upload takes effect instantly with no
+            // change to this file.
+            const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
 
-    event.waitUntil(self.registration.showNotification(title, options));
+            if (payload.sound) {
+                clientList.forEach((client) => client.postMessage({ type: 'play-notification-sound', url: payload.sound }));
+            }
+
+            // Suppress the OS's own default ding only when we know an open
+            // tab is about to play the custom sound instead — otherwise a
+            // fully-closed browser would go completely silent.
+            const hasVisibleClient = clientList.some((client) => client.visibilityState === 'visible');
+
+            return self.registration.showNotification(title, {
+                body: payload.body || '',
+                icon: payload.icon || undefined,
+                badge: payload.badge || payload.icon || undefined,
+                silent: Boolean(payload.sound) && hasVisibleClient,
+                // Distinct notifications (booking updates) each get their
+                // own banner; same-type pings (e.g. repeated dispatch
+                // pings) could tag with type+booking_id to replace rather
+                // than stack, but every event this app sends today is a
+                // one-off, so no tag is set.
+                data: {
+                    url: payload.url || '/',
+                    type: payload.type || null,
+                    booking_id: payload.booking_id || null,
+                    ...(payload.data || {}),
+                },
+            });
+        })()
+    );
 });
 
 self.addEventListener('notificationclick', (event) => {

@@ -65,6 +65,8 @@
         @include('admin.partials.bottom-nav')
     </div>
 
+    <x-push-sound-listener />
+
     @stack('scripts')
 </body>
 </html>

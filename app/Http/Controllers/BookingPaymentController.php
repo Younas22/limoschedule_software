@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Services\BookingCreationService;
 use App\Services\Payments\PayPalPaymentService;
 use App\Services\Payments\StripePaymentService;
 use Illuminate\Http\RedirectResponse;
@@ -54,7 +55,7 @@ class BookingPaymentController extends Controller
      * from Stripe itself (never trusted from the query string alone) to
      * confirm what was actually collected before marking anything paid.
      */
-    public function stripeReturn(Request $request, string $bookingNumber, StripePaymentService $stripe): RedirectResponse
+    public function stripeReturn(Request $request, string $bookingNumber, StripePaymentService $stripe, BookingCreationService $bookingCreation): RedirectResponse
     {
         $booking = Booking::where('booking_number', $bookingNumber)->firstOrFail();
         $sessionId = $request->query('session_id');
@@ -76,6 +77,7 @@ class BookingPaymentController extends Controller
         }
 
         $this->markPaid($booking, 'stripe', (string) $session->payment_intent);
+        $bookingCreation->confirmAfterPayment($booking);
 
         return $this->paymentSucceeded($booking);
     }
@@ -85,7 +87,7 @@ class BookingPaymentController extends Controller
      * ?token=<order id>) — that approval isn't itself a charge, so the
      * order is captured here before anything is marked paid.
      */
-    public function paypalReturn(Request $request, string $bookingNumber, PayPalPaymentService $paypal): RedirectResponse
+    public function paypalReturn(Request $request, string $bookingNumber, PayPalPaymentService $paypal, BookingCreationService $bookingCreation): RedirectResponse
     {
         $booking = Booking::where('booking_number', $bookingNumber)->firstOrFail();
         $orderId = $request->query('token');
@@ -108,6 +110,7 @@ class BookingPaymentController extends Controller
 
         $captureId = data_get($result, 'purchase_units.0.payments.captures.0.id', $orderId);
         $this->markPaid($booking, 'paypal', $captureId);
+        $bookingCreation->confirmAfterPayment($booking);
 
         return $this->paymentSucceeded($booking);
     }

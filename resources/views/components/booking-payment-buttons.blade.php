@@ -39,7 +39,7 @@
 
         <p class="mt-3 text-[11px] leading-snug text-luxury-muted">
             @if ($awaitingConfirmation)
-                {{ __("You'll be redirected to a secure payment page — your booking is confirmed as soon as payment is received.") }}
+                {{ __("You'll be redirected to a secure payment page. This booking is confirmed only once payment is received.") }}
             @else
                 {{ __("You'll be redirected to a secure payment page. Your booking stays reserved either way.") }}
             @endif

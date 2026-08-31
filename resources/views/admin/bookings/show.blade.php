@@ -239,6 +239,14 @@
                         <p class="mt-1 text-sm {{ $booking->refund_status === 'refunded' ? 'text-emerald-400' : 'text-luxury-gold' }}">{{ $booking->refund_status_label }}</p>
                     </div>
                 @endif
+
+                @if ($booking->payment_status !== 'paid' && $booking->status !== 'cancelled')
+                    <div class="mt-4 border-t border-luxury-border pt-4">
+                        <p class="text-xs uppercase tracking-wide text-luxury-muted">{{ __('Unpaid') }}</p>
+                        <p class="mt-1 text-xs text-luxury-muted">{{ __("Share this link — the customer (or anyone paying on their behalf) can pay it without logging in.") }}</p>
+                        <x-copy-payment-link-button :booking="$booking" class="mt-2.5 inline-flex" />
+                    </div>
+                @endif
             </div>
         </div>
     </div>

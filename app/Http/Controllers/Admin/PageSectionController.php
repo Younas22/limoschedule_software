@@ -21,7 +21,7 @@ class PageSectionController extends Controller
 
     public function store(Request $request, Page $page): RedirectResponse
     {
-        $data = $this->validateSection($request);
+        $data = $this->validateSection($request, $page);
 
         if ($request->hasFile('image')) {
             $data['image'] = $this->storeUpload($request->file('image'));
@@ -48,7 +48,7 @@ class PageSectionController extends Controller
 
     public function update(Request $request, Page $page, PageSection $section): RedirectResponse
     {
-        $data = $this->validateSection($request);
+        $data = $this->validateSection($request, $page);
 
         if ($request->hasFile('image')) {
             $data['image'] = $this->storeUpload($request->file('image'), $section->image);
@@ -138,9 +138,21 @@ class PageSectionController extends Controller
         return back()->with('status', 'Section order updated.');
     }
 
-    private function validateSection(Request $request): array
+    private function validateSection(Request $request, Page $page): array
     {
         $type = $request->input('type');
+
+        // Only a service page's hero renders as the compact 1900×575 banner
+        // strip (see pages/sections/hero.blade.php) — the home page's hero
+        // is a full-screen cinematic background, and the CTA section's
+        // image fills a ~560-620px-tall card, so both need room to be much
+        // taller than that. Capping the source there too would reject
+        // every image actually meant for those layouts.
+        $imageRules = ['nullable', 'image', 'max:4096'];
+
+        if ($type === 'hero' && in_array($page->slug, Page::SERVICE_PAGES, true)) {
+            $imageRules[] = Rule::dimensions()->maxWidth(1900)->maxHeight(575);
+        }
 
         $data = $request->validate([
             'type' => ['required', Rule::in(array_keys(PageSection::TYPES))],
@@ -149,11 +161,7 @@ class PageSectionController extends Controller
             'subheading' => ['nullable', 'string', 'max:255'],
             'differentiator' => ['nullable', 'string', 'max:160'],
             'body' => [Rule::requiredIf($type === 'rich_text'), 'nullable', 'string'],
-            // Hero/CTA backgrounds render as a wide, short banner strip —
-            // capping the source at 1900×575 keeps uploads from being
-            // needlessly larger (and heavier to load) than anything the
-            // layout will ever actually display.
-            'image' => ['nullable', 'image', 'max:4096', Rule::dimensions()->maxWidth(1900)->maxHeight(575)],
+            'image' => $imageRules,
             'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:25600'],
             'button_text' => ['nullable', 'string', 'max:100'],
             'button_url' => ['nullable', 'string', 'max:255'],

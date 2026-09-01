@@ -13,7 +13,7 @@
     resources/js/app.js rather than an inline <script> here, because the
     compact topbar badge (components/push-notification-badge.blade.php)
     shares the exact same logic and the two can render on the same page. --}}
-<div x-data="pushNotificationToggle(@js(config('webpush.public_key')), @js(asset('sw.js')), @js(route('push.subscribe')), @js(route('push.unsubscribe')), @js(['enableError' => __('Something went wrong enabling notifications. Please try again.'), 'disableError' => __('Could not disable notifications. Please try again.')]))" x-init="init()"
+<div x-data="pushNotificationToggle(@js(config('webpush.public_key')), @js(asset('sw.js')), @js(route('push.subscribe')), @js(route('push.unsubscribe')), @js(route('push.status')), @js(['enableError' => __('Something went wrong enabling notifications. Please try again.'), 'disableError' => __('Could not disable notifications. Please try again.')]))" x-init="init()"
     {{ $attributes->merge(['class' => 'rounded-2xl border border-luxury-border bg-luxury-charcoal p-6']) }}>
     <div class="flex items-start gap-4">
         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-luxury-border bg-luxury-graphite text-luxury-gold">

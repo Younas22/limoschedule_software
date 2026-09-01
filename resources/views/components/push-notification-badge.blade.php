@@ -11,7 +11,7 @@
     or a previous attempt errored); silent once enabled, unsupported, or
     blocked, since a topbar nag has no useful next step in those states.
 --}}
-<div x-data="pushNotificationToggle(@js(config('webpush.public_key')), @js(asset('sw.js')), @js(route('push.subscribe')), @js(route('push.unsubscribe')), @js(['enableError' => __('Something went wrong enabling notifications. Please try again.'), 'disableError' => __('Could not disable notifications. Please try again.')]))" x-init="init()">
+<div x-data="pushNotificationToggle(@js(config('webpush.public_key')), @js(asset('sw.js')), @js(route('push.subscribe')), @js(route('push.unsubscribe')), @js(route('push.status')), @js(['enableError' => __('Something went wrong enabling notifications. Please try again.'), 'disableError' => __('Could not disable notifications. Please try again.')]))" x-init="init()">
     <template x-if="state === 'default' || state === 'error'">
         <button type="button" @click="enable()" :disabled="busy"
             class="tap-scale inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-luxury-gold/40 bg-luxury-gold/10 px-2.5 text-xs font-semibold text-luxury-gold transition hover:bg-luxury-gold/20 disabled:opacity-60"

@@ -14,7 +14,7 @@ import './bootstrap';
  * Route URLs can't be resolved with Blade's route() helper here since this
  * file is a static, pre-built asset — callers pass them in instead.
  */
-window.pushNotificationToggle = function (vapidPublicKey, serviceWorkerUrl, subscribeUrl, unsubscribeUrl, messages) {
+window.pushNotificationToggle = function (vapidPublicKey, serviceWorkerUrl, subscribeUrl, unsubscribeUrl, statusUrl, messages) {
     messages = messages || {};
     return {
         // states: 'checking' | 'unsupported' | 'denied' | 'default' | 'enabled' | 'error'
@@ -38,7 +38,17 @@ window.pushNotificationToggle = function (vapidPublicKey, serviceWorkerUrl, subs
                 const registration = await navigator.serviceWorker.register(serviceWorkerUrl);
                 const existing = await registration.pushManager.getSubscription();
 
-                if (existing && Notification.permission === 'granted') {
+                // A push subscription lives at the browser/device level, not
+                // the logged-in account level — on a shared computer, a
+                // subscription created for one account is still sitting
+                // right there in this browser's own storage after a
+                // different account logs in. Trusting `existing` alone would
+                // then show "Enabled" here even though the server has never
+                // linked this endpoint to whoever is signed in right now.
+                // Cross-checking the endpoint against push.status (scoped
+                // server-side to the current session's account) is what
+                // catches that instead of just hoping it's still accurate.
+                if (existing && Notification.permission === 'granted' && await this.isRegisteredForCurrentAccount(existing.endpoint)) {
                     this.subscription = existing;
                     this.state = 'enabled';
                 } else {
@@ -49,6 +59,25 @@ window.pushNotificationToggle = function (vapidPublicKey, serviceWorkerUrl, subs
                 // context, etc.) shouldn't break the rest of the page —
                 // just fall back to the "enable" prompt.
                 this.state = 'default';
+            }
+        },
+
+        async isRegisteredForCurrentAccount(endpoint) {
+            try {
+                const response = await fetch(statusUrl + '?endpoint=' + encodeURIComponent(endpoint), {
+                    headers: { 'Accept': 'application/json' },
+                });
+
+                if (!response.ok) return false;
+
+                const body = await response.json();
+
+                return Boolean(body.subscribed);
+            } catch (e) {
+                // Can't confirm either way — default to "not enabled" so the
+                // user sees an accurate Enable button rather than a false
+                // "Enabled" they can't act on.
+                return false;
             }
         },
 

@@ -35,9 +35,21 @@ class PushSubscriptionController extends Controller
 
         $userAgent = (string) $request->userAgent();
 
-        $subscriber->pushSubscriptions()->updateOrCreate(
+        // Keyed on the base model — not $subscriber->pushSubscriptions() —
+        // and deliberately so: endpoint_hash is globally unique (one browser
+        // install = one push endpoint, full stop), so on a device someone
+        // else already enabled notifications on, scoping this to the
+        // current subscriber's own relation would try to INSERT a second
+        // row for the same endpoint and crash on that unique constraint.
+        // Going through the base model reassigns the existing row to
+        // whoever is enabling it now, which is also the behavior a shared
+        // device should have: the last account to explicitly hit "Enable"
+        // here is who this browser notifies, not whoever did it first.
+        PushSubscription::updateOrCreate(
             ['endpoint_hash' => PushSubscription::hashEndpoint($data['endpoint'])],
             [
+                'subscribable_type' => $subscriber->getMorphClass(),
+                'subscribable_id' => $subscriber->getKey(),
                 'endpoint' => $data['endpoint'],
                 'public_key' => $data['keys']['p256dh'],
                 'auth_token' => $data['keys']['auth'],

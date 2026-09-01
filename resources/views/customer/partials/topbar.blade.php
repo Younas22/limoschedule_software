@@ -87,6 +87,7 @@
             @endif
         </div>
 
+        <x-push-notification-badge />
         @include('customer.partials.notifications')
         @include('customer.partials.profile-menu')
     </div>

@@ -30,6 +30,7 @@
         @include('admin.partials.theme-toggle')
         @include('admin.partials.currency-switcher')
         @include('admin.partials.locale-switcher')
+        <x-push-notification-badge />
         @include('admin.partials.notifications')
         @include('admin.partials.profile-menu')
     </div>

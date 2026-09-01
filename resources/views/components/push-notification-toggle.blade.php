@@ -8,8 +8,12 @@
     the brief calls for: unsupported browser, permission denied/default/
     granted, already-subscribed, and subscribe/unsubscribe round-trips to
     PushSubscriptionController — all client-side, no page reload.
---}}
-<div x-data="pushNotificationToggle(@js(config('webpush.public_key')), @js(asset('sw.js')))" x-init="init()"
+
+    The Alpine component itself (window.pushNotificationToggle) lives in
+    resources/js/app.js rather than an inline <script> here, because the
+    compact topbar badge (components/push-notification-badge.blade.php)
+    shares the exact same logic and the two can render on the same page. --}}
+<div x-data="pushNotificationToggle(@js(config('webpush.public_key')), @js(asset('sw.js')), @js(route('push.subscribe')), @js(route('push.unsubscribe')), @js(['enableError' => __('Something went wrong enabling notifications. Please try again.'), 'disableError' => __('Could not disable notifications. Please try again.')]))" x-init="init()"
     {{ $attributes->merge(['class' => 'rounded-2xl border border-luxury-border bg-luxury-charcoal p-6']) }}>
     <div class="flex items-start gap-4">
         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-luxury-border bg-luxury-graphite text-luxury-gold">
@@ -55,133 +59,3 @@
         </div>
     </div>
 </div>
-
-@once
-    @push('scripts')
-        <script>
-            function pushNotificationToggle(vapidPublicKey, serviceWorkerUrl) {
-                return {
-                    // states: 'checking' | 'unsupported' | 'denied' | 'default' | 'enabled' | 'error'
-                    state: 'checking',
-                    busy: false,
-                    errorMessage: '',
-                    subscription: null,
-
-                    async init() {
-                        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-                            this.state = 'unsupported';
-                            return;
-                        }
-
-                        if (Notification.permission === 'denied') {
-                            this.state = 'denied';
-                            return;
-                        }
-
-                        try {
-                            const registration = await navigator.serviceWorker.register(serviceWorkerUrl);
-                            const existing = await registration.pushManager.getSubscription();
-
-                            if (existing && Notification.permission === 'granted') {
-                                this.subscription = existing;
-                                this.state = 'enabled';
-                            } else {
-                                this.state = 'default';
-                            }
-                        } catch (e) {
-                            // Registration itself failing (blocked SW, non-secure
-                            // context, etc.) shouldn't break the rest of the page —
-                            // just fall back to the "enable" prompt.
-                            this.state = 'default';
-                        }
-                    },
-
-                    async enable() {
-                        if (this.busy) return;
-                        this.busy = true;
-                        this.errorMessage = '';
-
-                        try {
-                            const permission = await Notification.requestPermission();
-
-                            if (permission !== 'granted') {
-                                this.state = permission === 'denied' ? 'denied' : 'default';
-                                return;
-                            }
-
-                            const registration = await navigator.serviceWorker.ready;
-
-                            let subscription = await registration.pushManager.getSubscription();
-
-                            if (!subscription) {
-                                subscription = await registration.pushManager.subscribe({
-                                    userVisibleOnly: true,
-                                    applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey),
-                                });
-                            }
-
-                            await this.sendToServer('{{ route('push.subscribe') }}', subscription.toJSON());
-
-                            this.subscription = subscription;
-                            this.state = 'enabled';
-                        } catch (e) {
-                            this.state = 'error';
-                            this.errorMessage = '{{ __('Something went wrong enabling notifications. Please try again.') }}';
-                        } finally {
-                            this.busy = false;
-                        }
-                    },
-
-                    async disable() {
-                        if (this.busy || !this.subscription) return;
-                        this.busy = true;
-
-                        try {
-                            const endpoint = this.subscription.endpoint;
-                            await this.subscription.unsubscribe();
-                            await this.sendToServer('{{ route('push.unsubscribe') }}', { endpoint });
-                            this.subscription = null;
-                            this.state = 'default';
-                        } catch (e) {
-                            this.errorMessage = '{{ __('Could not disable notifications. Please try again.') }}';
-                            this.state = 'error';
-                        } finally {
-                            this.busy = false;
-                        }
-                    },
-
-                    async sendToServer(url, body) {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-                            },
-                            body: JSON.stringify(body),
-                        });
-
-                        if (!response.ok) {
-                            throw new Error('Push subscription request failed');
-                        }
-
-                        return response.json();
-                    },
-
-                    urlBase64ToUint8Array(base64String) {
-                        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-                        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-                        const rawData = window.atob(base64);
-                        const outputArray = new Uint8Array(rawData.length);
-
-                        for (let i = 0; i < rawData.length; ++i) {
-                            outputArray[i] = rawData.charCodeAt(i);
-                        }
-
-                        return outputArray;
-                    },
-                };
-            }
-        </script>
-    @endpush
-@endonce

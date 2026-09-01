@@ -79,6 +79,8 @@
             </button>
         </form>
 
+        <x-push-notification-badge />
+
         @include('driver.partials.notifications')
 
         @include('driver.partials.profile-menu')

@@ -25,6 +25,10 @@ class PageSectionController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $this->storeUpload($request->file('image'));
+
+            if ($this->isCompactHeroImage($data['type'], $page)) {
+                $this->resizeToFit(public_path('uploads/pages/'.$data['image']), 1900, 575);
+            }
         }
 
         if ($request->hasFile('video')) {
@@ -52,6 +56,10 @@ class PageSectionController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $this->storeUpload($request->file('image'), $section->image);
+
+            if ($this->isCompactHeroImage($data['type'], $page)) {
+                $this->resizeToFit(public_path('uploads/pages/'.$data['image']), 1900, 575);
+            }
         } elseif ($request->boolean('remove_image')) {
             $this->deleteUpload($section->image);
             $data['image'] = null;
@@ -142,18 +150,6 @@ class PageSectionController extends Controller
     {
         $type = $request->input('type');
 
-        // Only a service page's hero renders as the compact 1900×575 banner
-        // strip (see pages/sections/hero.blade.php) — the home page's hero
-        // is a full-screen cinematic background, and the CTA section's
-        // image fills a ~560-620px-tall card, so both need room to be much
-        // taller than that. Capping the source there too would reject
-        // every image actually meant for those layouts.
-        $imageRules = ['nullable', 'image', 'max:4096'];
-
-        if ($type === 'hero' && in_array($page->slug, Page::SERVICE_PAGES, true)) {
-            $imageRules[] = Rule::dimensions()->maxWidth(1900)->maxHeight(575);
-        }
-
         $data = $request->validate([
             'type' => ['required', Rule::in(array_keys(PageSection::TYPES))],
             'heading' => ['nullable', 'string', 'max:255'],
@@ -161,7 +157,13 @@ class PageSectionController extends Controller
             'subheading' => ['nullable', 'string', 'max:255'],
             'differentiator' => ['nullable', 'string', 'max:160'],
             'body' => [Rule::requiredIf($type === 'rich_text'), 'nullable', 'string'],
-            'image' => $imageRules,
+            // No dimension cap here — a photo an admin actually has almost
+            // never comes pre-cropped to the service-page hero's exact
+            // 1900×575 banner shape, and rejecting the upload outright over
+            // that (as this used to) just blocks every real photo. Instead
+            // storeUpload() downscales the saved file to fit afterwards —
+            // see isCompactHeroImage() below.
+            'image' => ['nullable', 'image', 'max:4096'],
             'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/quicktime', 'max:25600'],
             'button_text' => ['nullable', 'string', 'max:100'],
             'button_url' => ['nullable', 'string', 'max:255'],
@@ -294,6 +296,79 @@ class PageSectionController extends Controller
         );
 
         return $data;
+    }
+
+    /**
+     * Only a service page's hero renders as the compact 1900×575 banner
+     * strip (see pages/sections/hero.blade.php) — the home page's hero is a
+     * full-screen cinematic background and the CTA section's image fills a
+     * ~560-620px-tall card, so neither should ever be downscaled to fit a
+     * short banner.
+     */
+    private function isCompactHeroImage(string $type, Page $page): bool
+    {
+        return $type === 'hero' && in_array($page->slug, Page::SERVICE_PAGES, true);
+    }
+
+    /**
+     * Downscales an already-saved image in place to fit within the given box,
+     * preserving aspect ratio — never upscales, so a source already smaller
+     * than the box is left untouched. Uses GD (bundled with PHP) since the
+     * project has no image-processing package installed.
+     */
+    private function resizeToFit(string $path, int $maxWidth, int $maxHeight): void
+    {
+        $info = @getimagesize($path);
+
+        if (! $info) {
+            return;
+        }
+
+        [$width, $height, $imageType] = $info;
+        $scale = min($maxWidth / $width, $maxHeight / $height, 1.0);
+
+        if ($scale >= 1.0) {
+            return;
+        }
+
+        $newWidth = max(1, (int) round($width * $scale));
+        $newHeight = max(1, (int) round($height * $scale));
+
+        $source = match ($imageType) {
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($path),
+            IMAGETYPE_PNG => @imagecreatefrompng($path),
+            IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : null,
+            IMAGETYPE_GIF => @imagecreatefromgif($path),
+            default => null,
+        };
+
+        if (! $source) {
+            return;
+        }
+
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+        // Preserve transparency for formats that support it, instead of it
+        // rendering as opaque black.
+        if (in_array($imageType, [IMAGETYPE_PNG, IMAGETYPE_WEBP, IMAGETYPE_GIF], true)) {
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+            $transparent = imagecolorallocatealpha($resized, 0, 0, 0, 127);
+            imagefilledrectangle($resized, 0, 0, $newWidth, $newHeight, $transparent);
+        }
+
+        imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        match ($imageType) {
+            IMAGETYPE_JPEG => imagejpeg($resized, $path, 90),
+            IMAGETYPE_PNG => imagepng($resized, $path),
+            IMAGETYPE_WEBP => function_exists('imagewebp') ? imagewebp($resized, $path, 90) : null,
+            IMAGETYPE_GIF => imagegif($resized, $path),
+            default => null,
+        };
+
+        imagedestroy($source);
+        imagedestroy($resized);
     }
 
     private function storeUpload($file, ?string $previousFilename = null, string $directory = 'pages'): string

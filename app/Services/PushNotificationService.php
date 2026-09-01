@@ -158,12 +158,15 @@ class PushNotificationService
     }
 
     /**
-     * The existing white LimoSchedule logo, read live from Settings on
-     * every send — never a duplicated/hardcoded asset. If the admin
-     * changes the logo, the very next push automatically uses the new one.
+     * The site's favicon, read live from Settings on every send — never a
+     * duplicated/hardcoded asset. A notification icon renders tiny (much
+     * closer to a favicon's own size than a full logo's), so the favicon
+     * reads clearly where a wordmark-shaped logo would just blur into a
+     * smudge. If the admin changes the favicon, the very next push
+     * automatically uses the new one.
      */
     public function brandIconUrl(): ?string
     {
-        return setting('logo_dark_url') ?: setting('logo_url');
+        return setting('favicon_url') ?: asset('favicon.ico');
     }
 }

@@ -5,6 +5,12 @@
     // software.limoschedule.com.
     $isSaleDomain = request()->getHost() === 'software.limoschedule.com'
         || (app()->environment('local') && request()->boolean('preview_sale_modal'));
+
+    // On top of the domain check above, a private, unlinked toggle page
+    // (see PromoBannerSettingController) lets the vendor switch this
+    // specific promo off without touching code — e.g. while the other one
+    // (software-sale-sticky-banner.blade.php) is running instead.
+    $isSaleDomain = $isSaleDomain && \App\Models\PromoBannerSetting::current()->sale_modal_enabled;
 @endphp
 
 @if ($isSaleDomain)

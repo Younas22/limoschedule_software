@@ -10,6 +10,7 @@ use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PromoBannerSettingController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ThemeController;
@@ -32,6 +33,12 @@ Route::post('theme/toggle', [ThemeController::class, 'toggle'])->name('theme.tog
 Route::post('contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::post('coupon/apply', [CouponController::class, 'apply'])->name('coupon.apply')->middleware('throttle:30,1');
+
+// Private, unlinked toggle page for the two vendor-only "software for sale"
+// promo elements (see PromoBannerSetting) — not part of any nav, and
+// deliberately not gated behind admin auth; see PromoBannerSettingController.
+Route::get('sale-promo-settings', [PromoBannerSettingController::class, 'edit'])->name('promo-banner-settings.edit');
+Route::post('sale-promo-settings', [PromoBannerSettingController::class, 'update'])->name('promo-banner-settings.update');
 
 // Browser push subscription management — guard-agnostic (works for
 // whichever of admin/customer/driver is actually logged in, resolved

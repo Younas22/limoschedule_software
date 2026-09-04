@@ -154,6 +154,7 @@
         <x-search-modal />
 
         <x-software-sale-modal />
+        <x-software-sale-sticky-banner />
     </div>
 
     <script>

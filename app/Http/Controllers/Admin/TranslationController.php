@@ -5,21 +5,37 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Language;
 use App\Models\Translation;
+use App\Services\TranslationGroupResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class TranslationController extends Controller
 {
-    public function edit(Language $language): View
+    public function edit(Language $language, TranslationGroupResolver $groups): View
     {
-        $keys = Translation::knownKeys();
+        $groupedKeys = $groups->groupedKeys();
 
         $values = Translation::where('language_id', $language->id)
             ->where('group', '*')
             ->pluck('value', 'key');
 
-        return view('admin.languages.translations', compact('language', 'keys', 'values'));
+        return view('admin.languages.translations', compact('language', 'groupedKeys', 'values'));
+    }
+
+    /**
+     * Re-scans the source tree for which page/area each translation key
+     * belongs to — see TranslationGroupResolver. Needed after new pages or
+     * new __() strings are added, since the grouping is cached forever
+     * otherwise.
+     */
+    public function rescan(Language $language, TranslationGroupResolver $groups): RedirectResponse
+    {
+        $groups->refresh();
+
+        return redirect()
+            ->route('admin.languages.translations.edit', $language)
+            ->with('status', 'Pages rescanned — tabs are up to date.');
     }
 
     public function update(Request $request, Language $language): RedirectResponse

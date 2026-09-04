@@ -38,8 +38,14 @@
             @include('admin.partials.sidebar')
         </aside>
 
-        {{-- Main column --}}
-        <div class="flex min-h-screen flex-1 flex-col">
+        {{-- Main column. min-w-0 matters here: a flex item's default
+             min-width is "auto" (its content's min-content size), not 0 —
+             without this, any page that ever renders a sufficiently wide
+             piece of content deep inside (e.g. one long, unbroken string
+             with no natural wrap point) forces this WHOLE column past its
+             own share of the flex row, overflowing the page horizontally
+             instead of just scrolling locally wherever that content lives. --}}
+        <div class="flex min-h-screen min-w-0 flex-1 flex-col">
             @include('admin.partials.topbar')
 
             <main class="flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">

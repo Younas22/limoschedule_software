@@ -106,11 +106,33 @@ class PricingRule extends Model
     /**
      * Whether the base fare applies to a trip of this total distance — when
      * a threshold is set, only short trips (at or under it) get the base
-     * fare; longer trips bill purely on distance instead.
+     * fare; longer trips bill purely on distance instead. With no threshold
+     * configured, the base fare always applies (see isWithinFlatFareTier()
+     * for the other half of that "no threshold" case).
      */
     public function appliesBaseFare(float $totalDistanceKm): bool
     {
         return $this->base_fare_threshold_km === null || $totalDistanceKm <= (float) $this->base_fare_threshold_km;
+    }
+
+    /**
+     * Whether this trip falls into the flat "base fare only, no per-km
+     * charge" tier — true only when a threshold is actually configured AND
+     * the trip is at or under it.
+     *
+     * This is deliberately NOT the same check as appliesBaseFare() above.
+     * A rule with no threshold set (base_fare + km_fare configured together,
+     * as most vehicle categories are) means plain "base fare + per-km for
+     * the whole trip" pricing — the base fare always applies, but so should
+     * the distance charge. Reusing appliesBaseFare()'s "no threshold ->
+     * true" default to also gate the distance charge (as this codebase used
+     * to) made every such rule charge the flat base fare only, forever,
+     * regardless of distance — a 100 km trip and a 5 km trip billed
+     * identically. See BookingFareCalculator::breakdown().
+     */
+    public function isWithinFlatFareTier(float $totalDistanceKm): bool
+    {
+        return $this->base_fare_threshold_km !== null && $totalDistanceKm <= (float) $this->base_fare_threshold_km;
     }
 
     /**

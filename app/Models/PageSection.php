@@ -83,20 +83,24 @@ class PageSection extends Model
     }
 
     /**
-     * The hero's action-button row (Book Now, Call Now, phone number, the
-     * Pricing modal trigger, or any admin-defined custom link), each with
-     * its own desktop/mobile visibility — configured at Admin → Pages →
-     * (page) → Hero section.
+     * The single, shared list of action buttons (Book Now, Call Now / phone
+     * number, the Pricing modal trigger, or any admin-defined custom link)
+     * used to render BOTH this hero section AND — for the home page's hero
+     * specifically, see components/header.blade.php — the site's top
+     * navbar. Each button carries independent desktop/mobile visibility for
+     * each of those two locations, so e.g. Price can show in the navbar on
+     * desktop only while showing in the hero on both. Configured in one
+     * place: Admin → Pages → Home → Hero section.
      *
      * A hero section saved before this existed has no 'buttons' key in its
-     * content yet, so this falls back to reconstructing the equivalent list
-     * from the legacy button_text/button_url/button_text_2/button_url_2
-     * columns (plus the always-on-when-a-phone-is-set Call Now button that
-     * used to be hard-coded in the view) — the exact same buttons that were
-     * already showing, just expressed in the new shape. Once the section is
-     * saved again through the admin form, the explicit list here takes over.
+     * content yet, so this falls back to Book Now (from the legacy
+     * button_text/button_url columns) + Call Now + Pricing, all shown
+     * everywhere — the sensible default this now ships with, and (for
+     * button_text/button_url) the same primary CTA that was already there.
+     * Once the section is saved again through the admin form, the explicit
+     * list here takes over.
      *
-     * @return array<int, array{id: string, kind: string, label: ?string, url: ?string, show_desktop: bool, show_mobile: bool}>
+     * @return array<int, array{id: string, kind: string, label: ?string, url: ?string, hero_show_desktop: bool, hero_show_mobile: bool, navbar_show_desktop: bool, navbar_show_mobile: bool}>
      */
     public function getHeroButtonsAttribute(): array
     {
@@ -107,20 +111,59 @@ class PageSection extends Model
         $configured = $this->content['buttons'] ?? null;
 
         if (is_array($configured)) {
-            return $configured;
+            // Normalizes each entry so both an old save (from before the
+            // navbar_show_* fields existed — it only had show_desktop/
+            // show_mobile, meaning "in the hero") and a new one read the
+            // same shape: an old entry's show_desktop/show_mobile becomes
+            // its hero visibility, and its navbar visibility (a concept
+            // that didn't exist yet) defaults to shown everywhere.
+            return collect($configured)->map(fn ($button) => [
+                'id' => $button['id'] ?? null,
+                'kind' => $button['kind'] ?? 'custom',
+                'label' => $button['label'] ?? null,
+                'url' => $button['url'] ?? null,
+                'hero_show_desktop' => $button['hero_show_desktop'] ?? $button['show_desktop'] ?? true,
+                'hero_show_mobile' => $button['hero_show_mobile'] ?? $button['show_mobile'] ?? true,
+                'navbar_show_desktop' => $button['navbar_show_desktop'] ?? true,
+                'navbar_show_mobile' => $button['navbar_show_mobile'] ?? true,
+                'bg_color' => $button['bg_color'] ?? null,
+                'text_color' => $button['text_color'] ?? null,
+            ])->all();
         }
 
         $buttons = [];
 
-        if ($this->button_text && $this->button_url) {
-            $buttons[] = ['id' => 'legacy-primary', 'kind' => 'book_now', 'label' => $this->button_text, 'url' => $this->button_url, 'show_desktop' => true, 'show_mobile' => true];
-        }
+        $buttons[] = [
+            'id' => 'legacy-primary',
+            'kind' => 'book_now',
+            'label' => $this->button_text ?: 'Book Now',
+            'url' => $this->button_url ?: '/#booking-widget',
+            'hero_show_desktop' => true, 'hero_show_mobile' => true,
+            'navbar_show_desktop' => true, 'navbar_show_mobile' => true,
+        ];
 
         if ($this->button_text_2 && $this->button_url_2) {
-            $buttons[] = ['id' => 'legacy-secondary', 'kind' => 'custom', 'label' => $this->button_text_2, 'url' => $this->button_url_2, 'show_desktop' => true, 'show_mobile' => true];
+            $buttons[] = [
+                'id' => 'legacy-secondary',
+                'kind' => 'custom',
+                'label' => $this->button_text_2,
+                'url' => $this->button_url_2,
+                'hero_show_desktop' => true, 'hero_show_mobile' => true,
+                'navbar_show_desktop' => false, 'navbar_show_mobile' => false,
+            ];
         }
 
-        $buttons[] = ['id' => 'legacy-call', 'kind' => 'call_now', 'label' => 'Call Now', 'url' => null, 'show_desktop' => true, 'show_mobile' => true];
+        $buttons[] = [
+            'id' => 'legacy-call', 'kind' => 'call_now', 'label' => 'Call Now', 'url' => null,
+            'hero_show_desktop' => true, 'hero_show_mobile' => true,
+            'navbar_show_desktop' => true, 'navbar_show_mobile' => true,
+        ];
+
+        $buttons[] = [
+            'id' => 'legacy-price', 'kind' => 'price', 'label' => 'Pricing', 'url' => null,
+            'hero_show_desktop' => true, 'hero_show_mobile' => true,
+            'navbar_show_desktop' => true, 'navbar_show_mobile' => true,
+        ];
 
         return $buttons;
     }

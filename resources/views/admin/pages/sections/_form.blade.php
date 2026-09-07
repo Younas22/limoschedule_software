@@ -61,8 +61,8 @@
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'hero' || type === 'cta'" x-cloak>
             <div>
                 <x-admin.input-label for="eyebrow" value="{{ __('Eyebrow (optional)') }}" />
-                <x-admin.text-input id="eyebrow" name="eyebrow" type="text" :placeholder="__('e.g. Bilzen & surrounding area')" value="{{ old('eyebrow', $section?->eyebrow) }}" />
-                <p class="mt-1 text-xs text-luxury-muted">{{ __('A short label shown above the headline.') }}</p>
+                <x-admin.text-input id="eyebrow" name="eyebrow" type="text" :placeholder="__('e.g. 🏷️ Start from $2, or Bilzen & surrounding area')" value="{{ old('eyebrow', $section?->eyebrow) }}" />
+                <p class="mt-1 text-xs text-luxury-muted">{{ __('A short badge shown above the headline — a starting price, a location, or any short claim. Emoji work fine here.') }}</p>
                 <x-admin.input-error :messages="$errors->get('eyebrow')" />
             </div>
             <div>
@@ -146,14 +146,22 @@
             </div>
         </div>
 
-        {{-- Hero Action Buttons (hero only) --}}
+        {{-- Action Buttons (hero only) — this one list drives BOTH this hero
+             section and, for the home page specifically, the site's top
+             navbar (see components/header.blade.php). --}}
         <div x-show="type === 'hero'" x-cloak class="space-y-4 border-t border-luxury-border pt-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <h4 class="text-sm font-semibold text-luxury-white">{{ __('Hero Action Buttons') }}</h4>
-                    <p class="mt-1 text-xs text-luxury-muted">{{ __('Book Now, Call Now, your phone number, the Pricing modal, or any custom link — choose which show, and whether each shows on desktop, mobile, or both.') }}</p>
+                    <h4 class="text-sm font-semibold text-luxury-white">{{ __('Action Buttons') }}</h4>
+                    <p class="mt-1 text-xs text-luxury-muted">
+                        @if ($page->slug === 'home')
+                            {{ __("Book Now, Call Now, your phone number, the Pricing modal, or any custom link — managed here for both this hero AND the site's top navbar. Each button gets its own Desktop/Mobile toggle for each location.") }}
+                        @else
+                            {{ __('Book Now, Call Now, your phone number, the Pricing modal, or any custom link — choose which show, and whether each shows on desktop, mobile, or both. (Only the home page\'s hero also feeds the top navbar.)') }}
+                        @endif
+                    </p>
                 </div>
-                <button type="button" @click="heroButtons.push({ id: '', kind: 'custom', label: '', url: '', show_desktop: true, show_mobile: true })" class="shrink-0 text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">
+                <button type="button" @click="heroButtons.push({ id: '', kind: 'custom', label: '', url: '', hero_show_desktop: true, hero_show_mobile: true, navbar_show_desktop: true, navbar_show_mobile: true, bg_color: '', text_color: '' })" class="shrink-0 text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">
                     {{ __('+ Add Button') }}
                 </button>
             </div>
@@ -191,21 +199,74 @@
                                 <a href="{{ route('admin.settings.edit') }}" class="text-luxury-gold hover:text-luxury-gold-light">{{ __('Settings → Contact & Hours') }}</a>.
                                 {{ __("Won't show if no phone number is set there.") }}
                             </p>
+
+                            <div>
+                                <label class="mb-1 block text-xs text-luxury-muted">{{ __('Background Color') }}</label>
+                                <div class="flex items-center gap-2">
+                                    <label class="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-luxury-border">
+                                        <input type="color" :value="button.bg_color || '#c9a24b'" @input="button.bg_color = $event.target.value"
+                                            class="absolute -inset-2 h-[calc(100%+1rem)] w-[calc(100%+1rem)] cursor-pointer border-0 p-0">
+                                    </label>
+                                    <input type="text" :name="'hero_buttons[' + index + '][bg_color]'" x-model="button.bg_color" placeholder="{{ __('Default') }}" pattern="^#[0-9A-Fa-f]{6}$" maxlength="7"
+                                        class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 font-mono text-xs uppercase text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                                    <button type="button" x-show="button.bg_color" x-cloak @click="button.bg_color = ''" class="shrink-0 text-xs text-luxury-muted hover:text-luxury-white">{{ __('Clear') }}</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs text-luxury-muted">{{ __('Text Color') }}</label>
+                                <div class="flex items-center gap-2">
+                                    <label class="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-luxury-border">
+                                        <input type="color" :value="button.text_color || '#ffffff'" @input="button.text_color = $event.target.value"
+                                            class="absolute -inset-2 h-[calc(100%+1rem)] w-[calc(100%+1rem)] cursor-pointer border-0 p-0">
+                                    </label>
+                                    <input type="text" :name="'hero_buttons[' + index + '][text_color]'" x-model="button.text_color" placeholder="{{ __('Default') }}" pattern="^#[0-9A-Fa-f]{6}$" maxlength="7"
+                                        class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 font-mono text-xs uppercase text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                                    <button type="button" x-show="button.text_color" x-cloak @click="button.text_color = ''" class="shrink-0 text-xs text-luxury-muted hover:text-luxury-white">{{ __('Clear') }}</button>
+                                </div>
+                            </div>
                         </div>
                         <button type="button" @click="heroButtons.splice(index, 1)" class="shrink-0 text-xs text-red-400 hover:text-red-300">{{ __('Remove') }}</button>
                     </div>
 
-                    <div class="flex items-center gap-5 border-t border-luxury-border/60 pt-3">
-                        <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
-                            <input type="checkbox" :name="'hero_buttons[' + index + '][show_desktop]'" value="1" x-model="button.show_desktop"
-                                class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
-                            {{ __('Show on Desktop') }}
-                        </label>
-                        <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
-                            <input type="checkbox" :name="'hero_buttons[' + index + '][show_mobile]'" value="1" x-model="button.show_mobile"
-                                class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
-                            {{ __('Show on Mobile') }}
-                        </label>
+                    <div class="grid grid-cols-1 gap-3 border-t border-luxury-border/60 pt-3 {{ $page->slug === 'home' ? 'sm:grid-cols-2' : '' }}">
+                        <div>
+                            <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-luxury-muted">{{ __('In the Hero') }}</p>
+                            <div class="flex flex-wrap gap-x-5 gap-y-1.5">
+                                <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
+                                    <input type="checkbox" :name="'hero_buttons[' + index + '][hero_show_desktop]'" value="1" x-model="button.hero_show_desktop"
+                                        class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                                    {{ __('Show on Desktop') }}
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
+                                    <input type="checkbox" :name="'hero_buttons[' + index + '][hero_show_mobile]'" value="1" x-model="button.hero_show_mobile"
+                                        class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                                    {{ __('Show on Mobile') }}
+                                </label>
+                            </div>
+                        </div>
+                        @if ($page->slug === 'home')
+                            <div>
+                                <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-luxury-muted">{{ __('In the Top Navbar') }}</p>
+                                <div class="flex flex-wrap gap-x-5 gap-y-1.5">
+                                    <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
+                                        <input type="checkbox" :name="'hero_buttons[' + index + '][navbar_show_desktop]'" value="1" x-model="button.navbar_show_desktop"
+                                            class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                                        {{ __('Show on Desktop') }}
+                                    </label>
+                                    <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
+                                        <input type="checkbox" :name="'hero_buttons[' + index + '][navbar_show_mobile]'" value="1" x-model="button.navbar_show_mobile"
+                                            class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                                        {{ __('Show on Mobile') }}
+                                    </label>
+                                </div>
+                            </div>
+                        @else
+                            {{-- Not the home page — its hero doesn't feed the navbar, but the
+                                 fields still need to round-trip so a later home-page edit
+                                 doesn't see them reset. --}}
+                            <input type="hidden" :name="'hero_buttons[' + index + '][navbar_show_desktop]'" :value="button.navbar_show_desktop ? '1' : '0'">
+                            <input type="hidden" :name="'hero_buttons[' + index + '][navbar_show_mobile]'" :value="button.navbar_show_mobile ? '1' : '0'">
+                        @endif
                     </div>
                 </div>
             </template>
@@ -560,8 +621,12 @@
                 // "unset" — so this only defaults to true for a value that
                 // was never present at all (undefined), not one already
                 // present-but-falsy.
-                show_desktop: button.show_desktop === undefined ? true : (button.show_desktop === true || button.show_desktop === '1' || button.show_desktop === 1),
-                show_mobile: button.show_mobile === undefined ? true : (button.show_mobile === true || button.show_mobile === '1' || button.show_mobile === 1),
+                hero_show_desktop: button.hero_show_desktop === undefined ? true : (button.hero_show_desktop === true || button.hero_show_desktop === '1' || button.hero_show_desktop === 1),
+                hero_show_mobile: button.hero_show_mobile === undefined ? true : (button.hero_show_mobile === true || button.hero_show_mobile === '1' || button.hero_show_mobile === 1),
+                navbar_show_desktop: button.navbar_show_desktop === undefined ? true : (button.navbar_show_desktop === true || button.navbar_show_desktop === '1' || button.navbar_show_desktop === 1),
+                navbar_show_mobile: button.navbar_show_mobile === undefined ? true : (button.navbar_show_mobile === true || button.navbar_show_mobile === '1' || button.navbar_show_mobile === 1),
+                bg_color: button.bg_color || '',
+                text_color: button.text_color || '',
             })) : [],
         };
     }

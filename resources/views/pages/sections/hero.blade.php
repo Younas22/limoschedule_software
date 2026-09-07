@@ -10,10 +10,12 @@
 
     // Book Now / Call Now / phone number / the Pricing modal / any custom
     // link an admin has added — each with its own desktop/mobile
-    // visibility. See PageSection::getHeroButtonsAttribute() for the
-    // legacy-column fallback used until this section is re-saved.
+    // visibility for the hero (this section) and, separately, for the top
+    // navbar (see components/header.blade.php, which reads this same list
+    // off the home page's hero). See PageSection::getHeroButtonsAttribute()
+    // for the legacy-column fallback used until this section is re-saved.
     $heroButtons = collect($section->hero_buttons)->filter(function ($button) {
-        if (! ($button['show_desktop'] ?? true) && ! ($button['show_mobile'] ?? true)) {
+        if (! ($button['hero_show_desktop'] ?? true) && ! ($button['hero_show_mobile'] ?? true)) {
             return false;
         }
 
@@ -26,7 +28,10 @@
         }
 
         return true;
-    })->values();
+    })->map(fn ($button) => array_merge($button, [
+        'show_desktop' => $button['hero_show_desktop'] ?? true,
+        'show_mobile' => $button['hero_show_mobile'] ?? true,
+    ]))->values();
 @endphp
 
 @if ($isCompactBanner)
@@ -69,7 +74,7 @@
 
             <div class="relative z-[1] mx-auto flex w-full max-w-3xl flex-col items-center px-4 py-10 text-center sm:absolute sm:inset-x-0 sm:top-0 sm:px-6 sm:py-0 sm:pt-9 lg:pt-12 lg:px-8">
                 @if ($section->eyebrow)
-                    <p class="animate-fade-up text-xs font-semibold uppercase tracking-[0.2em] text-luxury-gold">
+                    <p class="animate-fade-up inline-flex items-center gap-1.5 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 px-3 py-1 text-xs font-semibold text-luxury-gold">
                         {{ __($section->eyebrow) }}
                     </p>
                 @endif
@@ -158,13 +163,13 @@
         {{-- Content --}}
         <div class="relative mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center px-4 py-28 text-center sm:px-6 lg:px-8">
             @if ($section->eyebrow)
-                <p class="animate-fade-up text-xs font-semibold uppercase tracking-[0.2em] text-luxury-gold">
+                <p class="animate-fade-up inline-flex items-center gap-1.5 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 px-4 py-1.5 text-xs font-semibold text-luxury-gold sm:text-sm">
                     {{ __($section->eyebrow) }}
                 </p>
             @endif
 
             @if ($section->heading)
-                <h1 class="animate-fade-up text-4xl font-bold leading-[0.95] tracking-tight text-luxury-white sm:text-6xl lg:text-7xl {{ $section->eyebrow ? 'mt-3' : '' }}">
+                <h1 class="animate-fade-up text-4xl font-bold leading-[0.95] tracking-tight text-luxury-white sm:text-6xl lg:text-7xl {{ $section->eyebrow ? 'mt-4' : '' }}">
                     {{ __($section->heading) }}
                 </h1>
             @endif

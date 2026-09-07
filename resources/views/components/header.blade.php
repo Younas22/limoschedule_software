@@ -12,6 +12,34 @@
     $activeCurrencies = \App\Models\Currency::active();
     $currentCurrency = active_currency();
 
+    // Book Now / Call Now / phone number / Pricing / any custom link for the
+    // top navbar — the SAME list an admin manages at Admin → Pages → Home →
+    // Hero section (its "In the Top Navbar" toggles), so both places are
+    // configured together in one spot rather than drifting independently.
+    // See PageSection::getHeroButtonsAttribute() for the fallback used
+    // before that section has ever been saved with this feature.
+    $navbarButtons = collect(
+        (isset($navPages['home']) ? $navPages['home'] : \App\Models\Page::where('slug', 'home')->first())
+            ?->sections()->where('type', 'hero')->first()?->hero_buttons ?? []
+    )->filter(function ($button) {
+        if (! ($button['navbar_show_desktop'] ?? true) && ! ($button['navbar_show_mobile'] ?? true)) {
+            return false;
+        }
+
+        if (in_array($button['kind'] ?? null, ['call_now', 'phone_number'], true)) {
+            return filled(setting('phone'));
+        }
+
+        if (in_array($button['kind'] ?? null, ['book_now', 'custom'], true)) {
+            return filled($button['url'] ?? null);
+        }
+
+        return true;
+    })->map(fn ($button) => array_merge($button, [
+        'show_desktop' => $button['navbar_show_desktop'] ?? true,
+        'show_mobile' => $button['navbar_show_mobile'] ?? true,
+    ]))->values();
+
     // Mega-menu contents for the "Services" and "Areas" nav items — spread
     // across a 4-column grid on hover instead of one long single-column
     // dropdown, so every item stays visible and scannable at a glance.
@@ -145,25 +173,13 @@
 
         {{-- Right actions --}}
         <div class="ms-auto flex items-center gap-1.5 lg:ms-0">
-            {{-- Phone — pulled from Admin Settings → Contact & Hours, shown
-                 here (not hidden below sm) so it's reachable from the top
-                 navbar on mobile too, not just the desktop header. --}}
-            @if (setting('phone'))
-                <a href="tel:{{ preg_replace('/[^0-9+]/', '', setting('phone')) }}"
-                    class="flex h-10 items-center gap-1.5 rounded-lg px-2 text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white"
-                    aria-label="{{ __('Call us') }}: {{ setting('phone') }}">
-                    <x-icon name="phone" class="h-5 w-5 shrink-0" />
-                    <span class="hidden text-sm font-bold text-luxury-white md:inline">{{ setting('phone') }}</span>
-                </a>
-            @endif
-
-            {{-- Pricing — opens a modal with the global pricing chart
-                 (Admin → Pricing → Global Default) plus phone/address. --}}
-            <button type="button" @click="pricingOpen = true"
-                class="flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-luxury-gold/40 px-2.5 text-sm font-medium text-luxury-gold transition hover:bg-luxury-gold/10 sm:px-3">
-                <x-icon name="cash" class="h-4 w-4 shrink-0" />
-                <span class="hidden sm:inline">{{ __('Pricing') }}</span>
-            </button>
+            {{-- Book Now / Call Now / phone number / Pricing / custom links —
+                 managed at Admin → Pages → Home → Hero section, alongside
+                 the hero's own copy of the same buttons. See $navbarButtons
+                 above. --}}
+            @foreach ($navbarButtons as $button)
+                <x-hero-button :button="$button" size="nav" />
+            @endforeach
 
             {{-- Search --}}
             <button type="button" @click="searchOpen = true" aria-label="{{ __('Search') }}"

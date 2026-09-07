@@ -279,6 +279,25 @@
                     </div>
                 </div>
 
+                @php
+                    $homePage = \App\Models\Page::where('slug', 'home')->first();
+                    $homeHeroSection = $homePage?->sections()->where('type', 'hero')->first();
+                @endphp
+                <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                    <h3 class="mb-1 text-sm font-semibold text-luxury-white">{{ __('Top Navbar Buttons') }}</h3>
+                    <p class="text-xs text-luxury-muted">
+                        {{ __('Book Now, Call Now / your phone number, Pricing, and any custom links — for both the top navbar and the homepage hero — are managed together in one place:') }}
+                        @if ($homePage && $homeHeroSection)
+                            <a href="{{ route('admin.pages.sections.edit', [$homePage, $homeHeroSection]) }}" class="text-luxury-gold hover:text-luxury-gold-light">
+                                {{ __('Home → Hero section') }}
+                            </a>.
+                        @else
+                            {{ __('Home → Hero section.') }}
+                        @endif
+                        {{ __('Each button there has its own Desktop/Mobile toggle for the hero and, separately, for the navbar.') }}
+                    </p>
+                </div>
+
                 <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
                     <h3 class="mb-1 text-sm font-semibold text-luxury-white">{{ __('Business Hours') }}</h3>
                     <p class="mb-4 text-xs text-luxury-muted">{{ __('Set your opening hours for each day, shown on the Contact page.') }}</p>

@@ -86,6 +86,21 @@
 @endphp
 
 <header class="sticky top-0 z-30 border-b border-luxury-border bg-luxury-charcoal/90 backdrop-blur">
+    {{-- Mobile-only utility strip: Book Now / Call / Price / custom links
+         marked "Show on Mobile" (Admin → Pages → Home → Hero section) get
+         their own thin row above the logo/search/hamburger row, instead of
+         competing with those for space in it. Hidden entirely at sm+, where
+         these same buttons render inline in the row below instead. Part of
+         this same sticky header (not a separate, scrolls-away block) so the
+         buttons stay reachable while scrolling, same as before. --}}
+    @if ($navbarButtons->contains(fn ($button) => $button['show_mobile'] ?? true))
+        <div class="flex flex-wrap items-center justify-center gap-1.5 border-b border-luxury-border/60 px-3 py-1.5 sm:hidden">
+            @foreach ($navbarButtons as $button)
+                <x-hero-button :button="$button" size="nav" device-context="mobile" />
+            @endforeach
+        </div>
+    @endif
+
     <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         {{-- Logo --}}
         <a href="{{ route('pages.home') }}" class="flex min-w-0 shrink items-center">
@@ -176,10 +191,16 @@
             {{-- Book Now / Call Now / phone number / Pricing / custom links —
                  managed at Admin → Pages → Home → Hero section, alongside
                  the hero's own copy of the same buttons. See $navbarButtons
-                 above. --}}
-            @foreach ($navbarButtons as $button)
-                <x-hero-button :button="$button" size="nav" />
-            @endforeach
+                 above. Desktop-only here (hidden sm:flex) — the buttons
+                 marked "Show on Mobile" render instead in their own thin
+                 strip above the header (see below), so this main bar never
+                 gets crowded with logo + buttons + search + hamburger all
+                 competing for the same tiny row. --}}
+            <div class="hidden items-center gap-1.5 sm:flex">
+                @foreach ($navbarButtons as $button)
+                    <x-hero-button :button="$button" size="nav" device-context="desktop" />
+                @endforeach
+            </div>
 
             {{-- Search --}}
             <button type="button" @click="searchOpen = true" aria-label="{{ __('Search') }}"

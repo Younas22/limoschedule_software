@@ -1,4 +1,4 @@
-@props(['button', 'size' => 'full'])
+@props(['button', 'size' => 'full', 'deviceContext' => null])
 
 @php
     $kind = $button['kind'] ?? 'custom';
@@ -27,7 +27,27 @@
     // mobile-only while Book Now stays on both.
     $showMobile = $button['show_mobile'] ?? true;
     $showDesktop = $button['show_desktop'] ?? true;
-    $visibilityClass = ($showMobile ? 'inline-flex' : 'hidden').' '.($showDesktop ? 'sm:inline-flex' : 'sm:hidden');
+
+    // Hero/compact rendering (deviceContext null) needs both flags folded
+    // into one responsive class, since it's the only copy of this button on
+    // the page. The navbar (deviceContext 'desktop'/'mobile') instead
+    // renders TWO separate copies — one inside the sticky header for
+    // desktop, one in the small mobile-only strip above it (see
+    // components/header.blade.php) — so each copy only needs to check its
+    // own flag and can skip rendering entirely when that flag is off,
+    // rather than hiding itself with CSS while still sitting in the DOM.
+    if ($deviceContext === 'mobile' && ! $showMobile) {
+        return;
+    }
+
+    if ($deviceContext === 'desktop' && ! $showDesktop) {
+        return;
+    }
+
+    $visibilityClass = match ($deviceContext) {
+        'mobile', 'desktop' => 'inline-flex',
+        default => ($showMobile ? 'inline-flex' : 'hidden').' '.($showDesktop ? 'sm:inline-flex' : 'sm:hidden'),
+    };
 
     // "nav" is a compact pill sized for the top navbar (see
     // components/header.blade.php) — no backdrop-blur (it never sits over a

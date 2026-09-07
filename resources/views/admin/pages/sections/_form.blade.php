@@ -204,7 +204,7 @@
                                 <label class="mb-1 block text-xs text-luxury-muted">{{ __('Background Color') }}</label>
                                 <div class="flex items-center gap-2">
                                     <label class="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-luxury-border">
-                                        <input type="color" :value="button.bg_color || '#c9a24b'" @input="button.bg_color = $event.target.value"
+                                        <input type="color" x-model="button.bg_color"
                                             class="absolute -inset-2 h-[calc(100%+1rem)] w-[calc(100%+1rem)] cursor-pointer border-0 p-0">
                                     </label>
                                     <input type="text" :name="'hero_buttons[' + index + '][bg_color]'" x-model="button.bg_color" placeholder="{{ __('Default') }}" pattern="^#[0-9A-Fa-f]{6}$" maxlength="7"
@@ -216,7 +216,7 @@
                                 <label class="mb-1 block text-xs text-luxury-muted">{{ __('Text Color') }}</label>
                                 <div class="flex items-center gap-2">
                                     <label class="relative h-9 w-9 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-luxury-border">
-                                        <input type="color" :value="button.text_color || '#ffffff'" @input="button.text_color = $event.target.value"
+                                        <input type="color" x-model="button.text_color"
                                             class="absolute -inset-2 h-[calc(100%+1rem)] w-[calc(100%+1rem)] cursor-pointer border-0 p-0">
                                     </label>
                                     <input type="text" :name="'hero_buttons[' + index + '][text_color]'" x-model="button.text_color" placeholder="{{ __('Default') }}" pattern="^#[0-9A-Fa-f]{6}$" maxlength="7"

@@ -113,6 +113,10 @@
     }
 </style>
 
+<p class="mb-3 text-center text-lg font-semibold text-luxury-white sm:text-xl">
+    {{ __('Book Ride & Fare Estimate') }}
+</p>
+
 <div id="booking-widget" data-booking-widget
     @select-vehicle-category.window="vehicleCategory = $event.detail"
     @select-route.window="pickup = $event.detail.pickup; dropoff = $event.detail.dropoff"

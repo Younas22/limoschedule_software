@@ -28,10 +28,10 @@
                     </div>
 
                     @if (!empty($step['title']))
-                        <p class="mt-4 font-semibold text-luxury-white">{{ $step['title'] }}</p>
+                        <p class="mt-4 font-semibold text-luxury-white">{{ __($step['title']) }}</p>
                     @endif
                     @if (!empty($step['description']))
-                        <p class="mt-2 text-sm text-luxury-muted">{{ $step['description'] }}</p>
+                        <p class="mt-2 text-sm text-luxury-muted">{{ __($step['description']) }}</p>
                     @endif
                 </div>
             @endforeach

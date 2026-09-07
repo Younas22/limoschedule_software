@@ -39,7 +39,14 @@
         <div class="rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
             <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h3 class="text-sm font-semibold text-luxury-white">{{ __('Existing Strings') }}</h3>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <select x-model="category" @change="onCategoryChange()"
+                        class="rounded-lg border border-luxury-border bg-luxury-graphite px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                        <option value="Admin Panel">{{ __('Admin Panel') }}</option>
+                        <option value="Customer Panel">{{ __('Customer Panel') }}</option>
+                        <option value="Driver Panel">{{ __('Driver Panel') }}</option>
+                        <option value="Website">{{ __('Website') }}</option>
+                    </select>
                     <input type="search" x-model="search" placeholder="{{ __('Search in this tab...') }}"
                         class="w-full max-w-xs rounded-lg border border-luxury-border bg-luxury-graphite px-3 py-2 text-sm text-luxury-white placeholder:text-luxury-muted focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
                     <form method="POST" action="{{ route('admin.languages.translations.rescan', $language) }}">
@@ -54,12 +61,17 @@
 
             {{-- Tabs — one per page/area a string was actually found in (see
                  TranslationGroupResolver); "Rescan Pages" above refreshes
-                 this if a page was added/changed since it was last computed. --}}
-            <div class="scrollbar-luxury -mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-2">
+                 this if a page was added/changed since it was last computed.
+                 Wraps onto as many lines as needed (no horizontal scrolling)
+                 and is filtered down to the selected Category above, so a
+                 panel with dozens of modules doesn't turn into one long
+                 unreadable scroll strip. --}}
+            <div class="-mx-1 mb-4 flex flex-wrap gap-1.5 px-1 pb-2">
                 @foreach ($groupedKeys as $group => $groupKeys)
-                    <button type="button" @click="activeTab = {{ \Illuminate\Support\Js::from($group) }}; search = ''"
+                    <button type="button" x-show="categoryOf({{ \Illuminate\Support\Js::from($group) }}) === category"
+                        @click="activeTab = {{ \Illuminate\Support\Js::from($group) }}; search = ''"
                         :class="activeTab === {{ \Illuminate\Support\Js::from($group) }} ? 'bg-luxury-gold text-luxury-black border-luxury-gold' : 'border-luxury-border text-luxury-muted hover:border-luxury-gold/40 hover:text-luxury-white'"
-                        class="shrink-0 whitespace-nowrap rounded-lg border px-3.5 py-2 text-xs font-semibold transition">
+                        class="shrink-0 cursor-pointer whitespace-nowrap rounded-lg border px-3.5 py-2 text-xs font-semibold transition">
                         {{ $group }}
                         <span class="ms-1 opacity-70">{{ $groupKeys->count() }}</span>
                     </button>
@@ -146,8 +158,35 @@
                 search: '',
                 activeTab: firstGroup ?? '',
                 groups: groups ?? {},
+                category: 'Website',
                 rows: [],
                 nextId: 1,
+                init() {
+                    // Start on whichever Category the pre-selected first tab
+                    // actually belongs to, so the page doesn't open with its
+                    // own active tab hidden behind a different category.
+                    this.category = this.categoryOf(this.activeTab);
+                },
+                // Mirrors TranslationGroupResolver's own dynamic-panel split
+                // (Admin:/Customer:/Driver: prefixes) — everything else
+                // (Homepage & Site Pages, Blog, Header/Footer/Nav, Login,
+                // Emails, ...) is lumped into "Website" for this filter.
+                categoryOf(group) {
+                    if (group.startsWith('Admin:')) return 'Admin Panel';
+                    if (group.startsWith('Customer:')) return 'Customer Panel';
+                    if (group.startsWith('Driver:')) return 'Driver Panel';
+
+                    return 'Website';
+                },
+                onCategoryChange() {
+                    this.search = '';
+
+                    if (this.categoryOf(this.activeTab) === this.category) {
+                        return;
+                    }
+
+                    this.activeTab = Object.keys(this.groups).find(group => this.categoryOf(group) === this.category) ?? this.activeTab;
+                },
                 addRow() {
                     this.rows.push({ id: this.nextId++, key: '', value: '' });
                 },

@@ -18,23 +18,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Both "translation.loader" and "translator" must be bound as resolved
-        // instances (not singleton factories) here. Laravel's TranslationServiceProvider
-        // is deferred and only checks $app->instances (not $app->bindings) before
-        // re-registering itself — if either key is still "unresolved" the first time
-        // it's requested, the deferred provider loads and silently overwrites this
-        // binding with its own FileLoader. Pre-resolving both closes that gap.
-        $frameworkLangPath = dirname((new \ReflectionClass(Translator::class))->getFileName()).'/lang';
-
-        $fileLoader = new FileLoader($this->app['files'], [$frameworkLangPath, $this->app['path.lang']]);
-        $loader = new DatabaseTranslationLoader($fileLoader);
-
-        $this->app->instance('translation.loader', $loader);
-
-        $translator = new Translator($loader, $this->app->getLocale());
-        $translator->setFallback($this->app->getFallbackLocale());
-
-        $this->app->instance('translator', $translator);
+        //
     }
 
     /**
@@ -42,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->overrideTranslatorWithDatabaseLoader();
+
         Blade::if('permission', function (string $slug) {
             return Auth::guard('admin')->check() && Auth::guard('admin')->user()->hasPermission($slug);
         });
@@ -65,6 +51,36 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->configureWebPushOpenSsl();
+    }
+
+    /**
+     * Swaps in the DB-backed translation loader (see DatabaseTranslationLoader)
+     * for JSON-style __() keys, so Admin → Languages → Translations actually
+     * takes effect instead of every non-default locale silently falling back
+     * to the English source string.
+     *
+     * This has to happen in boot(), not register(): Illuminate\Translation\
+     * TranslationServiceProvider is NOT a deferred provider, so it always
+     * runs its own register() and unconditionally overwrites the
+     * "translation.loader"/"translator" bindings with its plain FileLoader —
+     * regardless of registration order, and regardless of whether those keys
+     * were already bound. boot() only runs once every provider's register()
+     * has already executed, so rebinding here is guaranteed to be the last
+     * word no matter where TranslationServiceProvider lands in that order.
+     */
+    private function overrideTranslatorWithDatabaseLoader(): void
+    {
+        $frameworkLangPath = dirname((new \ReflectionClass(Translator::class))->getFileName()).'/lang';
+
+        $fileLoader = new FileLoader($this->app['files'], [$frameworkLangPath, $this->app['path.lang']]);
+        $loader = new DatabaseTranslationLoader($fileLoader);
+
+        $this->app->instance('translation.loader', $loader);
+
+        $translator = new Translator($loader, $this->app->getLocale());
+        $translator->setFallback($this->app->getFallbackLocale());
+
+        $this->app->instance('translator', $translator);
     }
 
     /**

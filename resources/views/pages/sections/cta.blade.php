@@ -4,8 +4,11 @@
     // "Ready to Book?" -> "Ready to" (white) + "Book?" (gold) — splits off the
     // last word of whatever heading is configured, so any admin-edited
     // heading still gets the same gold-highlighted-final-word treatment
-    // shown in the reference design.
-    $headingWords = $section->heading ? preg_split('/\s+/', trim($section->heading)) : [];
+    // shown in the reference design. Translated FIRST, then split — splitting
+    // the raw English heading before translation would bake the split (and
+    // thus the whole heading) to English regardless of the active locale.
+    $translatedHeading = $section->heading ? __($section->heading) : null;
+    $headingWords = $translatedHeading ? preg_split('/\s+/', trim($translatedHeading)) : [];
     $headingLast = $headingWords ? array_pop($headingWords) : null;
     $headingLead = implode(' ', $headingWords);
 @endphp
@@ -39,6 +42,12 @@
                         <span class="h-1.5 w-1.5 rotate-45 bg-luxury-gold"></span>
                         <span class="h-px w-10 bg-luxury-gold/60"></span>
                     </div>
+
+                    @if ($section->eyebrow)
+                        <p class="animate-fade-up mt-4 inline-flex items-center gap-1.5 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 px-3 py-1 text-xs font-semibold text-luxury-gold">
+                            {{ __($section->eyebrow) }}
+                        </p>
+                    @endif
 
                     @if ($section->heading)
                         <h2 class="animate-fade-up mt-5 text-4xl font-bold leading-tight tracking-tight text-luxury-white sm:text-5xl lg:text-6xl">
@@ -176,6 +185,12 @@
                     <span class="h-1.5 w-1.5 rotate-45 bg-luxury-gold"></span>
                     <span class="h-px w-10 bg-luxury-gold/60"></span>
                 </div>
+
+                @if ($section->eyebrow)
+                    <p class="animate-fade-up mt-4 inline-flex items-center gap-1.5 rounded-full border border-luxury-gold/30 bg-luxury-gold/10 px-3 py-1 text-xs font-semibold text-luxury-gold">
+                        {{ __($section->eyebrow) }}
+                    </p>
+                @endif
 
                 @if ($section->heading)
                     <h2 class="animate-fade-up mt-5 text-3xl font-bold leading-tight tracking-tight text-luxury-white sm:text-4xl">

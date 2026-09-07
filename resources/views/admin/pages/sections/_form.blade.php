@@ -2,6 +2,7 @@
     $section = $section ?? null;
     $contact = $section?->contact_fields ?? [];
     $initialItems = old('items', $section?->content ?? []);
+    $initialHeroButtons = old('hero_buttons', $section?->hero_buttons ?? []);
 
     if (($section?->type ?? old('type', 'hero')) === 'team' && ! empty($initialItems) && is_array($initialItems)) {
         $initialItems = collect($initialItems)->map(function ($item) {
@@ -22,6 +23,7 @@
     x-data="pageSectionForm({
         type: {{ \Illuminate\Support\Js::from(old('type', $section?->type ?? 'hero')) }},
         items: {{ \Illuminate\Support\Js::from(!empty($initialItems) && is_array($initialItems) && array_is_list($initialItems) ? $initialItems : []) }},
+        heroButtons: {{ \Illuminate\Support\Js::from(!empty($initialHeroButtons) && is_array($initialHeroButtons) && array_is_list($initialHeroButtons) ? $initialHeroButtons : []) }},
     })">
 
     <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
@@ -116,8 +118,8 @@
             <p class="mt-1 text-xs text-luxury-muted">{{ __('MP4 or WebM, up to 25MB. Takes priority over the image above when present.') }}</p>
         </div>
 
-        {{-- Primary button (hero / cta) --}}
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'hero' || type === 'cta'" x-cloak>
+        {{-- Primary button (cta only — hero uses the Hero Action Buttons repeater below) --}}
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'cta'" x-cloak>
             <div>
                 <x-admin.input-label for="button_text" value="{{ __('Primary Button Text') }}" />
                 <x-admin.text-input id="button_text" name="button_text" type="text" value="{{ old('button_text', $section?->button_text) }}" />
@@ -130,8 +132,8 @@
             </div>
         </div>
 
-        {{-- Secondary button (hero / cta) --}}
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'hero' || type === 'cta'" x-cloak>
+        {{-- Secondary button (cta only) --}}
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2" x-show="type === 'cta'" x-cloak>
             <div>
                 <x-admin.input-label for="button_text_2" value="{{ __('Secondary Button Text (optional)') }}" />
                 <x-admin.text-input id="button_text_2" name="button_text_2" type="text" value="{{ old('button_text_2', $section?->button_text_2) }}" />
@@ -142,6 +144,72 @@
                 <x-admin.text-input id="button_url_2" name="button_url_2" type="text" placeholder="/about" value="{{ old('button_url_2', $section?->button_url_2) }}" />
                 <x-admin.input-error :messages="$errors->get('button_url_2')" />
             </div>
+        </div>
+
+        {{-- Hero Action Buttons (hero only) --}}
+        <div x-show="type === 'hero'" x-cloak class="space-y-4 border-t border-luxury-border pt-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="text-sm font-semibold text-luxury-white">{{ __('Hero Action Buttons') }}</h4>
+                    <p class="mt-1 text-xs text-luxury-muted">{{ __('Book Now, Call Now, your phone number, the Pricing modal, or any custom link — choose which show, and whether each shows on desktop, mobile, or both.') }}</p>
+                </div>
+                <button type="button" @click="heroButtons.push({ id: '', kind: 'custom', label: '', url: '', show_desktop: true, show_mobile: true })" class="shrink-0 text-xs font-medium text-luxury-gold hover:text-luxury-gold-light">
+                    {{ __('+ Add Button') }}
+                </button>
+            </div>
+
+            <template x-for="(button, index) in heroButtons" :key="index">
+                <div class="space-y-3 rounded-xl border border-luxury-border/60 bg-luxury-graphite/40 p-4">
+                    <input type="hidden" :name="'hero_buttons[' + index + '][id]'" x-model="button.id">
+
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div>
+                                <label class="mb-1 block text-xs text-luxury-muted">{{ __('Type') }}</label>
+                                <select :name="'hero_buttons[' + index + '][kind]'" x-model="button.kind"
+                                    class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                                    <option value="book_now">{{ __('Book Now (link)') }}</option>
+                                    <option value="call_now">{{ __('Call Now') }}</option>
+                                    <option value="phone_number">{{ __('Show Phone Number') }}</option>
+                                    <option value="price">{{ __('Pricing (opens the pricing chart)') }}</option>
+                                    <option value="custom">{{ __('Custom Link') }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-xs text-luxury-muted">{{ __('Label (optional)') }}</label>
+                                <input type="text" :name="'hero_buttons[' + index + '][label]'" x-model="button.label"
+                                    :placeholder="{ book_now: '{{ __('Book Now') }}', call_now: '{{ __('Call Now') }}', phone_number: '{{ setting('phone') ?: __('shows the number as-is') }}', price: '{{ __('Pricing') }}', custom: '{{ __('Learn More') }}' }[button.kind]"
+                                    class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                            </div>
+                            <div class="sm:col-span-2" x-show="button.kind === 'book_now' || button.kind === 'custom'">
+                                <label class="mb-1 block text-xs text-luxury-muted">{{ __('URL') }}</label>
+                                <input type="text" :name="'hero_buttons[' + index + '][url]'" x-model="button.url" placeholder="/#booking-widget"
+                                    class="w-full rounded-lg border border-luxury-border bg-luxury-charcoal px-3 py-2 text-sm text-luxury-white focus:border-luxury-gold focus:outline-none focus:ring-1 focus:ring-luxury-gold">
+                            </div>
+                            <p class="text-xs text-luxury-muted sm:col-span-2" x-show="button.kind === 'call_now' || button.kind === 'phone_number'">
+                                {{ __('Uses the phone number from') }}
+                                <a href="{{ route('admin.settings.edit') }}" class="text-luxury-gold hover:text-luxury-gold-light">{{ __('Settings → Contact & Hours') }}</a>.
+                                {{ __("Won't show if no phone number is set there.") }}
+                            </p>
+                        </div>
+                        <button type="button" @click="heroButtons.splice(index, 1)" class="shrink-0 text-xs text-red-400 hover:text-red-300">{{ __('Remove') }}</button>
+                    </div>
+
+                    <div class="flex items-center gap-5 border-t border-luxury-border/60 pt-3">
+                        <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
+                            <input type="checkbox" :name="'hero_buttons[' + index + '][show_desktop]'" value="1" x-model="button.show_desktop"
+                                class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                            {{ __('Show on Desktop') }}
+                        </label>
+                        <label class="flex items-center gap-1.5 text-xs text-luxury-muted">
+                            <input type="checkbox" :name="'hero_buttons[' + index + '][show_mobile]'" value="1" x-model="button.show_mobile"
+                                class="h-3.5 w-3.5 rounded border-luxury-border bg-luxury-charcoal text-luxury-gold focus:ring-1 focus:ring-luxury-gold">
+                            {{ __('Show on Mobile') }}
+                        </label>
+                    </div>
+                </div>
+            </template>
+            <p class="text-xs text-luxury-muted" x-show="heroButtons.length === 0" x-cloak>{{ __('No buttons — the hero shows no action buttons at all.') }}</p>
         </div>
     </div>
 
@@ -481,6 +549,19 @@
                 bio: item.bio || '',
                 existing_photo: item.existing_photo || '',
                 photo_preview: item.photo_preview || '',
+            })) : [],
+            heroButtons: config.heroButtons.length ? config.heroButtons.map((button) => ({
+                id: button.id || '',
+                kind: button.kind || 'custom',
+                label: button.label || '',
+                url: button.url || '',
+                // A checkbox absent from a stale old()-repopulated request
+                // (i.e. the admin had just unchecked it) means false, not
+                // "unset" — so this only defaults to true for a value that
+                // was never present at all (undefined), not one already
+                // present-but-falsy.
+                show_desktop: button.show_desktop === undefined ? true : (button.show_desktop === true || button.show_desktop === '1' || button.show_desktop === 1),
+                show_mobile: button.show_mobile === undefined ? true : (button.show_mobile === true || button.show_mobile === '1' || button.show_mobile === 1),
             })) : [],
         };
     }

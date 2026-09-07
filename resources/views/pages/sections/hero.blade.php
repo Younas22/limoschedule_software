@@ -7,6 +7,26 @@
     // in from pages/show.blade.php is what lets this one shared partial
     // tell the two apart.
     $isCompactBanner = $page && in_array($page->slug, \App\Models\Page::SERVICE_PAGES, true);
+
+    // Book Now / Call Now / phone number / the Pricing modal / any custom
+    // link an admin has added — each with its own desktop/mobile
+    // visibility. See PageSection::getHeroButtonsAttribute() for the
+    // legacy-column fallback used until this section is re-saved.
+    $heroButtons = collect($section->hero_buttons)->filter(function ($button) {
+        if (! ($button['show_desktop'] ?? true) && ! ($button['show_mobile'] ?? true)) {
+            return false;
+        }
+
+        if (in_array($button['kind'] ?? null, ['call_now', 'phone_number'], true)) {
+            return filled(setting('phone'));
+        }
+
+        if (in_array($button['kind'] ?? null, ['book_now', 'custom'], true)) {
+            return filled($button['url'] ?? null);
+        }
+
+        return true;
+    })->values();
 @endphp
 
 @if ($isCompactBanner)
@@ -66,28 +86,11 @@
                     </p>
                 @endif
 
-                @if (($section->button_text && $section->button_url) || ($section->button_text_2 && $section->button_url_2) || setting('phone'))
+                @if ($heroButtons->isNotEmpty())
                     <div class="animate-fade-up delay-2 mt-5 flex flex-row items-center justify-center gap-2 sm:mt-6 sm:gap-3">
-                        @if ($section->button_text && $section->button_url)
-                            <a href="{{ str_starts_with($section->button_url, 'http') ? $section->button_url : url($section->button_url) }}" @if (str_starts_with($section->button_url, 'http')) target="_blank" rel="noopener" @endif
-                                class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-luxury-gold px-3.5 py-2.5 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:px-6 sm:py-3 sm:text-sm">
-                                <x-icon name="calendar" class="h-4 w-4 shrink-0" />
-                                {{ __($section->button_text) }}
-                            </a>
-                        @endif
-                        @if ($section->button_text_2 && $section->button_url_2)
-                            <a href="{{ str_starts_with($section->button_url_2, 'http') ? $section->button_url_2 : url($section->button_url_2) }}" @if (str_starts_with($section->button_url_2, 'http')) target="_blank" rel="noopener" @endif
-                                class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-luxury-white/30 bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-luxury-white backdrop-blur transition hover:border-luxury-white/60 hover:bg-white/10 sm:px-6 sm:py-3 sm:text-sm">
-                                {{ __($section->button_text_2) }}
-                            </a>
-                        @endif
-                        @if (setting('phone'))
-                            <a href="tel:{{ setting('phone') }}"
-                                class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-luxury-white/30 bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-luxury-white backdrop-blur transition hover:border-luxury-white/60 hover:bg-white/10 sm:px-6 sm:py-3 sm:text-sm">
-                                <x-icon name="phone" class="h-4 w-4 shrink-0" />
-                                {{ __('Call Now') }}
-                            </a>
-                        @endif
+                        @foreach ($heroButtons as $button)
+                            <x-hero-button :button="$button" size="compact" />
+                        @endforeach
                     </div>
                 @endif
             </div>
@@ -183,28 +186,11 @@
                 </p>
             @endif
 
-            @if (($section->button_text && $section->button_url) || ($section->button_text_2 && $section->button_url_2) || setting('phone'))
+            @if ($heroButtons->isNotEmpty())
                 <div class="animate-fade-up delay-2 mt-9 flex flex-row items-center justify-center gap-3">
-                    @if ($section->button_text && $section->button_url)
-                        <a href="{{ str_starts_with($section->button_url, 'http') ? $section->button_url : url($section->button_url) }}" @if (str_starts_with($section->button_url, 'http')) target="_blank" rel="noopener" @endif
-                            class="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-luxury-gold px-4 py-3 text-xs font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98] sm:gap-2 sm:px-7 sm:py-3.5 sm:text-sm">
-                            <x-icon name="calendar" class="h-4 w-4 shrink-0" />
-                            {{ __($section->button_text) }}
-                        </a>
-                    @endif
-                    @if ($section->button_text_2 && $section->button_url_2)
-                        <a href="{{ str_starts_with($section->button_url_2, 'http') ? $section->button_url_2 : url($section->button_url_2) }}" @if (str_starts_with($section->button_url_2, 'http')) target="_blank" rel="noopener" @endif
-                            class="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-luxury-white/30 bg-white/5 px-4 py-3 text-xs font-semibold text-luxury-white backdrop-blur transition hover:border-luxury-white/60 hover:bg-white/10 sm:gap-2 sm:px-7 sm:py-3.5 sm:text-sm">
-                            {{ __($section->button_text_2) }}
-                        </a>
-                    @endif
-                    @if (setting('phone'))
-                        <a href="tel:{{ setting('phone') }}"
-                            class="inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-luxury-white/30 bg-white/5 px-4 py-3 text-xs font-semibold text-luxury-white backdrop-blur transition hover:border-luxury-white/60 hover:bg-white/10 sm:gap-2 sm:px-7 sm:py-3.5 sm:text-sm">
-                            <x-icon name="phone" class="h-4 w-4 shrink-0" />
-                            {{ __('Call Now') }}
-                        </a>
-                    @endif
+                    @foreach ($heroButtons as $button)
+                        <x-hero-button :button="$button" size="full" />
+                    @endforeach
                 </div>
             @endif
         </div>

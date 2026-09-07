@@ -169,6 +169,12 @@ class PageSectionController extends Controller
             'button_url' => ['nullable', 'string', 'max:255'],
             'button_text_2' => ['nullable', 'string', 'max:100'],
             'button_url_2' => ['nullable', 'string', 'max:255'],
+            'hero_buttons' => ['nullable', 'array'],
+            'hero_buttons.*.kind' => ['required_with:hero_buttons', Rule::in(['book_now', 'call_now', 'phone_number', 'price', 'custom'])],
+            'hero_buttons.*.label' => ['nullable', 'string', 'max:100'],
+            'hero_buttons.*.url' => ['nullable', 'string', 'max:255'],
+            'hero_buttons.*.show_desktop' => ['nullable', 'boolean'],
+            'hero_buttons.*.show_mobile' => ['nullable', 'boolean'],
             'items' => [Rule::requiredIf(in_array($type, ['items', 'trust_badges', 'faq', 'stats', 'team', 'process'], true)), 'nullable', 'array'],
             'items.*.title' => ['required_if:type,items', 'required_if:type,trust_badges', 'required_if:type,process', 'nullable', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:1000'],
@@ -236,6 +242,18 @@ class PageSectionController extends Controller
             // this page. This section is just a placeholder marking where
             // that block renders on the Contact page.
             'contact_info' => [],
+            'hero' => [
+                'buttons' => collect($data['hero_buttons'] ?? [])
+                    ->filter(fn ($button) => filled($button['kind'] ?? null))
+                    ->map(fn ($button, $index) => [
+                        'id' => $button['id'] ?? ('button-'.$index.'-'.Str::random(6)),
+                        'kind' => $button['kind'],
+                        'label' => $button['label'] ?? null,
+                        'url' => $button['url'] ?? null,
+                        'show_desktop' => (bool) ($button['show_desktop'] ?? false),
+                        'show_mobile' => (bool) ($button['show_mobile'] ?? false),
+                    ])->values()->all(),
+            ],
             'testimonials' => [
                 'limit' => (int) ($data['testimonial_limit'] ?? 6),
                 'min_rating' => (int) ($data['testimonial_min_rating'] ?? 4),
@@ -289,7 +307,7 @@ class PageSectionController extends Controller
         };
 
         unset(
-            $data['items'],
+            $data['items'], $data['hero_buttons'],
             $data['testimonial_limit'], $data['testimonial_min_rating'], $data['fleet_limit'], $data['fleet_category_id'], $data['route_limit'], $data['blog_limit'],
             $data['vision_icon'], $data['vision_title'], $data['vision_body'],
             $data['mission_icon'], $data['mission_title'], $data['mission_body']

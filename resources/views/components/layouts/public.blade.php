@@ -153,6 +153,8 @@
 
         <x-search-modal />
 
+        <x-pricing-modal />
+
         <x-software-sale-modal />
         <x-software-sale-sticky-banner />
     </div>
@@ -170,6 +172,7 @@
             return {
                 sidebarOpen: false,
                 searchOpen: false,
+                pricingOpen: false,
                 theme: initialTheme,
 
                 toggleTheme() {

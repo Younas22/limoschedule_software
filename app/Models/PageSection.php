@@ -83,6 +83,49 @@ class PageSection extends Model
     }
 
     /**
+     * The hero's action-button row (Book Now, Call Now, phone number, the
+     * Pricing modal trigger, or any admin-defined custom link), each with
+     * its own desktop/mobile visibility — configured at Admin → Pages →
+     * (page) → Hero section.
+     *
+     * A hero section saved before this existed has no 'buttons' key in its
+     * content yet, so this falls back to reconstructing the equivalent list
+     * from the legacy button_text/button_url/button_text_2/button_url_2
+     * columns (plus the always-on-when-a-phone-is-set Call Now button that
+     * used to be hard-coded in the view) — the exact same buttons that were
+     * already showing, just expressed in the new shape. Once the section is
+     * saved again through the admin form, the explicit list here takes over.
+     *
+     * @return array<int, array{id: string, kind: string, label: ?string, url: ?string, show_desktop: bool, show_mobile: bool}>
+     */
+    public function getHeroButtonsAttribute(): array
+    {
+        if ($this->type !== 'hero') {
+            return [];
+        }
+
+        $configured = $this->content['buttons'] ?? null;
+
+        if (is_array($configured)) {
+            return $configured;
+        }
+
+        $buttons = [];
+
+        if ($this->button_text && $this->button_url) {
+            $buttons[] = ['id' => 'legacy-primary', 'kind' => 'book_now', 'label' => $this->button_text, 'url' => $this->button_url, 'show_desktop' => true, 'show_mobile' => true];
+        }
+
+        if ($this->button_text_2 && $this->button_url_2) {
+            $buttons[] = ['id' => 'legacy-secondary', 'kind' => 'custom', 'label' => $this->button_text_2, 'url' => $this->button_url_2, 'show_desktop' => true, 'show_mobile' => true];
+        }
+
+        $buttons[] = ['id' => 'legacy-call', 'kind' => 'call_now', 'label' => 'Call Now', 'url' => null, 'show_desktop' => true, 'show_mobile' => true];
+
+        return $buttons;
+    }
+
+    /**
      * @return array<int, array{icon: ?string, title: string, description: ?string, link: ?string}>
      */
     public function getTrustBadgeItemsAttribute(): array

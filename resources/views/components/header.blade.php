@@ -75,7 +75,7 @@
             @foreach (\App\Models\Page::PAGES as $slug => $label)
                 @continue(! isset($navPages[$slug]))
                 @continue(in_array($slug, \App\Models\Page::LEGAL_PAGES, true) || in_array($slug, \App\Models\Page::SERVICE_PAGES, true))
-                @continue($slug === 'faq')
+                @continue($slug === 'faq' || $slug === 'home')
 
                 @if ($slug === 'services' && $navServiceLinks->isNotEmpty())
                     {{-- Alpine-driven (not CSS group-hover) so opening this
@@ -141,13 +141,30 @@
                     </a>
                 @endif
             @endforeach
-            <a href="{{ route('blog.index') }}" class="text-sm font-medium text-luxury-muted transition hover:text-luxury-gold {{ request()->routeIs('blog.*') ? 'text-luxury-gold' : '' }}">
-                {{ __('Blog') }}
-            </a>
         </nav>
 
         {{-- Right actions --}}
         <div class="ms-auto flex items-center gap-1.5 lg:ms-0">
+            {{-- Phone — pulled from Admin Settings → Contact & Hours, shown
+                 here (not hidden below sm) so it's reachable from the top
+                 navbar on mobile too, not just the desktop header. --}}
+            @if (setting('phone'))
+                <a href="tel:{{ preg_replace('/[^0-9+]/', '', setting('phone')) }}"
+                    class="flex h-10 items-center gap-1.5 rounded-lg px-2 text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white"
+                    aria-label="{{ __('Call us') }}: {{ setting('phone') }}">
+                    <x-icon name="phone" class="h-5 w-5 shrink-0" />
+                    <span class="hidden text-sm font-bold text-luxury-white md:inline">{{ setting('phone') }}</span>
+                </a>
+            @endif
+
+            {{-- Pricing — opens a modal with the global pricing chart
+                 (Admin → Pricing → Global Default) plus phone/address. --}}
+            <button type="button" @click="pricingOpen = true"
+                class="flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-luxury-gold/40 px-2.5 text-sm font-medium text-luxury-gold transition hover:bg-luxury-gold/10 sm:px-3">
+                <x-icon name="cash" class="h-4 w-4 shrink-0" />
+                <span class="hidden sm:inline">{{ __('Pricing') }}</span>
+            </button>
+
             {{-- Search --}}
             <button type="button" @click="searchOpen = true" aria-label="{{ __('Search') }}"
                 class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-luxury-muted transition hover:bg-luxury-graphite hover:text-luxury-white">

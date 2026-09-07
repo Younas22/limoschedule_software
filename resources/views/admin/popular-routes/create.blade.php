@@ -4,7 +4,7 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Create a new popular route shown on the public website.') }}</p>
     </div>
 
-    <form method="POST" action="{{ route('admin.popular-routes.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.popular-routes.store') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @include('admin.popular-routes._form')
 

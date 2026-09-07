@@ -25,55 +25,77 @@
     $waLines[] = __('Please confirm availability.');
 
     $waMessage = implode("\n", $waLines);
+
+    // Popular Routes always books straight via WhatsApp, regardless of the
+    // site's manual/website booking mode — these are quick, pre-priced
+    // routes best confirmed by chat. No WhatsApp number configured falls
+    // back to jumping to the booking widget with pickup/dropoff prefilled.
+    $bookHref = $waDigits ? "https://wa.me/{$waDigits}?text=".rawurlencode($waMessage) : '#booking-widget';
 @endphp
 
-<div {{ $attributes->merge(['class' => 'flex h-full flex-col justify-between rounded-2xl border border-luxury-border bg-luxury-charcoal p-5 transition hover:border-luxury-gold/40']) }}>
-    <div>
-        <div class="flex items-start gap-3">
-            <div class="mt-0.5 flex flex-col items-center">
-                <span class="h-2 w-2 shrink-0 rounded-full bg-luxury-gold"></span>
-                <span class="my-1 h-6 w-px bg-luxury-border"></span>
-                <x-icon name="map-pin" class="h-3.5 w-3.5 shrink-0 text-luxury-gold" />
+{{-- Editorial, photo-led card — big image, then plain typography, no
+     border/box around it (the grid's own gap is the only separation) and no
+     separate button: the whole card is one clickable link, same as the
+     reference layout, just in this site's dark/gold palette instead of the
+     reference's white one. --}}
+<a href="{{ $bookHref }}"
+    @if ($waDigits) target="_blank" rel="noopener" @else @click="window.dispatchEvent(new CustomEvent('select-route', { detail: { pickup: {{ \Illuminate\Support\Js::from($route->pickup) }}, dropoff: {{ \Illuminate\Support\Js::from($route->dropoff) }} } }))" @endif
+    {{ $attributes->merge(['class' => 'group block']) }}>
+    {{-- Optional — a route with no photo just shows a plain gradient tile
+         instead. The hover photo (if set) crossfades in on top of the main
+         one on hover — pure CSS, no JS — and only ever appears when a main
+         photo exists too (see the admin form's own note on this). --}}
+    <div class="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-luxury-graphite">
+        @if ($route->image_url)
+            <img src="{{ $route->image_url }}" alt="{{ $route->pickup }} → {{ $route->dropoff }}"
+                class="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105 {{ $route->hover_image_url ? 'group-hover:opacity-0' : '' }}">
+            @if ($route->hover_image_url)
+                <img src="{{ $route->hover_image_url }}" alt="{{ $route->pickup }} → {{ $route->dropoff }}"
+                    class="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-300 group-hover:scale-105 group-hover:opacity-100">
+            @endif
+        @else
+            <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-luxury-graphite to-luxury-charcoal">
+                <x-icon name="map-pin" class="h-8 w-8 text-luxury-border" />
             </div>
-            <div class="min-w-0 flex-1 space-y-2.5">
-                <p class="truncate text-sm font-semibold text-luxury-white">{{ $route->pickup }}</p>
-                <p class="truncate text-sm font-semibold text-luxury-white">{{ $route->dropoff }}</p>
-            </div>
-        </div>
-
-        <div class="mt-4 grid grid-cols-2 gap-2 text-center text-xs text-luxury-muted">
-            <div class="flex items-center justify-center gap-1.5 rounded-lg bg-luxury-graphite py-2">
-                <x-icon name="trending-up" class="h-3.5 w-3.5" />
-                <span class="font-semibold text-luxury-white">{{ $route->distance ? rtrim(rtrim(number_format((float) $route->distance, 1), '0'), '.') : '—' }}</span>
-                {{ $route->distance ? $route->distance_unit : '' }}
-            </div>
-            <div class="flex items-center justify-center gap-1.5 rounded-lg bg-luxury-graphite py-2">
-                <x-icon name="cash" class="h-3.5 w-3.5 shrink-0" />
-                @if ($route->has_discount)
-                    <span class="text-luxury-muted line-through decoration-solid decoration-red-500 decoration-2">{{ currency($route->original_price) }}</span>
-                    <span class="font-semibold text-luxury-gold">{{ currency($route->estimated_price) }}</span>
-                @else
-                    <span class="font-semibold text-luxury-gold">{{ $route->estimated_price ? currency($route->estimated_price) : '—' }}</span>
-                @endif
-            </div>
-        </div>
+        @endif
     </div>
 
-    @if ($waDigits)
-        {{-- Popular Routes always books straight via WhatsApp, regardless of
-             the site's manual/website booking mode — these are quick,
-             pre-priced routes best confirmed by chat. --}}
-        <a href="https://wa.me/{{ $waDigits }}?text={{ rawurlencode($waMessage) }}" target="_blank" rel="noopener"
-            class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
-            <x-icon name="chat" class="h-4 w-4" />
-            {{ __('Book This Route') }}
-        </a>
-    @else
-        <a href="#booking-widget"
-            @click="window.dispatchEvent(new CustomEvent('select-route', { detail: { pickup: {{ \Illuminate\Support\Js::from($route->pickup) }}, dropoff: {{ \Illuminate\Support\Js::from($route->dropoff) }} } }))"
-            class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-luxury-gold px-4 py-2.5 text-sm font-semibold text-luxury-black transition hover:bg-luxury-gold-light active:scale-[0.98]">
-            <x-icon name="calendar" class="h-4 w-4" />
-            {{ __('Book This Route') }}
-        </a>
-    @endif
-</div>
+    <div class="mt-3 flex items-end justify-between gap-3">
+        <div class="min-w-0">
+            <p class="truncate text-base font-semibold text-luxury-white">
+                {{ $route->pickup }} <span class="text-luxury-muted">&rarr;</span> {{ $route->dropoff }}
+            </p>
+
+            @if ($route->distance)
+                <p class="mt-1 text-sm text-luxury-muted">
+                    {{ rtrim(rtrim(number_format((float) $route->distance, 1), '0'), '.') }} {{ $route->distance_unit }}
+                </p>
+            @endif
+
+            {{-- The original price's line-through and "From $X"'s underline
+                 live on separate sibling spans (not nested) — putting both
+                 decorations on one shared element meant only one of the two
+                 text-decoration-line values could ever win, so the
+                 strikethrough silently never rendered. --}}
+            @if ($route->estimated_price)
+                <p class="mt-1 text-sm font-semibold">
+                    @if ($route->has_discount)
+                        <span class="text-luxury-muted line-through">{{ currency($route->original_price) }}</span>
+                    @endif
+                    <span class="text-luxury-gold underline decoration-luxury-gold/40 underline-offset-2 transition group-hover:decoration-luxury-gold">
+                        {{ __('From') }} {{ currency($route->estimated_price) }}
+                    </span>
+                </p>
+            @endif
+        </div>
+
+        {{-- Purely visual — the whole card above is already the clickable
+             link, so this doesn't need its own href/click handler. Small on
+             purpose (per the reference layout's minimal look) but still an
+             actual button shape, not just underlined text, so the CTA
+             stays unmistakable. --}}
+        <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-luxury-gold px-3 py-1.5 text-xs font-semibold text-luxury-black transition group-hover:bg-luxury-gold-light">
+            {{ __('Book') }}
+        </span>
+    </div>
+</a>

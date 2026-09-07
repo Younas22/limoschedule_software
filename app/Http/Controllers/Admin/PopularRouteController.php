@@ -7,6 +7,7 @@ use App\Models\PopularRoute;
 use App\Models\RouteType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PopularRouteController extends Controller
@@ -36,6 +37,14 @@ class PopularRouteController extends Controller
     {
         $data = $this->validateRoute($request);
 
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storeUpload($request->file('image'));
+        }
+
+        if ($request->hasFile('hover_image')) {
+            $data['hover_image'] = $this->storeUpload($request->file('hover_image'));
+        }
+
         PopularRoute::create($data + ['is_active' => true]);
 
         return redirect()
@@ -52,7 +61,23 @@ class PopularRouteController extends Controller
 
     public function update(Request $request, PopularRoute $popularRoute): RedirectResponse
     {
-        $popularRoute->update($this->validateRoute($request));
+        $data = $this->validateRoute($request);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->storeUpload($request->file('image'), $popularRoute->image);
+        } elseif ($request->boolean('remove_image')) {
+            $this->deleteUpload($popularRoute->image);
+            $data['image'] = null;
+        }
+
+        if ($request->hasFile('hover_image')) {
+            $data['hover_image'] = $this->storeUpload($request->file('hover_image'), $popularRoute->hover_image);
+        } elseif ($request->boolean('remove_hover_image')) {
+            $this->deleteUpload($popularRoute->hover_image);
+            $data['hover_image'] = null;
+        }
+
+        $popularRoute->update($data);
 
         return redirect()
             ->route('admin.popular-routes.index')
@@ -61,6 +86,9 @@ class PopularRouteController extends Controller
 
     public function destroy(PopularRoute $popularRoute): RedirectResponse
     {
+        $this->deleteUpload($popularRoute->image);
+        $this->deleteUpload($popularRoute->hover_image);
+
         $popularRoute->delete();
 
         return back()->with('status', 'Route deleted successfully.');
@@ -83,6 +111,39 @@ class PopularRouteController extends Controller
             'distance_unit' => ['required', 'in:km,mi'],
             'estimated_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'original_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'image' => ['nullable', 'image', 'max:2048'],
+            'hover_image' => ['nullable', 'image', 'max:2048'],
         ]);
+    }
+
+    private function storeUpload($file, ?string $previousFilename = null): string
+    {
+        $directory = public_path('uploads/popular-routes');
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $filename = 'route-'.time().'-'.Str::random(8).'.'.$file->getClientOriginalExtension();
+        $file->move($directory, $filename);
+
+        if ($previousFilename && file_exists($directory.DIRECTORY_SEPARATOR.$previousFilename)) {
+            @unlink($directory.DIRECTORY_SEPARATOR.$previousFilename);
+        }
+
+        return $filename;
+    }
+
+    private function deleteUpload(?string $filename): void
+    {
+        if (! $filename) {
+            return;
+        }
+
+        $path = public_path('uploads/popular-routes'.DIRECTORY_SEPARATOR.$filename);
+
+        if (file_exists($path)) {
+            @unlink($path);
+        }
     }
 }

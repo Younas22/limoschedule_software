@@ -27,7 +27,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-luxury-white">{{ __($group['label'].'s') }}</h3>
 
-                        <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="mt-5 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
                             @foreach ($group['routes'] as $route)
                                 <x-route-card :route="$route" />
                             @endforeach

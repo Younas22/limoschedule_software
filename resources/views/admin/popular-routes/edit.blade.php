@@ -4,7 +4,7 @@
         <p class="mt-1 text-sm text-luxury-muted">{{ __('Update the details for :pickup → :dropoff.', ['pickup' => $route->pickup, 'dropoff' => $route->dropoff]) }}</p>
     </div>
 
-    <form method="POST" action="{{ route('admin.popular-routes.update', $route) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.popular-routes.update', $route) }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PUT')
         @include('admin.popular-routes._form')

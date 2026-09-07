@@ -54,6 +54,7 @@
                 <table class="w-full text-start text-sm">
                     <thead>
                         <tr class="border-b border-luxury-border text-xs uppercase tracking-wider text-luxury-muted">
+                            <th class="px-6 py-3 font-medium">{{ __('Photo') }}</th>
                             <th class="px-6 py-3 font-medium">{{ __('Type') }}</th>
                             <th class="px-6 py-3 font-medium">{{ __('Pickup') }}</th>
                             <th class="px-6 py-3 font-medium">{{ __('Dropoff') }}</th>
@@ -66,6 +67,15 @@
                     <tbody class="divide-y divide-luxury-border/60">
                         @foreach ($routes as $route)
                             <tr class="hover:bg-luxury-graphite">
+                                <td class="px-6 py-3">
+                                    @if ($route->image_url)
+                                        <img src="{{ $route->image_url }}" alt="" class="h-10 w-16 rounded-lg border border-luxury-border object-cover">
+                                    @else
+                                        <span class="flex h-10 w-16 items-center justify-center rounded-lg border border-dashed border-luxury-border text-luxury-muted">
+                                            <x-icon name="map-pin" class="h-4 w-4" />
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-3">
                                     <span class="rounded-full bg-luxury-gold/10 px-2.5 py-1 text-xs font-medium text-luxury-gold">{{ $route->routeType?->name ?? '—' }}</span>
                                 </td>
@@ -121,6 +131,10 @@
                         <span class="rounded-full bg-luxury-gold/10 px-2.5 py-1 text-xs font-medium text-luxury-gold">{{ $route->routeType?->name ?? '—' }}</span>
                         <x-admin.status-badge :active="$route->is_active" />
                     </div>
+
+                    @if ($route->image_url)
+                        <img src="{{ $route->image_url }}" alt="" class="mt-3 h-28 w-full rounded-xl border border-luxury-border object-cover">
+                    @endif
 
                     <div class="mt-3 flex items-start gap-3">
                         <div class="mt-1 flex flex-col items-center">

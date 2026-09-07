@@ -16,6 +16,8 @@ class PopularRoute extends Model
         'distance_unit',
         'estimated_price',
         'original_price',
+        'image',
+        'hover_image',
         'is_active',
     ];
 
@@ -40,6 +42,16 @@ class PopularRoute extends Model
         return $this->original_price !== null
             && $this->estimated_price !== null
             && (float) $this->original_price > (float) $this->estimated_price;
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? asset('public/uploads/popular-routes/'.$this->image) : null;
+    }
+
+    public function getHoverImageUrlAttribute(): ?string
+    {
+        return $this->hover_image ? asset('public/uploads/popular-routes/'.$this->hover_image) : null;
     }
 
     public function routeType(): BelongsTo

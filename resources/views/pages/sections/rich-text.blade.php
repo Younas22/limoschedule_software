@@ -1,7 +1,7 @@
 @props(['section'])
 
 <section class="border-b border-luxury-border">
-    <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 lg:px-8">
         @if ($section->heading)
             <h2 class="text-2xl font-semibold text-luxury-white sm:text-3xl">{{ __($section->heading) }}</h2>
         @endif

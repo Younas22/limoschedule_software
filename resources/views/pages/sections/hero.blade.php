@@ -80,7 +80,16 @@
                 @endif
 
                 @if ($section->heading)
-                    <h1 class="animate-fade-up text-3xl font-bold leading-[0.95] tracking-tight text-luxury-white sm:text-5xl lg:text-7xl {{ $section->eyebrow ? 'mt-3' : '' }}">
+                    {{-- Noticeably smaller than the homepage's full-screen hero
+                         heading (which tops out at the same lg:text-7xl this
+                         used to share) — this banner is a fraction of that
+                         hero's height (aspect-[1900/575]), so a long heading
+                         at that size doesn't just look oversized, it overflows
+                         past two lines and spills out of the banner. This
+                         scale keeps even a long admin-written heading (e.g. a
+                         full sentence with a subtitle after a dash) wrapping
+                         to two lines instead of three or four. --}}
+                    <h1 class="animate-fade-up text-xl font-bold leading-tight tracking-tight text-luxury-white sm:text-2xl lg:text-4xl {{ $section->eyebrow ? 'mt-3' : '' }}">
                         {{ __($section->heading) }}
                     </h1>
                 @endif

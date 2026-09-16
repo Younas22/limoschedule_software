@@ -12,11 +12,11 @@
             'title' => __('Base Pricing'),
             'rows' => [
                 [__('Base Fare'), currency($globalPricing->base_fare)],
-                [__('Per KM'), currency($globalPricing->km_fare)],
+                [__('0–50 km'), currency($globalPricing->km_fare)],
+                $globalPricing->mid_distance_km_fare ? [__('50–100 km'), currency($globalPricing->mid_distance_km_fare)] : null,
+                $globalPricing->long_distance_km_fare ? [__('100–200 km'), currency($globalPricing->long_distance_km_fare)] : null,
+                $globalPricing->very_long_distance_km_fare ? [__('200+ km'), currency($globalPricing->very_long_distance_km_fare)] : null,
                 [__('Per Hour (hourly bookings)'), currency($globalPricing->hour_fare)],
-                $globalPricing->long_distance_km_fare
-                    ? [__('Long-Distance Per KM (beyond :km km)', ['km' => rtrim(rtrim((string) $globalPricing->long_distance_threshold_km, '0'), '.')]), currency($globalPricing->long_distance_km_fare)]
-                    : null,
             ],
         ],
         [

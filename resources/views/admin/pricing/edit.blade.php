@@ -51,15 +51,34 @@
 
                 <div class="grid grid-cols-1 gap-5 border-t border-luxury-border pt-5 sm:grid-cols-2">
                     <div>
-                        <x-admin.input-label for="long_distance_threshold_km" value="{{ __('Long-Distance Threshold (km)') }}" />
-                        <x-admin.text-input id="long_distance_threshold_km" name="long_distance_threshold_km" type="number" step="0.01" min="0" value="{{ old('long_distance_threshold_km', $rule->long_distance_threshold_km) }}" placeholder="{{ __('e.g. 90 — leave blank to disable') }}" />
-                        <p class="mt-1.5 text-xs text-luxury-muted">{{ __('Trips at or beyond this total distance bill at the long-distance rate below instead of the KM Fare above.') }}</p>
+                        <x-admin.input-label for="mid_distance_threshold_km" value="{{ __('Tier 2 Threshold (km)') }}" />
+                        <x-admin.text-input id="mid_distance_threshold_km" name="mid_distance_threshold_km" type="number" step="0.01" min="0" value="{{ old('mid_distance_threshold_km', $rule->mid_distance_threshold_km) }}" placeholder="{{ __('e.g. 50') }}" />
+                        <x-admin.input-error :messages="$errors->get('mid_distance_threshold_km')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="mid_distance_km_fare" value="{{ __('Tier 2 KM Fare') }}" />
+                        <x-admin.text-input id="mid_distance_km_fare" name="mid_distance_km_fare" type="number" step="0.01" min="0" value="{{ old('mid_distance_km_fare', $rule->mid_distance_km_fare) }}" placeholder="{{ __('e.g. 1.70') }}" />
+                        <x-admin.input-error :messages="$errors->get('mid_distance_km_fare')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="long_distance_threshold_km" value="{{ __('Tier 3 Threshold (km)') }}" />
+                        <x-admin.text-input id="long_distance_threshold_km" name="long_distance_threshold_km" type="number" step="0.01" min="0" value="{{ old('long_distance_threshold_km', $rule->long_distance_threshold_km) }}" placeholder="{{ __('e.g. 100') }}" />
                         <x-admin.input-error :messages="$errors->get('long_distance_threshold_km')" />
                     </div>
                     <div>
-                        <x-admin.input-label for="long_distance_km_fare" value="{{ __('Long-Distance KM Fare') }}" />
-                        <x-admin.text-input id="long_distance_km_fare" name="long_distance_km_fare" type="number" step="0.01" min="0" value="{{ old('long_distance_km_fare', $rule->long_distance_km_fare) }}" placeholder="{{ __('e.g. 2.25') }}" />
+                        <x-admin.input-label for="long_distance_km_fare" value="{{ __('Tier 3 KM Fare') }}" />
+                        <x-admin.text-input id="long_distance_km_fare" name="long_distance_km_fare" type="number" step="0.01" min="0" value="{{ old('long_distance_km_fare', $rule->long_distance_km_fare) }}" placeholder="{{ __('e.g. 1.50') }}" />
                         <x-admin.input-error :messages="$errors->get('long_distance_km_fare')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="very_long_distance_threshold_km" value="{{ __('Tier 4 Threshold (km)') }}" />
+                        <x-admin.text-input id="very_long_distance_threshold_km" name="very_long_distance_threshold_km" type="number" step="0.01" min="0" value="{{ old('very_long_distance_threshold_km', $rule->very_long_distance_threshold_km) }}" placeholder="{{ __('e.g. 200') }}" />
+                        <x-admin.input-error :messages="$errors->get('very_long_distance_threshold_km')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="very_long_distance_km_fare" value="{{ __('Tier 4 KM Fare') }}" />
+                        <x-admin.text-input id="very_long_distance_km_fare" name="very_long_distance_km_fare" type="number" step="0.01" min="0" value="{{ old('very_long_distance_km_fare', $rule->very_long_distance_km_fare) }}" placeholder="{{ __('e.g. 1.25') }}" />
+                        <x-admin.input-error :messages="$errors->get('very_long_distance_km_fare')" />
                     </div>
                 </div>
             </div>

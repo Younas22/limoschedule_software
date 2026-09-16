@@ -16,8 +16,12 @@ class PricingRule extends Model
         'base_fare',
         'base_fare_threshold_km',
         'km_fare',
+        'mid_distance_threshold_km',
+        'mid_distance_km_fare',
         'long_distance_threshold_km',
         'long_distance_km_fare',
+        'very_long_distance_threshold_km',
+        'very_long_distance_km_fare',
         'hour_fare',
         'waiting_charge_per_minute',
         'free_waiting_minutes',
@@ -43,8 +47,12 @@ class PricingRule extends Model
             'base_fare' => 'decimal:2',
             'base_fare_threshold_km' => 'decimal:2',
             'km_fare' => 'decimal:2',
+            'mid_distance_threshold_km' => 'decimal:2',
+            'mid_distance_km_fare' => 'decimal:2',
             'long_distance_threshold_km' => 'decimal:2',
             'long_distance_km_fare' => 'decimal:2',
+            'very_long_distance_threshold_km' => 'decimal:2',
+            'very_long_distance_km_fare' => 'decimal:2',
             'hour_fare' => 'decimal:2',
             'waiting_charge_per_minute' => 'decimal:2',
             'free_waiting_minutes' => 'integer',
@@ -75,7 +83,13 @@ class PricingRule extends Model
             [
                 'label' => 'Global Default',
                 'base_fare' => 25,
-                'km_fare' => 2.5,
+                'km_fare' => 2.3,
+                'mid_distance_threshold_km' => 50,
+                'mid_distance_km_fare' => 1.7,
+                'long_distance_threshold_km' => 100,
+                'long_distance_km_fare' => 1.5,
+                'very_long_distance_threshold_km' => 200,
+                'very_long_distance_km_fare' => 1.25,
                 'hour_fare' => 40,
                 'waiting_charge_per_minute' => 0.5,
                 'free_waiting_minutes' => 10,
@@ -142,15 +156,57 @@ class PricingRule extends Model
      */
     public function effectiveKmFare(float $totalDistanceKm): float
     {
+        $distanceKm = max((float) $totalDistanceKm, 0);
+
+        if (
+            $this->very_long_distance_threshold_km !== null
+            && $this->very_long_distance_km_fare !== null
+            && $distanceKm >= (float) $this->very_long_distance_threshold_km
+        ) {
+            return (float) $this->very_long_distance_km_fare;
+        }
+
         if (
             $this->long_distance_threshold_km !== null
             && $this->long_distance_km_fare !== null
-            && $totalDistanceKm >= (float) $this->long_distance_threshold_km
+            && $distanceKm >= (float) $this->long_distance_threshold_km
         ) {
             return (float) $this->long_distance_km_fare;
         }
 
+        if (
+            $this->mid_distance_threshold_km !== null
+            && $this->mid_distance_km_fare !== null
+            && $distanceKm >= (float) $this->mid_distance_threshold_km
+        ) {
+            return (float) $this->mid_distance_km_fare;
+        }
+
         return (float) $this->km_fare;
+    }
+
+    public function distanceFare(float $totalDistanceKm): float
+    {
+        $distanceKm = max((float) $totalDistanceKm, 0);
+        $fare = 0.0;
+
+        $firstBandKm = min($distanceKm, (float) ($this->mid_distance_threshold_km ?? 50));
+        $fare += $firstBandKm * (float) $this->km_fare;
+        $remainingKm = max($distanceKm - $firstBandKm, 0);
+
+        $secondBandThreshold = $this->long_distance_threshold_km ?? ($this->mid_distance_threshold_km !== null ? (float) $this->mid_distance_threshold_km + 50 : 100);
+        $secondBandKm = min($remainingKm, max($secondBandThreshold - ($this->mid_distance_threshold_km ?? 50), 0));
+        $fare += $secondBandKm * (float) ($this->mid_distance_km_fare ?? $this->km_fare);
+        $remainingKm = max($remainingKm - $secondBandKm, 0);
+
+        $thirdBandThreshold = $this->very_long_distance_threshold_km ?? ($this->long_distance_threshold_km ?? 200);
+        $thirdBandKm = min($remainingKm, max($thirdBandThreshold - ($this->long_distance_threshold_km ?? ($this->mid_distance_threshold_km ?? 50)), 0));
+        $fare += $thirdBandKm * (float) ($this->long_distance_km_fare ?? $this->mid_distance_km_fare ?? $this->km_fare);
+        $remainingKm = max($remainingKm - $thirdBandKm, 0);
+
+        $fare += $remainingKm * (float) ($this->very_long_distance_km_fare ?? $this->long_distance_km_fare ?? $this->mid_distance_km_fare ?? $this->km_fare);
+
+        return round($fare, 2);
     }
 
     public function isNight(Carbon $pickupDateTime): bool

@@ -137,7 +137,7 @@
                                 </div>
                                 <label class="flex-1 cursor-pointer rounded-lg border border-dashed border-luxury-border px-4 py-3 text-center text-xs text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
                                     <span>{{ __('Click to upload logo') }}</span>
-                                    <input type="file" name="logo" accept="image/*" class="hidden"
+                                    <input type="file" name="logo" accept="image/*,.svg" class="hidden"
                                         @change="preview = $event.target.files.length ? URL.createObjectURL($event.target.files[0]) : preview">
                                 </label>
                             </div>
@@ -158,7 +158,7 @@
                                 </div>
                                 <label class="flex-1 cursor-pointer rounded-lg border border-dashed border-luxury-border px-4 py-3 text-center text-xs text-luxury-muted transition hover:border-luxury-gold/40 hover:text-luxury-gold">
                                     <span>{{ __('Click to upload logo') }}</span>
-                                    <input type="file" name="logo_dark" accept="image/*" class="hidden"
+                                    <input type="file" name="logo_dark" accept="image/*,.svg" class="hidden"
                                         @change="preview = $event.target.files.length ? URL.createObjectURL($event.target.files[0]) : preview">
                                 </label>
                             </div>

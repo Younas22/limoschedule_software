@@ -36,6 +36,7 @@
                 $globalPricing->free_waiting_minutes > 0 ? [__('Free Waiting Minutes'), $globalPricing->free_waiting_minutes.' '.__('min')] : null,
                 $globalPricing->night_charge > 0 ? [__('Night Charge (:start – :end)', ['start' => $formatTime($globalPricing->night_start_time), 'end' => $formatTime($globalPricing->night_end_time)]), currency($globalPricing->night_charge)] : null,
                 $globalPricing->weekend_charge > 0 ? [__('Weekend Charge'), currency($globalPricing->weekend_charge)] : null,
+                $globalPricing->approach_km_fare > 0 ? [__('Pickup Distance Charge (beyond :km km, per km)', ['km' => rtrim(rtrim((string) $globalPricing->approach_free_km, '0'), '.')]), currency($globalPricing->approach_km_fare)] : null,
             ],
         ],
         [

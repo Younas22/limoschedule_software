@@ -23,9 +23,10 @@ class BookingFareCalculator
         int $waitingMinutes = 0,
         bool $hasToll = false,
         int $passengers = 1,
-        ?float $returnDistanceKm = null
+        ?float $returnDistanceKm = null,
+        ?float $approachDistanceKm = null
     ): float {
-        return $this->breakdown($vehicle, $type, $distanceKm, $hours, $pickupDateTime, $waitingMinutes, $hasToll, $passengers, $returnDistanceKm)['total'];
+        return $this->breakdown($vehicle, $type, $distanceKm, $hours, $pickupDateTime, $waitingMinutes, $hasToll, $passengers, $returnDistanceKm, $approachDistanceKm)['total'];
     }
 
     /**
@@ -40,7 +41,8 @@ class BookingFareCalculator
         int $waitingMinutes = 0,
         bool $hasToll = false,
         int $passengers = 1,
-        ?float $returnDistanceKm = null
+        ?float $returnDistanceKm = null,
+        ?float $approachDistanceKm = null
     ): array {
         $rule = PricingRule::resolveForVehicle($vehicle);
         $distanceKm = $distanceKm ?? 0;
@@ -86,9 +88,13 @@ class BookingFareCalculator
         $extraPassengers = max($passengers - (int) $rule->included_passengers, 0);
         $extraPassengerCharge = round((float) $rule->extra_passenger_charge * $extraPassengers, 2);
 
+        // Driver's run from base to the pickup — charged once, even on a
+        // round trip, and only for the km beyond the rule's free allowance.
+        $approachCharge = $rule->approachCharge($approachDistanceKm);
+
         $total = round(
             $baseFare + $distanceFare + $hourFare + $waitingCharge
-            + $nightCharge + $weekendCharge + $tollCharge + $airportSurcharge + $serviceFee + $extraPassengerCharge,
+            + $nightCharge + $weekendCharge + $tollCharge + $airportSurcharge + $serviceFee + $extraPassengerCharge + $approachCharge,
             2
         );
 
@@ -107,6 +113,7 @@ class BookingFareCalculator
             'airport_surcharge' => $airportSurcharge,
             'service_fee' => $serviceFee,
             'extra_passenger_charge' => $extraPassengerCharge,
+            'approach_charge' => $approachCharge,
             'total' => $total,
         ];
     }

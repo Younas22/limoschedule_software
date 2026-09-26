@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\QuoteRequest;
 use App\Models\Vehicle;
+use App\Services\ApproachDistanceService;
 use App\Services\BookingCreationService;
 use App\Services\BookingFareCalculator;
 use App\Services\GoogleMapsService;
@@ -29,7 +30,7 @@ use Illuminate\View\View;
  */
 class BookingRequestController extends Controller
 {
-    public function store(Request $request, BookingCreationService $bookingCreation): RedirectResponse
+    public function store(Request $request, BookingCreationService $bookingCreation, ApproachDistanceService $approachDistance): RedirectResponse
     {
         $settings = BookingSetting::current();
 
@@ -138,6 +139,7 @@ class BookingRequestController extends Controller
             'return_distance_km' => $data['return_distance_km'] ?? null,
             'hours' => $data['hours'] ?? null,
             'distance_km' => $data['distance_km'] ?? null,
+            'approach_distance_km' => $approachDistance->forBooking($vehicle, $data['pickup_lat'] ?? null, $data['pickup_lng'] ?? null, isset($data['distance_km']) ? (float) $data['distance_km'] : null),
             'passengers' => $data['passengers'],
             'luggage' => $data['luggage'],
             'waiting_minutes' => 0,
@@ -148,6 +150,7 @@ class BookingRequestController extends Controller
         ];
 
         $bookingData = $bookingCreation->attachFareBreakdown($bookingData);
+        unset($bookingData['approach_distance_km']);
         [$bookingData, $appliedCoupon] = $bookingCreation->applyCoupon($bookingData, $data['coupon_code'] ?? null);
         $bookingData = $bookingCreation->applyPolicies($bookingData);
 
@@ -171,7 +174,7 @@ class BookingRequestController extends Controller
      * fare engine used for real bookings, so the preview never drifts from
      * what the customer is actually charged.
      */
-    public function quote(Request $request, GoogleMapsService $maps, BookingFareCalculator $calculator, OfficeLocationService $officeLocation): JsonResponse
+    public function quote(Request $request, GoogleMapsService $maps, BookingFareCalculator $calculator, OfficeLocationService $officeLocation, ApproachDistanceService $approachDistance): JsonResponse
     {
         $data = $request->validate([
             'vehicle_category_id' => ['required', 'exists:vehicle_categories,id'],
@@ -273,7 +276,8 @@ class BookingRequestController extends Controller
             0,
             false,
             (int) ($data['passengers'] ?? 1),
-            $returnDistanceKm
+            $returnDistanceKm,
+            $approachDistance->forQuote($vehicle, $data['pickup_lat'] ?? null, $data['pickup_lng'] ?? null, $distanceKm)
         );
 
         try {

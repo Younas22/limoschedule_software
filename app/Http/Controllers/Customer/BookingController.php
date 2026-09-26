@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
 use App\Models\Booking;
 use App\Notifications\BookingCancelledNotification;
+use App\Services\AdminBookingNotifier;
 use App\Services\DriverDispatchService;
 use App\Services\PushNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -141,7 +140,7 @@ class BookingController extends Controller
         return view('customer.bookings.show', compact('booking', 'dispatch'));
     }
 
-    public function cancel(Request $request, Booking $booking, PushNotificationService $pushNotifications): RedirectResponse
+    public function cancel(Request $request, Booking $booking, PushNotificationService $pushNotifications, AdminBookingNotifier $adminNotifier): RedirectResponse
     {
         abort_unless($booking->customer_id === Auth::guard('customer')->id(), 404);
 
@@ -172,11 +171,7 @@ class BookingController extends Controller
         // nobody at all — admins found out only by noticing the status had
         // changed. Reusing the existing admin BookingCancelledNotification
         // (mail/in-app/push, per Settings → Notifications) closes that gap.
-        $admins = Admin::withPermission('bookings.view')->get();
-
-        if ($admins->isNotEmpty()) {
-            Notification::send($admins, new BookingCancelledNotification($booking));
-        }
+        $adminNotifier->send(new BookingCancelledNotification($booking));
 
         if ($booking->driver_id) {
             $booking->loadMissing('driver');

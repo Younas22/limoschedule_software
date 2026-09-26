@@ -2,8 +2,11 @@
 
 namespace App\Notifications;
 
+use App\Channels\SafeMailChannel;
 use App\Models\Booking;
+use App\Models\EmailSetting;
 use App\Models\NotificationSetting;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -38,6 +41,27 @@ abstract class BookingNotification extends Notification
     {
         $channels = NotificationSetting::forEvent($this->eventType())?->activeChannels() ?? ['database'];
 
+        // The on-demand copy AdminBookingNotifier sends to the configured
+        // admin inbox is mail-only — in-app and push belong to the Admin rows.
+        if ($notifiable instanceof AnonymousNotifiable) {
+            return in_array('mail', $channels, true) ? [SafeMailChannel::class] : [];
+        }
+
+        // With an admin inbox configured, that inbox gets the email instead
+        // of every admin login address (which may not be a real mailbox).
+        if (EmailSetting::current()->adminNotificationEmails() !== []) {
+            $channels = array_diff($channels, ['mail']);
+        }
+
+        $channels = array_values(array_map(
+            fn ($channel) => $channel === 'mail' ? SafeMailChannel::class : $channel,
+            $channels
+        ));
+
+        if (! $this->sendsWebPush()) {
+            return $channels;
+        }
+
         // Browser push has its own independent master/role/event-type
         // switches (Settings → Notifications → Browser Push) entirely
         // separate from the mail/database toggles above — see
@@ -46,6 +70,11 @@ abstract class BookingNotification extends Notification
         $channels[] = \App\Channels\WebPushChannel::class;
 
         return $channels;
+    }
+
+    protected function sendsWebPush(): bool
+    {
+        return true;
     }
 
     /**
@@ -85,7 +114,7 @@ abstract class BookingNotification extends Notification
     {
         $mail = (new MailMessage)
             ->subject($this->mailSubject())
-            ->greeting('Hello '.$notifiable->name.',');
+            ->greeting('Hello '.($notifiable->name ?? 'Admin').',');
 
         foreach ($this->mailLines() as $line) {
             $mail->line($line);

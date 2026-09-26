@@ -91,6 +91,9 @@ class PricingRuleController extends Controller
             'included_hours' => ['required', 'numeric', 'min:0'],
             'included_passengers' => ['required', 'integer', 'min:0'],
             'extra_passenger_charge' => ['required', 'numeric', 'min:0'],
+            'approach_free_km' => ['required', 'numeric', 'min:0'],
+            'approach_km_fare' => ['required', 'numeric', 'min:0'],
+            'approach_driver_max_km' => ['required', 'numeric', 'min:0'],
         ]);
 
         $data['weekend_days'] = $data['weekend_days'] ?? [];

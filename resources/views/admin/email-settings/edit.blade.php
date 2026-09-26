@@ -68,6 +68,20 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Admin Notification Inbox --}}
+                <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-luxury-white">{{ __('Admin Notification Email') }}</h3>
+                        <p class="mt-1 text-xs text-luxury-muted">{{ __('New bookings, confirmations, cancellations, payments and every status change are emailed here. Separate multiple addresses with commas. Leave blank to email each admin at their login address instead.') }}</p>
+                    </div>
+
+                    <div>
+                        <x-admin.input-label for="admin_notification_email" value="{{ __('Send Admin Notifications To') }}" />
+                        <x-admin.text-input id="admin_notification_email" name="admin_notification_email" type="text" placeholder="owner@yourdomain.com, dispatch@yourdomain.com" value="{{ old('admin_notification_email', $settings->admin_notification_email) }}" />
+                        <x-admin.input-error :messages="$errors->get('admin_notification_email')" />
+                    </div>
+                </div>
             </div>
 
             <div class="mt-6 flex items-center justify-end gap-3">

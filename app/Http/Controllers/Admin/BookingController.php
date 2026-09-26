@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Driver;
@@ -13,12 +12,15 @@ use App\Models\VehicleCategory;
 use App\Notifications\BookingCancelledNotification;
 use App\Notifications\BookingConfirmedNotification;
 use App\Notifications\BookingNotification;
+use App\Notifications\BookingStatusUpdatedNotification;
 use App\Notifications\Customer\BookingCancelledNotification as CustomerBookingCancelledNotification;
 use App\Notifications\Customer\BookingConfirmedNotification as CustomerBookingConfirmedNotification;
+use App\Notifications\Customer\BookingStatusUpdatedNotification as CustomerBookingStatusUpdatedNotification;
 use App\Notifications\Customer\DriverAssignedNotification as CustomerDriverAssignedNotification;
 use App\Notifications\Customer\PaymentCompletedNotification as CustomerPaymentCompletedNotification;
 use App\Notifications\Driver\DriverBookingNotification;
 use App\Notifications\PaymentSuccessfulNotification;
+use App\Services\AdminBookingNotifier;
 use App\Services\BookingCreationService;
 use App\Services\DriverDispatchService;
 use App\Services\PushNotificationService;
@@ -27,7 +29,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -98,7 +99,9 @@ class BookingController extends Controller
 
         $booking->update($data);
 
-        $this->notifyStatusTransition($booking, $previousStatus, $booking->status, $pushNotifications);
+        $driverChanged = $booking->driver_id && $booking->driver_id !== $previousDriverId;
+
+        $this->notifyStatusTransition($booking, $previousStatus, $booking->status, $pushNotifications, $driverChanged);
         $this->notifyDriverAssignment($booking, $previousDriverId);
 
         return redirect()
@@ -210,10 +213,24 @@ class BookingController extends Controller
         };
     }
 
-    private function notifyStatusTransition(Booking $booking, string $previousStatus, string $newStatus, PushNotificationService $pushNotifications): void
+    private function notifyStatusTransition(Booking $booking, string $previousStatus, string $newStatus, PushNotificationService $pushNotifications, bool $driverChanged = false): void
     {
         if ($newStatus === $previousStatus) {
             return;
+        }
+
+        // Every other transition (pending, assigned, in progress, completed)
+        // gets a generic status email to admins and the customer. A driver
+        // assigned in the same save already sends the customer
+        // DriverAssignedNotification, so skip the duplicate "Assigned" email.
+        if (! in_array($newStatus, ['confirmed', 'cancelled'], true)) {
+            $booking->loadMissing(['customer', 'driver']);
+
+            $this->notifyAdmins(new BookingStatusUpdatedNotification($booking, $previousStatus));
+
+            if (! ($newStatus === 'assigned' && $driverChanged)) {
+                $booking->customer?->notify(new CustomerBookingStatusUpdatedNotification($booking));
+            }
         }
 
         if ($newStatus === 'confirmed') {
@@ -283,11 +300,7 @@ class BookingController extends Controller
 
     private function notifyAdmins(BookingNotification $notification): void
     {
-        $admins = Admin::withPermission('bookings.view')->get();
-
-        if ($admins->isNotEmpty()) {
-            Notification::send($admins, $notification);
-        }
+        app(AdminBookingNotifier::class)->send($notification);
     }
 
     private function formOptions(): array

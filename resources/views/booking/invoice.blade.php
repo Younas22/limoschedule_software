@@ -119,6 +119,8 @@
                 'toll_charge' => 'Toll Charge',
                 'airport_surcharge' => 'Airport Surcharge',
                 'service_fee' => 'Service Fee',
+                'extra_passenger_charge' => 'Extra Passenger Charge',
+                'approach_charge' => 'Pickup Distance Charge',
             ] as $key => $label)
                 @continue(empty($breakdown[$key]))
                 <tr>

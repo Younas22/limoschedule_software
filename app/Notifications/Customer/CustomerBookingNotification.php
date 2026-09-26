@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Customer;
 
+use App\Channels\SafeMailChannel;
 use App\Models\Booking;
 use App\Models\NotificationSetting;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -44,7 +45,14 @@ abstract class CustomerBookingNotification extends Notification
             $channels = array_diff($channels, ['mail']);
         }
 
-        $channels = array_values($channels);
+        $channels = array_values(array_map(
+            fn ($channel) => $channel === 'mail' ? SafeMailChannel::class : $channel,
+            $channels
+        ));
+
+        if (! $this->sendsWebPush()) {
+            return $channels;
+        }
 
         // Browser push has its own independent master/role/event-type
         // switches (Settings → Notifications → Browser Push), entirely
@@ -54,6 +62,11 @@ abstract class CustomerBookingNotification extends Notification
         $channels[] = \App\Channels\WebPushChannel::class;
 
         return $channels;
+    }
+
+    protected function sendsWebPush(): bool
+    {
+        return true;
     }
 
     /**

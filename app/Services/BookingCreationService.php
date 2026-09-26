@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Admin;
 use App\Models\Booking;
 use App\Models\BookingSetting;
 use App\Models\Coupon;
@@ -12,10 +11,10 @@ use App\Models\Vehicle;
 use App\Notifications\BookingConfirmedNotification;
 use App\Notifications\BookingCreatedNotification;
 use App\Notifications\Customer\BookingConfirmedNotification as CustomerBookingConfirmedNotification;
+use App\Notifications\Customer\BookingReceivedNotification as CustomerBookingReceivedNotification;
 use App\Notifications\Customer\DriverAssignedNotification as CustomerDriverAssignedNotification;
 use App\Notifications\Driver\DriverBookingNotification;
 use App\Services\PushNotificationService;
-use Illuminate\Support\Facades\Notification;
 
 /**
  * Shared booking-creation logic used by both the admin manual-booking form
@@ -27,7 +26,8 @@ class BookingCreationService
 {
     public function __construct(
         private readonly BookingFareCalculator $calculator,
-        private readonly PushNotificationService $pushNotifications
+        private readonly PushNotificationService $pushNotifications,
+        private readonly AdminBookingNotifier $adminNotifier
     ) {
     }
 
@@ -44,7 +44,8 @@ class BookingCreationService
             (int) ($data['waiting_minutes'] ?? 0),
             (bool) ($data['has_toll'] ?? false),
             (int) ($data['passengers'] ?? 1),
-            isset($data['return_distance_km']) ? (float) $data['return_distance_km'] : null
+            isset($data['return_distance_km']) ? (float) $data['return_distance_km'] : null,
+            isset($data['approach_distance_km']) ? (float) $data['approach_distance_km'] : null
         );
 
         $data['fare_amount'] = $data['fare_amount'] ?? $data['fare_breakdown']['total'];
@@ -213,13 +214,7 @@ class BookingCreationService
             return;
         }
 
-        $admins = Admin::withPermission('bookings.view')->get();
-
-        if ($admins->isEmpty()) {
-            return;
-        }
-
-        Notification::send($admins, new BookingConfirmedNotification($booking));
+        $this->adminNotifier->send(new BookingConfirmedNotification($booking));
     }
 
     /**
@@ -229,16 +224,10 @@ class BookingCreationService
      */
     public function notifyAdminsOfCreation(Booking $booking): void
     {
-        $admins = Admin::withPermission('bookings.view')->get();
-
-        if ($admins->isEmpty()) {
-            return;
-        }
-
-        Notification::send($admins, new BookingCreatedNotification($booking));
+        $this->adminNotifier->send(new BookingCreatedNotification($booking));
 
         if ($booking->status === 'confirmed') {
-            Notification::send($admins, new BookingConfirmedNotification($booking));
+            $this->adminNotifier->send(new BookingConfirmedNotification($booking));
         }
     }
 
@@ -254,6 +243,10 @@ class BookingCreationService
 
         if ($booking->status === 'confirmed') {
             $booking->customer->notify(new CustomerBookingConfirmedNotification($booking));
+        } elseif ($booking->status === 'pending') {
+            // Awaiting payment or manual confirmation — still send the
+            // customer an immediate receipt of their booking.
+            $booking->customer->notify(new CustomerBookingReceivedNotification($booking));
         }
 
         if ($booking->driver_id) {

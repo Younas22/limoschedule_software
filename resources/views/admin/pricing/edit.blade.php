@@ -184,6 +184,34 @@
                 </div>
             </div>
 
+            {{-- Pickup Approach Distance --}}
+            <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
+                <div>
+                    <h3 class="text-sm font-semibold text-luxury-white">{{ __('Pickup Approach Distance') }}</h3>
+                    <p class="mt-1 text-xs text-luxury-muted">{{ __("Charge for the driver's run to the pickup point. For short rides it is measured from the nearest online driver's live location; for longer rides (or when no driver is online) from your office. The first free km are on the driver; every km beyond that is added to the fare. Example: free 5 km, pickup 10 km away → 5 km charged. Set the rate to 0 to turn this off.") }}</p>
+                </div>
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    <div>
+                        <x-admin.input-label for="approach_free_km" value="{{ __('Free Approach KM') }}" />
+                        <x-admin.text-input id="approach_free_km" name="approach_free_km" type="number" step="0.01" min="0" value="{{ old('approach_free_km', $rule->approach_free_km ?? 0) }}" required />
+                        <p class="mt-1 text-xs text-luxury-muted">{{ __('Km from the office to the pickup that are not charged.') }}</p>
+                        <x-admin.input-error :messages="$errors->get('approach_free_km')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="approach_km_fare" value="{{ __('Approach Charge per KM') }}" />
+                        <x-admin.text-input id="approach_km_fare" name="approach_km_fare" type="number" step="0.01" min="0" value="{{ old('approach_km_fare', $rule->approach_km_fare ?? 0) }}" required />
+                        <p class="mt-1 text-xs text-luxury-muted">{{ __('Charged per km beyond the free approach km.') }}</p>
+                        <x-admin.input-error :messages="$errors->get('approach_km_fare')" />
+                    </div>
+                    <div>
+                        <x-admin.input-label for="approach_driver_max_km" value="{{ __('Use Driver Location Below (KM)') }}" />
+                        <x-admin.text-input id="approach_driver_max_km" name="approach_driver_max_km" type="number" step="0.01" min="0" value="{{ old('approach_driver_max_km', $rule->approach_driver_max_km ?? 50) }}" required />
+                        <p class="mt-1 text-xs text-luxury-muted">{{ __('Rides shorter than this measure from the nearest driver; this distance and longer measure from the office. 0 = always office.') }}</p>
+                        <x-admin.input-error :messages="$errors->get('approach_driver_max_km')" />
+                    </div>
+                </div>
+            </div>
+
             {{-- Surcharges & Fees --}}
             <div class="space-y-5 rounded-2xl border border-luxury-border bg-luxury-charcoal p-6">
                 <h3 class="text-sm font-semibold text-luxury-white">{{ __('Surcharges & Fees') }}</h3>

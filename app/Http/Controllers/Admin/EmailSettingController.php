@@ -31,6 +31,15 @@ class EmailSettingController extends Controller
             'resend_api_key' => ['nullable', 'string', 'max:500'],
             'from_address' => ['nullable', 'email', 'max:255'],
             'from_name' => ['nullable', 'string', 'max:255'],
+            'admin_notification_email' => ['nullable', 'string', 'max:500', function ($attribute, $value, $fail) {
+                foreach (explode(',', $value) as $email) {
+                    if (! filter_var(trim($email), FILTER_VALIDATE_EMAIL)) {
+                        $fail('Enter valid email address(es), separated by commas.');
+
+                        return;
+                    }
+                }
+            }],
         ]);
 
         if (blank($data['resend_api_key'] ?? null)) {

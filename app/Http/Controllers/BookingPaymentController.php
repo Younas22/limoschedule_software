@@ -161,6 +161,8 @@ class BookingPaymentController extends Controller
         if ($booking->customer) {
             $booking->customer->notify(new \App\Notifications\Customer\PaymentCompletedNotification($booking));
         }
+
+        app(\App\Services\AdminBookingNotifier::class)->send(new \App\Notifications\PaymentSuccessfulNotification($booking));
     }
 
     private function paymentSucceeded(Booking $booking): RedirectResponse

@@ -15,6 +15,7 @@ class NotificationSetting extends Model
         'driver_assigned' => 'Driver Assigned',
         'payment_successful' => 'Payment Successful',
         'booking_cancelled' => 'Cancellation',
+        'booking_status_updated' => 'Booking Status Updated',
     ];
 
     protected $fillable = [

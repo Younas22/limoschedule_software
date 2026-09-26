@@ -1286,6 +1286,7 @@
                     airport_surcharge: @json(__('Airport Surcharge')),
                     service_fee: @json(__('Service Fee')),
                     extra_passenger_charge: @json(__('Extra Passenger Charge')),
+                    approach_charge: @json(__('Pickup Distance Charge')),
                 };
 
                 return Object.keys(labels)

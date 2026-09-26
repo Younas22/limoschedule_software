@@ -21,6 +21,7 @@ class EmailSetting extends Model
         'resend_api_key',
         'from_address',
         'from_name',
+        'admin_notification_email',
     ];
 
     protected function casts(): array
@@ -45,6 +46,22 @@ class EmailSetting extends Model
                 'from_name' => config('mail.from.name'),
             ]);
         });
+    }
+
+    /**
+     * The inbox(es) admin booking notifications are mailed to, parsed from
+     * the comma-separated admin_notification_email setting.
+     *
+     * @return array<int, string>
+     */
+    public function adminNotificationEmails(): array
+    {
+        return collect(explode(',', (string) $this->admin_notification_email))
+            ->map(fn ($email) => trim($email))
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

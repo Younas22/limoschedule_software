@@ -111,11 +111,15 @@
                 const endpoint = '{{ route('driver.location.update') }}';
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
                 const MIN_INTERVAL_MS = 8000;
+                // Heartbeat even when the driver is standing still —
+                // watchPosition only fires on movement, and pricing needs
+                // the position to stay fresh.
+                const HEARTBEAT_MS = 30000;
                 let lastSentAt = 0;
 
-                function report(position) {
+                function report(position, force = false) {
                     const now = Date.now();
-                    if (now - lastSentAt < MIN_INTERVAL_MS) return;
+                    if (! force && now - lastSentAt < MIN_INTERVAL_MS) return;
                     lastSentAt = now;
 
                     fetch(endpoint, {
@@ -138,6 +142,14 @@
                     maximumAge: 5000,
                     timeout: 15000,
                 });
+
+                setInterval(() => {
+                    navigator.geolocation.getCurrentPosition((position) => report(position, true), () => {}, {
+                        enableHighAccuracy: true,
+                        maximumAge: 10000,
+                        timeout: 15000,
+                    });
+                }, HEARTBEAT_MS);
             })();
         </script>
     @endif

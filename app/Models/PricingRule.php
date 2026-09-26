@@ -38,6 +38,9 @@ class PricingRule extends Model
         'included_hours',
         'included_passengers',
         'extra_passenger_charge',
+        'approach_free_km',
+        'approach_km_fare',
+        'approach_driver_max_km',
         'is_active',
     ];
 
@@ -67,6 +70,9 @@ class PricingRule extends Model
             'included_hours' => 'decimal:2',
             'included_passengers' => 'integer',
             'extra_passenger_charge' => 'decimal:2',
+            'approach_free_km' => 'decimal:2',
+            'approach_km_fare' => 'decimal:2',
+            'approach_driver_max_km' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }
@@ -207,6 +213,24 @@ class PricingRule extends Model
         $fare += $remainingKm * (float) ($this->very_long_distance_km_fare ?? $this->long_distance_km_fare ?? $this->mid_distance_km_fare ?? $this->km_fare);
 
         return round($fare, 2);
+    }
+
+    /**
+     * Charge for the driver's empty run to the pickup point (see
+     * ApproachDistanceService for where that run starts from): the
+     * first approach_free_km are absorbed by the driver, every km beyond
+     * that bills at approach_km_fare. E.g. free 5 km, pickup 10 km away ->
+     * 5 km charged. A zero rate turns the feature off.
+     */
+    public function approachCharge(?float $approachDistanceKm): float
+    {
+        if ($approachDistanceKm === null || (float) $this->approach_km_fare <= 0) {
+            return 0.0;
+        }
+
+        $chargeableKm = max($approachDistanceKm - (float) $this->approach_free_km, 0);
+
+        return round($chargeableKm * (float) $this->approach_km_fare, 2);
     }
 
     public function isNight(Carbon $pickupDateTime): bool

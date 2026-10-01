@@ -58,21 +58,30 @@ self.addEventListener('push', (event) => {
                 clientList.forEach((client) => client.postMessage({ type: 'play-notification-sound', url: payload.sound }));
             }
 
-            // Suppress the OS's own default ding only when we know an open
-            // tab is about to play the custom sound instead — otherwise a
-            // fully-closed browser would go completely silent.
-            const hasVisibleClient = clientList.some((client) => client.visibilityState === 'visible');
+            // Suppress the OS's own default ding only when the user is
+            // actively looking at an open tab (focused, not just "visible")
+            // that is about to play the custom sound instead. A locked
+            // phone, a background tab or a closed browser always gets the
+            // OS sound + vibration — the custom <audio> can't play there,
+            // and an autoplay-blocked tab must not leave the alert silent.
+            const hasFocusedClient = clientList.some((client) => client.visibilityState === 'visible' && client.focused);
 
             return self.registration.showNotification(title, {
                 body: payload.body || '',
                 icon: payload.icon || undefined,
                 badge: payload.badge || payload.icon || undefined,
-                silent: Boolean(payload.sound) && hasVisibleClient,
-                // Distinct notifications (booking updates) each get their
-                // own banner; same-type pings (e.g. repeated dispatch
-                // pings) could tag with type+booking_id to replace rather
-                // than stack, but every event this app sends today is a
-                // one-off, so no tag is set.
+                silent: Boolean(payload.sound) && hasFocusedClient,
+                // Android: buzz the phone even when it's locked/face-down.
+                vibrate: [400, 200, 400, 200, 400],
+                // Keep the alert on screen (desktop) until it's dealt with,
+                // instead of auto-hiding after a few seconds.
+                requireInteraction: true,
+                // A unique tag + renotify makes every push alert audibly,
+                // even if an earlier notification for the same booking is
+                // still sitting in the tray.
+                tag: `${payload.type || 'push'}-${payload.booking_id || ''}-${Date.now()}`,
+                renotify: true,
+                timestamp: Date.now(),
                 data: {
                     url: payload.url || '/',
                     type: payload.type || null,

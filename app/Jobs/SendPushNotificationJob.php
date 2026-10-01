@@ -61,6 +61,11 @@ class SendPushNotificationJob implements ShouldQueue
                 ],
             ], [
                 'TTL' => config('webpush.ttl'),
+                // "high" makes FCM/APNs wake a locked, dozing phone and
+                // deliver immediately — at the default "normal" urgency
+                // Android batches the push until the device next wakes,
+                // so it arrives late and without an audible alert.
+                'urgency' => 'high',
             ]);
         } catch (Throwable $e) {
             Log::error('Web Push is not configured correctly: '.$e->getMessage());
